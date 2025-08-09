@@ -24,8 +24,11 @@
   "homepage": "https://github.com/tanigu12/discord-bot#readme",
   "description": "",
   "dependencies": {
+    "axios": "^1.11.0",
+    "dayjs": "^1.11.13",
     "discord.js": "^14.21.0",
-    "dotenv": "^17.2.1"
+    "dotenv": "^17.2.1",
+    "openai": "^5.12.2"
   },
   "devDependencies": {
     "@types/node": "^24.2.1",
