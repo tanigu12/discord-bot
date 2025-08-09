@@ -1,5 +1,8 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 import dotenv from 'dotenv';
+import { translateCommand } from './commands/translate';
+import { grammarCommand } from './commands/grammar';
+import { explainCommand } from './commands/explain';
 
 dotenv.config();
 
@@ -7,6 +10,9 @@ const commands = [
   new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Replies with Pong!'),
+  translateCommand.data,
+  grammarCommand.data,
+  explainCommand.data,
 ].map(command => command.toJSON());
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
