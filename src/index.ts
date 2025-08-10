@@ -154,4 +154,58 @@ client.on(Events.MessageReactionRemove, async (reaction, _user) => {
   // For now, we don't need to do anything when reactions are removed
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// Enhanced error handling for production
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+  // Application specific logging, throwing an error, or other logic here
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🚨 Uncaught Exception thrown:', error);
+  // Attempt graceful shutdown
+  process.exit(1);
+});
+
+// Handle client errors for reconnection
+client.on(Events.Error, (error) => {
+  console.error('🔴 Discord client error:', error);
+});
+
+client.on(Events.Warn, (info) => {
+  console.warn('⚠️  Discord client warning:', info);
+});
+
+// Handle disconnections
+client.on(Events.ShardDisconnect, (event, shardId) => {
+  console.log(`🔌 Shard ${shardId} disconnected. Event:`, event);
+});
+
+client.on(Events.ShardReconnecting, (shardId) => {
+  console.log(`🔄 Shard ${shardId} reconnecting...`);
+});
+
+client.on(Events.ShardReady, (shardId) => {
+  console.log(`✅ Shard ${shardId} ready!`);
+});
+
+// Login with retry logic
+const loginWithRetry = async (retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await client.login(process.env.DISCORD_TOKEN);
+      console.log('🎉 Bot logged in successfully!');
+      break;
+    } catch (error) {
+      console.error(`❌ Login attempt ${i + 1} failed:`, error);
+      if (i === retries - 1) {
+        console.error('🚨 All login attempts failed. Exiting...');
+        process.exit(1);
+      }
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+};
+
+// Start the bot
+loginWithRetry();
