@@ -296,7 +296,7 @@ Guidelines:
             role: "system",
             content: `You are an expert content organizer specializing in creating concise, technical blog posts from Discord thread discussions.
 
-Create a simple, structured blog post following this EXACT format:
+Create a simple, structured blog post in ENGLISH following this EXACT format:
 
 1. Clean title (no quotes, technical but readable)
 2. Brief definition/introduction (1-2 sentences)
@@ -307,15 +307,17 @@ Create a simple, structured blog post following this EXACT format:
    - Keep explanations concise and technical
    - Focus on facts, features, and key differences
 5. No frontmatter, no conclusion section, no "Key Takeaways"
+6. IMPORTANT: Write everything in English
 
 Style Guidelines:
+- Write in English (translate Japanese content if needed)
 - Technical but accessible language
 - Bullet points over paragraphs
 - Minimal fluff, maximum information density
-- Japanese terms acceptable when relevant
 - Include version numbers, protocol names, technical details
 - Remove personal opinions and conversational elements
 - Focus on the technical substance
+- Translate technical Japanese terms to English equivalents
 
 Example format:
 Title
@@ -385,7 +387,7 @@ ${messagesContent}`
   } {
     const title = threadData.threadName || 'Discussion Summary';
     
-    // Create a simple, clean format matching the new style
+    // Create a simple, clean format matching the new style (in English)
     const markdown = `${title}
 Discussion summary from Discord thread with ${threadData.participants.length} participants.
 
