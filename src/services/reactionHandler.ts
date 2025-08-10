@@ -5,7 +5,6 @@ import {
   PartialUser,
   Message,
   PartialMessage,
-  ThreadChannel,
 } from "discord.js";
 import { OpenAIService } from "./openai";
 import { ContentFetcherService } from "./contentFetcherService";
@@ -94,10 +93,6 @@ export class ReactionHandler {
     _user: User | PartialUser,
     emoji: string
   ): Promise<void> {
-    // Create or get existing thread
-    const thread = await this.getOrCreateThread(message, action, emoji);
-    if (!thread) return;
-
     const messageContent = message.content || "";
 
     try {
@@ -162,58 +157,20 @@ export class ReactionHandler {
       }
 
       if (response) {
-        // Split long responses if needed
+        // Reply to the original message instead of creating a thread
         const chunks = this.splitMessage(response);
         for (const chunk of chunks) {
-          await thread.send(chunk);
+          await message.reply(chunk);
         }
       }
     } catch (error) {
-      await thread.send(
+      await message.reply(
         `Sorry, I encountered an error processing your request: ${error}`
       );
     }
   }
 
-  private async getOrCreateThread(
-    message: Message | PartialMessage,
-    action: string,
-    emoji: string
-  ): Promise<ThreadChannel | null> {
-    try {
-      // Check if a thread already exists for this message
-      if (message.hasThread) {
-        return message.thread;
-      }
 
-      // Create a new thread
-      const threadName = this.getThreadName(action, emoji);
-      const thread = await message.startThread({
-        name: threadName,
-        autoArchiveDuration: 60, // Auto-archive after 1 hour
-      });
-
-      return thread;
-    } catch (error) {
-      console.error("Error creating thread:", error);
-      return null;
-    }
-  }
-
-  private getThreadName(action: string, emoji: string): string {
-    if (action.startsWith("translate_")) {
-      if (action === "translate_auto") return `${emoji} Translation`;
-      const lang = this.LANGUAGE_MAP[emoji as keyof typeof this.LANGUAGE_MAP];
-      return `${emoji} Translation to ${lang}`;
-    } else if (action === "grammar_check") {
-      return `${emoji} Grammar Check`;
-    } else if (action === "explain_word") {
-      return `${emoji} Word Explanation`;
-    } else if (action === "explain_text") {
-      return `${emoji} Text Analysis`;
-    }
-    return `${emoji} AI Assistant`;
-  }
 
   private splitMessage(content: string, maxLength: number = 2000): string[] {
     if (content.length <= maxLength) {
@@ -285,6 +242,6 @@ export class ReactionHandler {
 **Content Analysis:**
 🔍 - Search and analyze content/URLs (like /search command)
 
-**How to use:** Simply react to any message with these emojis and I'll create a thread with the AI response!`;
+**How to use:** Simply react to any message with these emojis and I'll reply with the AI response!`;
   }
 }

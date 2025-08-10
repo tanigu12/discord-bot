@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, ThreadChannel, ChannelType, PermissionFlagsBits, TextChannel } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { OpenAIService } from '../services/openai';
 import { ContentFetcherService } from '../services/contentFetcherService';
 import { ContextCollectorService } from '../services/contextCollectorService';
@@ -73,50 +73,16 @@ export const searchCommand = {
         throw new Error(`AI analysis failed: ${aiError instanceof Error ? aiError.message : 'Unknown AI error'}`);
       }
 
-      // Check if we're already in a thread - if so, use direct reply
-      const channel = interaction.channel;
-      const isInThread = channel?.isThread();
-      
-      console.log(`📍 Command location: ${isInThread ? 'thread' : 'channel'} (${channel?.id})`);
-      
-      let thread: ThreadChannel | null = null;
-      let useDirectReply = isInThread;
-      
-      if (!isInThread) {
-        // Try to create thread for detailed response
-        console.log('🧵 Attempting to create thread for response...');
-        try {
-          thread = await searchCommand.createResponseThread(interaction, query, isUrl);
-          console.log('✅ Thread created successfully');
-        } catch (threadError) {
-          console.warn('⚠️ Failed to create thread, using direct reply:', threadError);
-          useDirectReply = true;
-        }
-      } else {
-        console.log('📝 Already in thread, using direct reply in current thread');
-      }
-
       // Prepare response message
       const responseMessage = `${analysis}${sourceInfo}${contextInfo}`;
       const contextStatus = context ? `📖 Context-aware analysis using ${context.messageCount} recent messages` : '🔍 Standard analysis';
 
-      if (thread && !useDirectReply) {
-        // Send analysis to thread
-        await searchCommand.sendLongMessage(thread, responseMessage);
-        
-        // Reply to original interaction with thread reference
-        await interaction.editReply({
-          content: `✅ **Analysis complete!** ${contextStatus}\n🧵 Check the thread below for detailed explanation of: \`${searchCommand.truncateText(query, 50)}\``
-        });
-      } else {
-        // Send analysis directly as reply (fallback or thread usage)
-        const locationInfo = isInThread ? '🧵 Thread response' : '💬 Direct response';
-        const directReplyHeader = `✅ **Analysis complete!** ${contextStatus}\n${locationInfo} for: \`${searchCommand.truncateText(query, 50)}\`\n\n`;
-        const fullDirectReply = directReplyHeader + responseMessage;
-        
-        // Split long messages for direct reply
-        await searchCommand.sendLongMessageDirect(interaction, fullDirectReply);
-      }
+      // Send analysis directly as reply
+      const directReplyHeader = `✅ **Analysis complete!** ${contextStatus}\n💬 Direct response for: \`${searchCommand.truncateText(query, 50)}\`\n\n`;
+      const fullDirectReply = directReplyHeader + responseMessage;
+      
+      // Split long messages for direct reply
+      await searchCommand.sendLongMessageDirect(interaction, fullDirectReply);
 
       console.log('✅ Search analysis completed successfully');
 
@@ -166,155 +132,7 @@ export const searchCommand = {
     }
   },
 
-  async createResponseThread(interaction: ChatInputCommandInteraction, query: string, isUrl: boolean): Promise<ThreadChannel> {
-    const channel = interaction.channel;
-    console.log(`🔍 Channel info: type=${channel?.type}, id=${channel?.id}`);
-    
-    if (!channel) {
-      throw new Error('Channel not found - interaction channel is null');
-    }
 
-    // Check channel type more specifically
-    if (channel.isDMBased()) {
-      throw new Error('Cannot create threads in DM channels');
-    }
-
-    // Check if we're already in a thread
-    if (channel.isThread()) {
-      throw new Error('Already in a thread - cannot create nested threads');
-    }
-
-    if (!channel.isTextBased()) {
-      throw new Error(`Cannot create threads in non-text channel`);
-    }
-
-    if (!('threads' in channel)) {
-      throw new Error(`Channel does not support thread creation`);
-    }
-
-    // Cast to TextChannel for type safety
-    const textChannel = channel as TextChannel;
-
-    // Check bot permissions
-    const botMember = textChannel.guild?.members.me;
-    if (!botMember) {
-      throw new Error('Bot member not found in guild');
-    }
-
-    console.log(`🔍 Checking bot permissions in channel ${textChannel.id}...`);
-    const permissions = textChannel.permissionsFor(botMember);
-    
-    if (!permissions) {
-      throw new Error('Cannot determine bot permissions for this channel');
-    }
-
-    // Required permissions for creating threads
-    const requiredPermissions = [
-      PermissionFlagsBits.CreatePublicThreads,
-      PermissionFlagsBits.SendMessages, 
-      PermissionFlagsBits.ViewChannel,
-      PermissionFlagsBits.ReadMessageHistory
-    ];
-
-    const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));
-    
-    if (missingPermissions.length > 0) {
-      const permissionNames = missingPermissions.map(perm => {
-        switch(perm) {
-          case PermissionFlagsBits.CreatePublicThreads: return 'Create Public Threads';
-          case PermissionFlagsBits.SendMessages: return 'Send Messages';
-          case PermissionFlagsBits.ViewChannel: return 'View Channel';
-          case PermissionFlagsBits.ReadMessageHistory: return 'Read Message History';
-          default: return perm.toString();
-        }
-      });
-      console.error(`❌ Missing permissions: ${permissionNames.join(', ')}`);
-      throw new Error(`Bot missing required permissions: ${permissionNames.join(', ')}. Please check bot role permissions.`);
-    }
-
-    console.log('✅ All required permissions present');
-
-    // Check if channel allows thread creation
-    if (textChannel.type !== ChannelType.GuildText && textChannel.type !== ChannelType.GuildAnnouncement) {
-      throw new Error(`Thread creation not supported in channel type: ${ChannelType[textChannel.type] || textChannel.type}`);
-    }
-
-    const threadName = isUrl 
-      ? `🌐 URL Analysis: ${searchCommand.truncateText(new URL(query).hostname, 20)}`
-      : `🔍 Search: ${searchCommand.truncateText(query, 20)}`;
-
-    console.log(`🧵 Creating thread: "${threadName}"`);
-
-    try {
-      const thread = await textChannel.threads.create({
-        name: threadName,
-        autoArchiveDuration: 1440, // 24 hours
-        reason: 'AI content analysis thread'
-      });
-
-      console.log(`✅ Thread created successfully: ${thread.id}`);
-      return thread;
-    } catch (createError) {
-      console.error('❌ Thread creation failed:', createError);
-      
-      if (createError instanceof Error) {
-        if (createError.message.includes('50013')) {
-          throw new Error('Missing Permissions: Bot lacks CREATE_PUBLIC_THREADS permission');
-        }
-        if (createError.message.includes('50001')) {
-          throw new Error('Missing Access: Bot cannot access this channel');
-        }
-        if (createError.message.includes('Maximum number of threads')) {
-          throw new Error('Channel has reached maximum number of active threads');
-        }
-        throw new Error(`Thread creation error: ${createError.message}`);
-      }
-      
-      throw createError;
-    }
-  },
-
-  async sendLongMessage(thread: ThreadChannel, message: string): Promise<void> {
-    const maxLength = 2000;
-    
-    if (message.length <= maxLength) {
-      await thread.send(message);
-      return;
-    }
-
-    // Split message into chunks
-    const chunks = [];
-    let currentChunk = '';
-    const lines = message.split('\n');
-
-    for (const line of lines) {
-      if (currentChunk.length + line.length + 1 > maxLength) {
-        if (currentChunk) {
-          chunks.push(currentChunk);
-          currentChunk = line;
-        } else {
-          // Line itself is too long, force split
-          chunks.push(line.substring(0, maxLength));
-          currentChunk = line.substring(maxLength);
-        }
-      } else {
-        currentChunk += (currentChunk ? '\n' : '') + line;
-      }
-    }
-
-    if (currentChunk) {
-      chunks.push(currentChunk);
-    }
-
-    // Send chunks with slight delay
-    for (let i = 0; i < chunks.length; i++) {
-      await thread.send(chunks[i]);
-      if (i < chunks.length - 1) {
-        // Small delay between messages to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-  },
 
   async sendLongMessageDirect(interaction: ChatInputCommandInteraction, message: string): Promise<void> {
     const maxLength = 2000;
