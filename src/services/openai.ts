@@ -94,4 +94,30 @@ export class OpenAIService {
       throw new Error("Failed to explain word");
     }
   }
+
+  async explainText(text: string): Promise<string> {
+    try {
+      const openai = this.getOpenAI();
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful text analysis assistant. Analyze the given text and provide insights including: main ideas, context, cultural references, idioms, writing style, and educational explanations. Make it helpful for language learning."
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ],
+        max_tokens: 1200,
+        temperature: 0.3,
+      });
+
+      return response.choices[0]?.message?.content || "Text analysis failed";
+    } catch (error) {
+      console.error("Text explanation error:", error);
+      throw new Error("Failed to analyze text");
+    }
+  }
 }

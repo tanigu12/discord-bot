@@ -10,6 +10,9 @@ const commands = [
   new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Replies with Pong!'),
+  new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('Show emoji reaction guide for AI assistant'),
   translateCommand.data,
   grammarCommand.data,
   explainCommand.data,
