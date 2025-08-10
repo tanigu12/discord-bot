@@ -6,6 +6,7 @@ import { explainCommand } from "./commands/explain";
 import { randomCommand } from "./commands/random";
 import { formatCommand } from "./commands/format";
 import { searchCommand } from "./commands/search";
+import { bskyCommand } from "./commands/bsky";
 import { ReactionHandler } from "./services/reactionHandler";
 import { DiaryHandler } from "./services/diaryHandler";
 
@@ -32,6 +33,7 @@ client.commands.set(explainCommand.data.name, explainCommand);
 client.commands.set(randomCommand.data.name, randomCommand);
 client.commands.set(formatCommand.data.name, formatCommand);
 client.commands.set(searchCommand.data.name, searchCommand);
+client.commands.set(bskyCommand.data.name, bskyCommand);
 
 // Initialize reaction handler and diary handler
 const reactionHandler = new ReactionHandler();

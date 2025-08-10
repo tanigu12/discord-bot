@@ -28,6 +28,7 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
+    "@atproto/api": "^0.16.2",
     "axios": "^1.11.0",
     "dayjs": "^1.11.13",
     "discord.js": "^14.21.0",

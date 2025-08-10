@@ -6,6 +6,7 @@ import { explainCommand } from './commands/explain';
 import { randomCommand } from './commands/random';
 import { formatCommand } from './commands/format';
 import { searchCommand } from './commands/search';
+import { bskyCommand } from './commands/bsky';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ const commands = [
   randomCommand.data,
   formatCommand.data,
   searchCommand.data,
+  bskyCommand.data,
 ].map(command => command.toJSON());
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);

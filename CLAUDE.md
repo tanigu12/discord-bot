@@ -20,6 +20,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `DISCORD_TOKEN` - Bot token from Discord Developer Portal
    - `CLIENT_ID` - Discord application client ID
    - `OPENAI_API_KEY` - OpenAI API key for AI features
+   - `BLUESKY_USERNAME` - Bluesky handle (e.g., taka1415.bsky.social)
+   - `BLUESKY_PASSWORD` - Bluesky app password (create in Bluesky settings)
    - `GUILD_ID` - (Optional) Guild ID for faster command deployment during development
 
 ## Architecture Overview

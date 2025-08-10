@@ -26,7 +26,7 @@ export const searchCommand = {
       console.log(`🔍 Processing search request from ${interaction.user.tag}: "${query.substring(0, 50)}..."`);
 
       // Detect if query is a URL
-      const isUrl = this.isValidUrl(query);
+      const isUrl = searchCommand.isValidUrl(query);
       let content = query;
       let sourceInfo = '';
 
@@ -59,24 +59,34 @@ export const searchCommand = {
 
       // Generate AI analysis with context
       console.log('🤖 Generating context-aware AI analysis...');
-      const analysis = context 
-        ? await openaiService.analyzeContentWithContext(content, context, isUrl)
-        : await openaiService.analyzeContent(content, isUrl);
+      let analysis: string;
+      try {
+        analysis = context 
+          ? await openaiService.analyzeContentWithContext(content, context, isUrl)
+          : await openaiService.analyzeContent(content, isUrl);
+          
+        if (!analysis || analysis.trim().length === 0) {
+          throw new Error('AI service returned empty response');
+        }
+      } catch (aiError) {
+        console.error('❌ AI analysis failed:', aiError);
+        throw new Error(`AI analysis failed: ${aiError instanceof Error ? aiError.message : 'Unknown AI error'}`);
+      }
 
       // Create thread for detailed response
       console.log('🧵 Creating thread for response...');
-      const thread = await this.createResponseThread(interaction, query, isUrl);
+      const thread = await searchCommand.createResponseThread(interaction, query, isUrl);
 
       // Send analysis to thread
       const responseMessage = `${analysis}${sourceInfo}${contextInfo}`;
       
       // Split long messages if necessary (Discord has 2000 character limit)
-      await this.sendLongMessage(thread, responseMessage);
+      await searchCommand.sendLongMessage(thread, responseMessage);
 
       // Reply to original interaction
       const contextStatus = context ? `📖 Context-aware analysis using ${context.messageCount} recent messages` : '🔍 Standard analysis';
       await interaction.editReply({
-        content: `✅ **Analysis complete!** ${contextStatus}\n🧵 Check the thread below for detailed explanation of: \`${this.truncateText(query, 50)}\``
+        content: `✅ **Analysis complete!** ${contextStatus}\n🧵 Check the thread below for detailed explanation of: \`${searchCommand.truncateText(query, 50)}\``
       });
 
       console.log('✅ Search analysis completed successfully');
@@ -84,21 +94,44 @@ export const searchCommand = {
     } catch (error) {
       console.error('❌ Error in search command:', error);
       
+      let errorMessage = '❌ **Search Error**\n\n';
+      let errorDetails = '';
+      
+      if (error instanceof Error) {
+        // Categorize error types for better user feedback
+        if (error.message.includes('timeout') || error.message.includes('ECONNABORTED')) {
+          errorDetails = '• **Timeout Error**: The website took too long to respond\n• Try again later or use a different URL';
+        } else if (error.message.includes('403') || error.message.includes('Access denied')) {
+          errorDetails = '• **Access Denied**: The website blocks automated requests\n• This website cannot be analyzed automatically';
+        } else if (error.message.includes('404') || error.message.includes('not found')) {
+          errorDetails = '• **Page Not Found**: The URL may be incorrect\n• Please check the URL and try again';
+        } else if (error.message.includes('OPENAI_API_KEY')) {
+          errorDetails = '• **Configuration Error**: AI service is not properly configured\n• Please contact the bot administrator';
+        } else if (error.message.includes('thread')) {
+          errorDetails = '• **Discord Error**: Cannot create thread in this channel\n• Make sure the bot has proper permissions';
+        } else {
+          errorDetails = `• **Error Details**: ${error.message}\n• Please try again or contact support if the issue persists`;
+        }
+        
+        console.error('Detailed error info:', {
+          message: error.message,
+          stack: error.stack,
+          query: query.substring(0, 100)
+        });
+      } else {
+        errorDetails = '• Unknown error occurred\n• Please try again with different content';
+      }
+      
       await interaction.editReply({
-        content: '❌ **Search Error**\n\n' +
-                'Failed to analyze the content. This could be due to:\n' +
-                '• Invalid or inaccessible URL\n' +
-                '• Content too large or complex to process\n' +
-                '• Temporary AI service issues\n\n' +
-                'Please try again with different content or check the URL.'
+        content: errorMessage + errorDetails
       });
     }
   },
 
   isValidUrl(string: string): boolean {
     try {
-      new URL(string);
-      return true;
+      const url = new URL(string);
+      return ['http:', 'https:'].includes(url.protocol);
     } catch (_) {
       return false;
     }
@@ -111,8 +144,8 @@ export const searchCommand = {
     }
 
     const threadName = isUrl 
-      ? `🌐 URL Analysis: ${this.truncateText(new URL(query).hostname, 20)}`
-      : `🔍 Search: ${this.truncateText(query, 20)}`;
+      ? `🌐 URL Analysis: ${searchCommand.truncateText(new URL(query).hostname, 20)}`
+      : `🔍 Search: ${searchCommand.truncateText(query, 20)}`;
 
     const thread = await channel.threads.create({
       name: threadName,
