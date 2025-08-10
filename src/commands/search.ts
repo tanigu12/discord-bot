@@ -1,9 +1,11 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ThreadChannel } from 'discord.js';
 import { OpenAIService } from '../services/openai';
 import { ContentFetcherService } from '../services/contentFetcherService';
+import { ContextCollectorService } from '../services/contextCollectorService';
 
 const openaiService = new OpenAIService();
 const contentFetcher = new ContentFetcherService();
+const contextCollector = new ContextCollectorService();
 
 export const searchCommand = {
   data: new SlashCommandBuilder()
@@ -42,23 +44,39 @@ export const searchCommand = {
         }
       }
 
-      // Generate AI analysis
-      console.log('🤖 Generating AI analysis...');
-      const analysis = await openaiService.analyzeContent(content, isUrl);
+      // Collect channel context
+      console.log('📖 Collecting conversation context...');
+      let context;
+      let contextInfo = '';
+      
+      try {
+        context = await contextCollector.collectChannelContext(interaction, 30); // Last 30 messages
+        contextInfo = `\n\n**Context:** Analyzed with ${context.messageCount} recent messages from ${context.participants.length} participants over ${context.timespan}`;
+        console.log(`✅ Context collected: ${context.messageCount} messages from ${context.participants.join(', ')}`);
+      } catch (error) {
+        console.warn('⚠️ Failed to collect context, falling back to regular analysis:', error);
+      }
+
+      // Generate AI analysis with context
+      console.log('🤖 Generating context-aware AI analysis...');
+      const analysis = context 
+        ? await openaiService.analyzeContentWithContext(content, context, isUrl)
+        : await openaiService.analyzeContent(content, isUrl);
 
       // Create thread for detailed response
       console.log('🧵 Creating thread for response...');
       const thread = await this.createResponseThread(interaction, query, isUrl);
 
       // Send analysis to thread
-      const responseMessage = `${analysis}${sourceInfo}`;
+      const responseMessage = `${analysis}${sourceInfo}${contextInfo}`;
       
       // Split long messages if necessary (Discord has 2000 character limit)
       await this.sendLongMessage(thread, responseMessage);
 
       // Reply to original interaction
+      const contextStatus = context ? `📖 Context-aware analysis using ${context.messageCount} recent messages` : '🔍 Standard analysis';
       await interaction.editReply({
-        content: `✅ **Analysis complete!** \n🧵 Check the thread below for detailed explanation of: \`${this.truncateText(query, 50)}\``
+        content: `✅ **Analysis complete!** ${contextStatus}\n🧵 Check the thread below for detailed explanation of: \`${this.truncateText(query, 50)}\``
       });
 
       console.log('✅ Search analysis completed successfully');

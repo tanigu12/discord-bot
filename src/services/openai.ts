@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { NewsItem } from "./newsService";
 import { ThreadData } from "./threadReaderService";
+import { ChannelContext } from "./contextCollectorService";
 
 export class OpenAIService {
   private openai: OpenAI | null = null;
@@ -480,5 +481,104 @@ Write in English and make it comprehensive, educational, and engaging.`;
       console.error("Content analysis error:", error);
       throw new Error("Failed to analyze content with AI");
     }
+  }
+
+  async analyzeContentWithContext(
+    content: string, 
+    context: ChannelContext, 
+    isUrl: boolean = false
+  ): Promise<string> {
+    try {
+      const openai = this.getOpenAI();
+
+      const systemPrompt = `You are an expert content analyzer and educator with access to conversation context. Your task is to analyze the given content while considering the ongoing discussion context.
+
+When analyzing with context:
+1. Consider how the query relates to the recent conversation
+2. Reference relevant points from the discussion when appropriate
+3. Build upon ideas and topics already mentioned
+4. Address questions or topics that emerged from the conversation
+5. Provide analysis that fits naturally with the discussion flow
+6. Connect the search query to the ongoing dialogue
+7. Make it feel like a natural extension of the conversation
+
+Format your response clearly with:
+- **Context-Aware Analysis**: How this relates to your discussion
+- **Direct Answer**: Response to the specific query
+- **Key Points**: Main concepts and ideas
+- **Connection to Discussion**: How this builds on your conversation
+- **Further Exploration**: Related topics worth discussing
+
+Write in English and make it feel like a knowledgeable participant joining the conversation with valuable insights.`;
+
+      // Prepare context summary (keep it concise for token efficiency)
+      const contextSummary = this.summarizeContextForAI(context);
+      
+      const userPrompt = isUrl 
+        ? `Based on our recent discussion, please analyze this web content:
+
+**Recent Context:**
+${contextSummary}
+
+**Content to Analyze:**
+${content}
+
+Please provide analysis that considers our ongoing conversation and how this content relates to what we've been discussing.`
+        : `Based on our recent discussion, please analyze this topic:
+
+**Recent Context:**
+${contextSummary}
+
+**Query/Topic:**
+${content}
+
+Please provide analysis that considers our ongoing conversation and how this topic connects to what we've been discussing.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: userPrompt
+          }
+        ],
+        max_tokens: 3500,
+        temperature: 0.4,
+      });
+
+      return response.choices[0]?.message?.content || "Context-aware analysis could not be completed.";
+
+    } catch (error) {
+      console.error("Context-aware content analysis error:", error);
+      // Fallback to regular analysis if context analysis fails
+      console.log('🔄 Falling back to regular content analysis...');
+      return await this.analyzeContent(content, isUrl);
+    }
+  }
+
+  private summarizeContextForAI(context: ChannelContext): string {
+    // Keep context concise to preserve tokens for the main analysis
+    const recentMessages = context.messages.slice(-8); // Last 8 messages
+    let summary = `Discussion in ${context.channelName}`;
+    
+    if (context.channelType === 'thread' && context.parentChannelName) {
+      summary += ` (thread in ${context.parentChannelName})`;
+    }
+    
+    summary += ` with ${context.participants.length} participants:\n\n`;
+    
+    // Include key messages, focusing on substantive content
+    for (const msg of recentMessages) {
+      if (msg.content.trim() && msg.content.length > 10) { // Only meaningful messages
+        const shortContent = msg.content.substring(0, 150);
+        summary += `${msg.author}: ${shortContent}${msg.content.length > 150 ? '...' : ''}\n`;
+      }
+    }
+    
+    return summary;
   }
 }
