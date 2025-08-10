@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { NewsItem } from "./newsService";
 
 export class OpenAIService {
   private openai: OpenAI | null = null;
@@ -174,5 +175,102 @@ export class OpenAIService {
       console.error("Language detection and translation error:", error);
       throw new Error("Failed to detect language and translate");
     }
+  }
+
+  async generateDiaryTopics(newsItems: NewsItem[]): Promise<{
+    newsTopics: string[];
+    personalPrompts: string[];
+    encouragement: string;
+  }> {
+    try {
+      const openai = this.getOpenAI();
+      
+      // Prepare news context
+      const newsContext = newsItems.length > 0 
+        ? newsItems.map((item, index) => `${index + 1}. ${item.title}${item.description ? ': ' + item.description : ''}`).join('\n')
+        : "No specific news available today";
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a supportive English learning partner and diary writing assistant. Your goal is to help users practice English through diary writing by providing engaging, relatable topics.
+
+Based on today's news and general life experiences, create:
+1. 3 news-inspired diary topics that connect current events to personal reflection
+2. 3 personal reflection prompts that encourage introspection and English practice  
+3. 1 warm, encouraging message as if you're their supportive language learning partner
+
+Format your response as JSON with these exact keys:
+{
+  "newsTopics": ["topic1", "topic2", "topic3"],
+  "personalPrompts": ["prompt1", "prompt2", "prompt3"], 
+  "encouragement": "supportive message"
+}
+
+Guidelines:
+- Make topics relatable and not overwhelming
+- Encourage both English and Japanese writing
+- Be warm, friendly, and supportive
+- Focus on personal growth and reflection
+- Include questions that spark genuine interest
+- Keep topics accessible for language learners`
+          },
+          {
+            role: "user",
+            content: `Today's news context:\n${newsContext}\n\nPlease generate diary topics and encouragement for today.`
+          }
+        ],
+        max_tokens: 1500,
+        temperature: 0.7,
+      });
+
+      const responseText = response.choices[0]?.message?.content || "";
+      
+      try {
+        const parsedResponse = JSON.parse(responseText);
+        return {
+          newsTopics: parsedResponse.newsTopics || [],
+          personalPrompts: parsedResponse.personalPrompts || [],
+          encouragement: parsedResponse.encouragement || "Hello! I'm here to support your English learning journey through diary writing. Let's explore your thoughts together! 😊"
+        };
+      } catch (parseError) {
+        console.error("Failed to parse AI response, using fallback");
+        return this.getFallbackDiaryTopics(newsItems);
+      }
+
+    } catch (error) {
+      console.error("Diary topic generation error:", error);
+      return this.getFallbackDiaryTopics(newsItems);
+    }
+  }
+
+  private getFallbackDiaryTopics(newsItems: NewsItem[]): {
+    newsTopics: string[];
+    personalPrompts: string[];
+    encouragement: string;
+  } {
+    const newsTopics = newsItems.length > 0 
+      ? [
+          `What do you think about: "${newsItems[0]?.title}"? How does it relate to your life?`,
+          "Choose any current event and write about how it makes you feel",
+          "What's one news story that caught your attention recently and why?"
+        ]
+      : [
+          "What's happening in your community that interests you?",
+          "Describe a recent change in the world that affects you personally", 
+          "Write about a current trend or topic you've been thinking about"
+        ];
+
+    return {
+      newsTopics,
+      personalPrompts: [
+        "How are you feeling today, and what's influencing your mood?",
+        "What's one thing you want to accomplish this week, and why is it important to you?",
+        "Describe a moment today when you felt proud of yourself, no matter how small"
+      ],
+      encouragement: "Hey there! 😊 I'm your English learning companion, and I believe in you! Writing is such a powerful way to practice language and reflect on life. Don't worry about making it perfect - just let your thoughts flow. I'm here to help you along the way! 🌟"
+    };
   }
 }

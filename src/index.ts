@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { translateCommand } from "./commands/translate";
 import { grammarCommand } from "./commands/grammar";
 import { explainCommand } from "./commands/explain";
+import { randomCommand } from "./commands/random";
 import { ReactionHandler } from "./services/reactionHandler";
 import { DiaryHandler } from "./services/diaryHandler";
 
@@ -26,6 +27,7 @@ client.commands = new Collection();
 client.commands.set(translateCommand.data.name, translateCommand);
 client.commands.set(grammarCommand.data.name, grammarCommand);
 client.commands.set(explainCommand.data.name, explainCommand);
+client.commands.set(randomCommand.data.name, randomCommand);
 
 // Initialize reaction handler and diary handler
 const reactionHandler = new ReactionHandler();

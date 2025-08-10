@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { translateCommand } from './commands/translate';
 import { grammarCommand } from './commands/grammar';
 import { explainCommand } from './commands/explain';
+import { randomCommand } from './commands/random';
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ const commands = [
   translateCommand.data,
   grammarCommand.data,
   explainCommand.data,
+  randomCommand.data,
 ].map(command => command.toJSON());
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
