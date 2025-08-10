@@ -407,4 +407,78 @@ ${threadData.participants.map(p => `    ${p}`).join('\n')}`;
       wordCount: markdown.split(/\s+/).length
     };
   }
+
+  async analyzeContent(content: string, isUrl: boolean = false): Promise<string> {
+    try {
+      const openai = this.getOpenAI();
+
+      const systemPrompt = isUrl 
+        ? `You are an expert content analyzer and educator. Your task is to analyze web content and provide a comprehensive, educational explanation.
+
+When analyzing content from URLs:
+1. Provide a clear summary of what the content is about
+2. Extract and explain key concepts, ideas, or information
+3. Identify the main topics and themes
+4. Explain any technical terms or complex concepts in simple language
+5. Provide context and background information when relevant
+6. Highlight practical applications or implications
+7. Structure your response with clear headings and bullet points
+8. Make it educational and accessible for language learners
+9. Include relevant examples or analogies to aid understanding
+
+Format your response clearly with:
+- **Overview**: Brief summary
+- **Key Points**: Main ideas and concepts
+- **Detailed Explanation**: In-depth analysis
+- **Practical Applications**: How this applies in real life
+- **Learning Notes**: Important terms and concepts to remember
+
+Write in English and make it comprehensive yet accessible.`
+        : `You are an expert content analyzer and educator. Your task is to analyze the given text or topic and provide a comprehensive, educational explanation.
+
+When analyzing text content or topics:
+1. Identify what the content/topic is about
+2. Provide comprehensive explanation of key concepts
+3. Break down complex ideas into understandable parts
+4. Give historical context or background when relevant
+5. Explain practical applications and real-world examples
+6. Define important terms and concepts
+7. Structure information logically with clear headings
+8. Make it educational for English language learners
+9. Include related topics or connections
+
+Format your response clearly with:
+- **Overview**: What this is about
+- **Key Concepts**: Main ideas and definitions
+- **Detailed Analysis**: In-depth explanation
+- **Examples**: Real-world applications or examples
+- **Related Topics**: Connected concepts worth exploring
+
+Write in English and make it comprehensive, educational, and engaging.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: isUrl 
+              ? `Please analyze this web content and provide a comprehensive explanation:\n\n${content}`
+              : `Please analyze and explain this topic/content in detail:\n\n${content}`
+          }
+        ],
+        max_tokens: 3000,
+        temperature: 0.4,
+      });
+
+      return response.choices[0]?.message?.content || "Analysis could not be completed.";
+
+    } catch (error) {
+      console.error("Content analysis error:", error);
+      throw new Error("Failed to analyze content with AI");
+    }
+  }
 }

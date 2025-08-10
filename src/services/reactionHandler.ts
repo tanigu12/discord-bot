@@ -8,9 +8,11 @@ import {
   ThreadChannel,
 } from "discord.js";
 import { OpenAIService } from "./openai";
+import { ContentFetcherService } from "./contentFetcherService";
 
 export class ReactionHandler {
   private openaiService: OpenAIService;
+  private contentFetcher: ContentFetcherService;
 
   // Emoji mappings for different functions
   private readonly EMOJI_ACTIONS = {
@@ -28,6 +30,9 @@ export class ReactionHandler {
     "✅": "grammar_check",
     "📚": "explain_word",
     "💡": "explain_text",
+
+    // Search emoji
+    "🔍": "search_analyze",
   };
 
   private readonly LANGUAGE_MAP = {
@@ -42,6 +47,7 @@ export class ReactionHandler {
 
   constructor() {
     this.openaiService = new OpenAIService();
+    this.contentFetcher = new ContentFetcherService();
   }
 
   async handleReaction(
@@ -130,6 +136,29 @@ export class ReactionHandler {
         // General text explanation/analysis
         response = await this.openaiService.explainText(messageContent);
         response = `**Text Analysis:**\n${response}`;
+      } else if (action === "search_analyze") {
+        // Search and analyze content (similar to /search command)
+        console.log('🔍 Processing search reaction...');
+        const isUrl = this.isValidUrl(messageContent);
+        let content = messageContent;
+        let sourceInfo = '';
+
+        if (isUrl) {
+          console.log('🌐 URL detected in reaction, fetching content...');
+          try {
+            const fetchedContent = await this.contentFetcher.fetchContent(messageContent);
+            content = fetchedContent.content;
+            sourceInfo = `\n\n**Source:** ${messageContent}\n**Title:** ${fetchedContent.title || 'Unknown'}`;
+            console.log(`✅ Content fetched for reaction: ${content.substring(0, 100)}...`);
+          } catch (error) {
+            console.error('❌ Failed to fetch URL content in reaction:', error);
+            sourceInfo = `\n\n**Source:** ${messageContent} (content fetch failed, analyzing URL directly)`;
+          }
+        }
+
+        // Generate AI analysis
+        const analysis = await this.openaiService.analyzeContent(content, isUrl);
+        response = `🔍 **Content Analysis**\n\n${analysis}${sourceInfo}`;
       }
 
       if (response) {
@@ -226,6 +255,15 @@ export class ReactionHandler {
     return chunks;
   }
 
+  private isValidUrl(string: string): boolean {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   getEmojiGuide(): string {
     return `**🤖 AI Assistant - Emoji Reactions Guide**
 
@@ -243,6 +281,9 @@ export class ReactionHandler {
 ✅ - Check grammar and get corrections
 📚 - Explain word (single word only)
 💡 - Analyze and explain text
+
+**Content Analysis:**
+🔍 - Search and analyze content/URLs (like /search command)
 
 **How to use:** Simply react to any message with these emojis and I'll create a thread with the AI response!`;
   }

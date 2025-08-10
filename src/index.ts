@@ -5,6 +5,7 @@ import { grammarCommand } from "./commands/grammar";
 import { explainCommand } from "./commands/explain";
 import { randomCommand } from "./commands/random";
 import { formatCommand } from "./commands/format";
+import { searchCommand } from "./commands/search";
 import { ReactionHandler } from "./services/reactionHandler";
 import { DiaryHandler } from "./services/diaryHandler";
 
@@ -30,6 +31,7 @@ client.commands.set(grammarCommand.data.name, grammarCommand);
 client.commands.set(explainCommand.data.name, explainCommand);
 client.commands.set(randomCommand.data.name, randomCommand);
 client.commands.set(formatCommand.data.name, formatCommand);
+client.commands.set(searchCommand.data.name, searchCommand);
 
 // Initialize reaction handler and diary handler
 const reactionHandler = new ReactionHandler();
