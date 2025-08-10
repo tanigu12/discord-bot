@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { NewsItem } from "./newsService";
+import { ThreadData } from "./threadReaderService";
 
 export class OpenAIService {
   private openai: OpenAI | null = null;
@@ -271,6 +272,149 @@ Guidelines:
         "Describe a moment today when you felt proud of yourself, no matter how small"
       ],
       encouragement: "Hey there! 😊 I'm your English learning companion, and I believe in you! Writing is such a powerful way to practice language and reflect on life. Don't worry about making it perfect - just let your thoughts flow. I'm here to help you along the way! 🌟"
+    };
+  }
+
+  async formatToObsidianBlog(threadData: ThreadData): Promise<{
+    markdown: string;
+    title: string;
+    sections: number;
+    wordCount: number;
+  }> {
+    try {
+      const openai = this.getOpenAI();
+
+      // Prepare thread content for AI processing
+      const messagesContent = threadData.messages
+        .map(msg => `**${msg.author}** (${msg.timestamp.toISOString().split('T')[0]}):\n${msg.content}`)
+        .join('\n\n---\n\n');
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert content organizer specializing in creating structured, blog-ready content from Discord thread discussions. 
+
+Your task is to transform Discord thread conversations into well-organized, Obsidian-compatible markdown that's ready for blog publication.
+
+Requirements:
+1. Create a compelling, SEO-friendly title
+2. Organize content into logical sections with proper headings
+3. Extract key ideas, insights, and actionable items
+4. Maintain the conversational flow while improving readability
+5. Add appropriate Obsidian metadata (tags, links, etc.)
+6. Format for blog publishing with proper introduction and conclusion
+7. Preserve important quotes and insights from participants
+8. Remove redundant or off-topic content
+9. Use markdown formatting (headers, lists, code blocks, etc.)
+10. Add relevant tags for categorization
+
+Structure:
+- Frontmatter with metadata (title, date, tags, participants)
+- Introduction/Summary
+- Main content sections (organized by topic/theme)
+- Key Insights/Takeaways
+- Action Items (if any)
+- Conclusion
+- References/Links (if mentioned in thread)
+
+Make it engaging, informative, and ready for publication while preserving the original ideas and contributions from all participants.`
+          },
+          {
+            role: "user",
+            content: `Please format this Discord thread discussion into a structured blog post:
+
+**Thread Info:**
+- Title: ${threadData.threadName}
+- Participants: ${threadData.participants.join(', ')}
+- Messages: ${threadData.totalMessages}
+- Date: ${threadData.createdAt}
+
+**Thread Content:**
+${messagesContent}`
+          }
+        ],
+        max_tokens: 4000,
+        temperature: 0.3,
+      });
+
+      const formattedMarkdown = response.choices[0]?.message?.content || "";
+      
+      // Extract metadata from the formatted content
+      const titleMatch = formattedMarkdown.match(/title:\s*"?([^"\n]+)"?/i);
+      const title = titleMatch ? titleMatch[1] : threadData.threadName;
+      
+      const sectionMatches = formattedMarkdown.match(/^#{1,3}\s/gm);
+      const sections = sectionMatches ? sectionMatches.length : 0;
+      
+      const wordCount = formattedMarkdown.split(/\s+/).length;
+
+      return {
+        markdown: formattedMarkdown,
+        title,
+        sections,
+        wordCount
+      };
+
+    } catch (error) {
+      console.error("Thread formatting error:", error);
+      // Fallback formatting
+      return this.createFallbackFormat(threadData);
+    }
+  }
+
+  private createFallbackFormat(threadData: ThreadData): {
+    markdown: string;
+    title: string;
+    sections: number;
+    wordCount: number;
+  } {
+    const date = new Date().toISOString().split('T')[0];
+    const title = threadData.threadName || 'Discussion Summary';
+    
+    const markdown = `---
+title: "${title}"
+date: ${date}
+tags: [discussion, ideas, discord]
+participants: [${threadData.participants.map(p => `"${p}"`).join(', ')}]
+source: Discord Thread
+---
+
+# ${title}
+
+## Overview
+This is a summary of a discussion that took place on ${threadData.createdAt} with ${threadData.participants.length} participants across ${threadData.totalMessages} messages.
+
+## Participants
+${threadData.participants.map(p => `- ${p}`).join('\n')}
+
+## Discussion Summary
+
+${threadData.messages.map(msg => 
+  `### ${msg.author} - ${msg.timestamp.toISOString().split('T')[0]}
+
+${msg.content}
+
+---`
+).join('\n\n')}
+
+## Key Takeaways
+- Discussion involved ${threadData.participants.length} participants
+- Thread contained ${threadData.totalMessages} messages
+- Topic: ${threadData.threadName}
+
+## Tags
+#discussion #ideas #discord
+
+---
+*Generated from Discord thread on ${date}*`;
+
+    return {
+      markdown,
+      title,
+      sections: 4,
+      wordCount: markdown.split(/\s+/).length
     };
   }
 }
