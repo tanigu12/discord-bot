@@ -294,32 +294,45 @@ Guidelines:
         messages: [
           {
             role: "system",
-            content: `You are an expert content organizer specializing in creating structured, blog-ready content from Discord thread discussions. 
+            content: `You are an expert content organizer specializing in creating concise, technical blog posts from Discord thread discussions.
 
-Your task is to transform Discord thread conversations into well-organized, Obsidian-compatible markdown that's ready for blog publication.
+Create a simple, structured blog post following this EXACT format:
 
-Requirements:
-1. Create a compelling, SEO-friendly title
-2. Organize content into logical sections with proper headings
-3. Extract key ideas, insights, and actionable items
-4. Maintain the conversational flow while improving readability
-5. Add appropriate Obsidian metadata (tags, links, etc.)
-6. Format for blog publishing with proper introduction and conclusion
-7. Preserve important quotes and insights from participants
-8. Remove redundant or off-topic content
-9. Use markdown formatting (headers, lists, code blocks, etc.)
-10. Add relevant tags for categorization
+1. Clean title (no quotes, technical but readable)
+2. Brief definition/introduction (1-2 sentences)
+3. Referenced links in brackets [URL] if any mentioned
+4. Main content organized with clear hierarchy:
+   - Use simple headers for main topics
+   - Use indented bullet points (spaces) for sub-points
+   - Keep explanations concise and technical
+   - Focus on facts, features, and key differences
+5. No frontmatter, no conclusion section, no "Key Takeaways"
 
-Structure:
-- Frontmatter with metadata (title, date, tags, participants)
-- Introduction/Summary
-- Main content sections (organized by topic/theme)
-- Key Insights/Takeaways
-- Action Items (if any)
-- Conclusion
-- References/Links (if mentioned in thread)
+Style Guidelines:
+- Technical but accessible language
+- Bullet points over paragraphs
+- Minimal fluff, maximum information density
+- Japanese terms acceptable when relevant
+- Include version numbers, protocol names, technical details
+- Remove personal opinions and conversational elements
+- Focus on the technical substance
 
-Make it engaging, informative, and ready for publication while preserving the original ideas and contributions from all participants.`
+Example format:
+Title
+Brief explanation of what it is.
+
+[relevant URLs if mentioned]
+
+Main Topic 1
+    sub-point with technical details
+    another technical point
+
+Main Topic 2
+    feature explanation
+    implementation details
+        deeper sub-point if needed
+
+Transform the Discord discussion into this clean, reference-style format.`
           },
           {
             role: "user",
@@ -370,50 +383,25 @@ ${messagesContent}`
     sections: number;
     wordCount: number;
   } {
-    const date = new Date().toISOString().split('T')[0];
     const title = threadData.threadName || 'Discussion Summary';
     
-    const markdown = `---
-title: "${title}"
-date: ${date}
-tags: [discussion, ideas, discord]
-participants: [${threadData.participants.map(p => `"${p}"`).join(', ')}]
-source: Discord Thread
----
+    // Create a simple, clean format matching the new style
+    const markdown = `${title}
+Discussion summary from Discord thread with ${threadData.participants.length} participants.
 
-# ${title}
+Main Points
+${threadData.messages
+  .filter(msg => msg.content.trim().length > 0)
+  .map(msg => `    ${msg.content.replace(/\n/g, ' ').substring(0, 100)}${msg.content.length > 100 ? '...' : ''}`)
+  .join('\n')}
 
-## Overview
-This is a summary of a discussion that took place on ${threadData.createdAt} with ${threadData.participants.length} participants across ${threadData.totalMessages} messages.
-
-## Participants
-${threadData.participants.map(p => `- ${p}`).join('\n')}
-
-## Discussion Summary
-
-${threadData.messages.map(msg => 
-  `### ${msg.author} - ${msg.timestamp.toISOString().split('T')[0]}
-
-${msg.content}
-
----`
-).join('\n\n')}
-
-## Key Takeaways
-- Discussion involved ${threadData.participants.length} participants
-- Thread contained ${threadData.totalMessages} messages
-- Topic: ${threadData.threadName}
-
-## Tags
-#discussion #ideas #discord
-
----
-*Generated from Discord thread on ${date}*`;
+Participants
+${threadData.participants.map(p => `    ${p}`).join('\n')}`;
 
     return {
       markdown,
       title,
-      sections: 4,
+      sections: 2,
       wordCount: markdown.split(/\s+/).length
     };
   }
