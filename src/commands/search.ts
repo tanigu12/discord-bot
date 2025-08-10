@@ -73,17 +73,27 @@ export const searchCommand = {
         throw new Error(`AI analysis failed: ${aiError instanceof Error ? aiError.message : 'Unknown AI error'}`);
       }
 
-      // Try to create thread for detailed response, fallback to direct reply if failed
-      console.log('🧵 Attempting to create thread for response...');
-      let thread: ThreadChannel | null = null;
-      let useDirectReply = false;
+      // Check if we're already in a thread - if so, use direct reply
+      const channel = interaction.channel;
+      const isInThread = channel?.isThread();
       
-      try {
-        thread = await searchCommand.createResponseThread(interaction, query, isUrl);
-        console.log('✅ Thread created successfully');
-      } catch (threadError) {
-        console.warn('⚠️ Failed to create thread, using direct reply:', threadError);
-        useDirectReply = true;
+      console.log(`📍 Command location: ${isInThread ? 'thread' : 'channel'} (${channel?.id})`);
+      
+      let thread: ThreadChannel | null = null;
+      let useDirectReply = isInThread;
+      
+      if (!isInThread) {
+        // Try to create thread for detailed response
+        console.log('🧵 Attempting to create thread for response...');
+        try {
+          thread = await searchCommand.createResponseThread(interaction, query, isUrl);
+          console.log('✅ Thread created successfully');
+        } catch (threadError) {
+          console.warn('⚠️ Failed to create thread, using direct reply:', threadError);
+          useDirectReply = true;
+        }
+      } else {
+        console.log('📝 Already in thread, using direct reply in current thread');
       }
 
       // Prepare response message
@@ -99,8 +109,9 @@ export const searchCommand = {
           content: `✅ **Analysis complete!** ${contextStatus}\n🧵 Check the thread below for detailed explanation of: \`${searchCommand.truncateText(query, 50)}\``
         });
       } else {
-        // Send analysis directly as reply (fallback)
-        const directReplyHeader = `✅ **Analysis complete!** ${contextStatus}\n📝 Analysis of: \`${searchCommand.truncateText(query, 50)}\`\n\n`;
+        // Send analysis directly as reply (fallback or thread usage)
+        const locationInfo = isInThread ? '🧵 Thread response' : '💬 Direct response';
+        const directReplyHeader = `✅ **Analysis complete!** ${contextStatus}\n${locationInfo} for: \`${searchCommand.truncateText(query, 50)}\`\n\n`;
         const fullDirectReply = directReplyHeader + responseMessage;
         
         // Split long messages for direct reply
@@ -166,6 +177,11 @@ export const searchCommand = {
     // Check channel type more specifically
     if (channel.isDMBased()) {
       throw new Error('Cannot create threads in DM channels');
+    }
+
+    // Check if we're already in a thread
+    if (channel.isThread()) {
+      throw new Error('Already in a thread - cannot create nested threads');
     }
 
     if (!channel.isTextBased()) {
