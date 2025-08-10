@@ -4,6 +4,7 @@ import { translateCommand } from "./commands/translate";
 import { grammarCommand } from "./commands/grammar";
 import { explainCommand } from "./commands/explain";
 import { ReactionHandler } from "./services/reactionHandler";
+import { DiaryHandler } from "./services/diaryHandler";
 
 dotenv.config();
 
@@ -26,8 +27,9 @@ client.commands.set(translateCommand.data.name, translateCommand);
 client.commands.set(grammarCommand.data.name, grammarCommand);
 client.commands.set(explainCommand.data.name, explainCommand);
 
-// Initialize reaction handler
+// Initialize reaction handler and diary handler
 const reactionHandler = new ReactionHandler();
+const diaryHandler = new DiaryHandler();
 
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
@@ -85,10 +87,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// Debug: Test if we can receive any message events
-client.on(Events.MessageCreate, (message) => {
-  if (!message.author.bot) {
-    console.log(`📨 Message received from ${message.author.tag}: "${message.content?.substring(0, 30)}..."`);
+// Handle new messages - check for diary channel and emoji reactions
+client.on(Events.MessageCreate, async (message) => {
+  try {
+    if (!message.author.bot) {
+      console.log(`📨 Message received from ${message.author.tag}: "${message.content?.substring(0, 30)}..."`);
+      
+      // Check if this is a diary channel message
+      if (diaryHandler.isDiaryChannel(message)) {
+        console.log('📔 Diary channel detected, processing auto-translation...');
+        await diaryHandler.handleDiaryMessage(message);
+      }
+    }
+  } catch (error) {
+    console.error('💥 Error processing message:', error);
   }
 });
 

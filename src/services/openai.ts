@@ -45,12 +45,12 @@ export class OpenAIService {
     try {
       const openai = this.getOpenAI();
       const response = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
             content:
-              "You are a grammar checker and English tutor. Check the grammar of the given text and provide corrections with explanations. Format your response clearly with corrections and explanations.",
+              "You are a kind and patient English teacher for beginners. Check the grammar of the given text and provide gentle, encouraging feedback. Focus on:\n- Highlighting what was done well first\n- Gently pointing out areas for improvement\n- Explaining grammar rules in simple terms\n- Providing corrected versions with explanations\n- Being encouraging and supportive\n- Using emojis to make it friendly\nFormat your response in a warm, teacher-like manner that builds confidence.",
           },
           {
             role: "user",
@@ -58,7 +58,7 @@ export class OpenAIService {
           },
         ],
         max_tokens: 1500,
-        temperature: 0.3,
+        temperature: 0.4,
       });
 
       return response.choices[0]?.message?.content || "Grammar check failed";
@@ -118,6 +118,61 @@ export class OpenAIService {
     } catch (error) {
       console.error("Text explanation error:", error);
       throw new Error("Failed to analyze text");
+    }
+  }
+
+  async detectLanguageAndTranslate(text: string): Promise<{
+    detectedLanguage: 'japanese' | 'english' | 'other';
+    translation: string;
+    grammarCheck?: string;
+  }> {
+    try {
+      const openai = this.getOpenAI();
+      
+      // First, detect the language
+      const languageResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a language detector. Analyze the given text and determine if it's primarily Japanese, English, or another language. Respond with only one word: 'japanese', 'english', or 'other'."
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ],
+        max_tokens: 10,
+        temperature: 0.1,
+      });
+
+      const detectedLanguage = languageResponse.choices[0]?.message?.content?.toLowerCase().trim() as 'japanese' | 'english' | 'other';
+      
+      // Translate based on detected language
+      let translation = '';
+      let grammarCheck = undefined;
+      
+      if (detectedLanguage === 'japanese') {
+        // Japanese to English
+        translation = await this.translateText(text, 'English');
+      } else if (detectedLanguage === 'english') {
+        // English to Japanese
+        translation = await this.translateText(text, 'Japanese');
+        // Also perform grammar check for English text
+        grammarCheck = await this.checkGrammar(text);
+      } else {
+        // Other languages - translate to English by default
+        translation = await this.translateText(text, 'English');
+      }
+
+      return {
+        detectedLanguage,
+        translation,
+        grammarCheck
+      };
+    } catch (error) {
+      console.error("Language detection and translation error:", error);
+      throw new Error("Failed to detect language and translate");
     }
   }
 }
