@@ -25,41 +25,36 @@ export class ThreadReaderService {
 
   async readThreadMessages(thread: ThreadChannel): Promise<ThreadData> {
     try {
-      console.log(`📖 Reading messages from thread: ${thread.name}`);
+      console.log(`📖 Reading messages from thread: ${thread.name} (ID: ${thread.id})`);
+      console.log(`🔧 Thread archived: ${thread.archived}, locked: ${thread.locked}`);
+      console.log(`👥 Thread member count: ${thread.memberCount}`);
 
-      // Fetch all messages from the thread
-      const messages: Collection<string, Message> = new Collection();
-      let lastMessage: string | undefined;
+      // Start with a simple fetch of the most recent messages
+      let fetchedMessages = await thread.messages.fetch({ limit: 100 });
+      console.log(`📥 Initial fetch: ${fetchedMessages.size} messages`);
 
-      // Discord limits to 100 messages per fetch, so we need to paginate
-      while (true) {
-        const fetchedMessages = await thread.messages.fetch({
-          limit: 100,
-          before: lastMessage,
-        });
-
-        if (fetchedMessages.size === 0) break;
-
-        messages.concat(fetchedMessages);
-        lastMessage = fetchedMessages.lastKey();
-
-        // Add a reasonable limit to prevent excessive API calls
-        if (messages.size >= 500) {
-          console.log('⚠️ Message limit reached (500), truncating...');
-          break;
-        }
+      // If no messages found, try fetching with different parameters
+      if (fetchedMessages.size === 0) {
+        console.log('🔄 Trying alternative fetch method...');
+        fetchedMessages = await thread.messages.fetch();
+        console.log(`📥 Alternative fetch: ${fetchedMessages.size} messages`);
       }
+
+      const allMessages = Array.from(fetchedMessages.values());
+      console.log(`📊 Total messages collected: ${allMessages.length}`);
 
       // Process messages and extract data
       const processedMessages: ThreadMessage[] = [];
       const participants = new Set<string>();
 
-      messages
+      // Sort messages by timestamp (oldest first)
+      allMessages
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
         .forEach(msg => {
-          // Skip bot messages and system messages
-          if (msg.author.bot || msg.system) return;
-
+          console.log(`🔍 Processing message from ${msg.author.username}: "${msg.content.substring(0, 50)}..."`);
+          
+          // Include all messages, not just non-bot messages for formatting purposes
+          // We'll let the AI decide what's important
           participants.add(msg.author.username);
 
           processedMessages.push({

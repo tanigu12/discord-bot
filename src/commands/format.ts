@@ -30,6 +30,7 @@ export const formatCommand = {
       }
 
       console.log(`📋 Formatting thread content for ${interaction.user.tag} in thread: ${interaction.channel.name}`);
+      console.log(`🔍 Thread ID: ${interaction.channel.id}, Parent: ${interaction.channel.parentId}`);
 
       // Read thread messages
       const threadData = await threadReaderService.readThreadMessages(interaction.channel);
