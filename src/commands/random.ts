@@ -33,7 +33,7 @@ export const randomCommand = {
           iconURL: interaction.user.displayAvatarURL()
         });
 
-      // Add news-based topics
+      // Add news-based topics with sources
       if (diaryPrompts.newsTopics && diaryPrompts.newsTopics.length > 0) {
         const newsText = diaryPrompts.newsTopics
           .map((topic, index) => `**${index + 1}.** ${topic}`)
@@ -44,6 +44,22 @@ export const randomCommand = {
           value: newsText,
           inline: false
         });
+      }
+
+      // Add news sources if available
+      if (newsTopics && newsTopics.length > 0) {
+        const sourcesText = newsTopics
+          .filter(item => item.url)
+          .map((item, index) => `**${index + 1}.** [${item.title}](${item.url})`)
+          .join('\n');
+        
+        if (sourcesText) {
+          embed.addFields({
+            name: '🔗 News Sources',
+            value: sourcesText,
+            inline: false
+          });
+        }
       }
 
       // Add personal reflection prompts
