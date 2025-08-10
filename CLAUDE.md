@@ -77,11 +77,41 @@ The bot is specifically designed to improve English output habits through:
 
 ## Discord Bot Permissions
 
-When re-inviting the bot, ensure these permissions are granted:
+### Required Permissions for Full Functionality
 
-- View Channels, Send Messages, Read Message History
-- Add Reactions, Create Public Threads
-- Use Slash Commands (requires bot + applications.commands scopes)
+The bot requires these specific permissions to work properly:
+
+**Essential Permissions:**
+- `View Channels` - Read channel content and see messages
+- `Send Messages` - Reply to commands and interactions  
+- `Read Message History` - Access previous messages for context analysis
+- `Use Slash Commands` - Execute `/` commands
+
+**Thread & Reaction Features:**
+- `Create Public Threads` - **CRITICAL** for `/search` command thread creation
+- `Add Reactions` - React to messages for emoji-based AI features
+- `Manage Messages` - Clean up bot reactions if needed
+
+**AI Features:**
+- `Attach Files` - For image analysis and content sharing
+- `Embed Links` - Rich embed responses for better UX
+
+### Permission Issues Troubleshooting
+
+**"Cannot create thread in this channel" Error:**
+1. Check if bot has `Create Public Threads` permission
+2. Verify channel type supports threads (text channels only)
+3. Ensure bot role is above @everyone with proper permissions
+4. Check if channel has reached thread limit (Discord limit: 1000 active threads)
+
+**Current Permission Integer:** `139586988096`
+
+### Re-invite URL Template
+```
+https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_CLIENT_ID&permissions=139586988096&scope=bot%20applications.commands
+```
+
+Replace `YOUR_BOT_CLIENT_ID` with your actual bot's client ID.
 
 ## Development Notes
 
