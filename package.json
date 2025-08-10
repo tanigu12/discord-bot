@@ -22,7 +22,11 @@
     "url": "https://github.com/tanigu12/discord-bot/issues"
   },
   "homepage": "https://github.com/tanigu12/discord-bot#readme",
-  "description": "",
+  "description": "Discord language learning bot with AI translation and emoji reactions",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "dependencies": {
     "axios": "^1.11.0",
     "dayjs": "^1.11.13",
