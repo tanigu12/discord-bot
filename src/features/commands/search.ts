@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { OpenAIService } from '../services/openai';
-import { ContentFetcherService } from '../services/contentFetcherService';
-import { ContextCollectorService } from '../services/contextCollectorService';
+import { ContentAnalysisService } from '../search/contentAnalysisService';
+import { ContentFetcherService } from '../../services/contentFetcherService';
+import { ContextCollectorService } from '../../services/contextCollectorService';
 
-const openaiService = new OpenAIService();
+const contentAnalysisService = new ContentAnalysisService();
 const contentFetcher = new ContentFetcherService();
 const contextCollector = new ContextCollectorService();
 
@@ -62,8 +62,8 @@ export const searchCommand = {
       let analysis: string;
       try {
         analysis = context 
-          ? await openaiService.analyzeContentWithContext(content, context, isUrl)
-          : await openaiService.analyzeContent(content, isUrl);
+          ? await contentAnalysisService.analyzeContentWithContext(content, context, isUrl)
+          : await contentAnalysisService.analyzeContent(content, isUrl);
           
         if (!analysis || analysis.trim().length === 0) {
           throw new Error('AI service returned empty response');

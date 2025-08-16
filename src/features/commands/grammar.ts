@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
-import { OpenAIService } from '../services/openai';
+import { TranslationService } from '../translation/translationService';
 
-const openaiService = new OpenAIService();
+const translationService = new TranslationService();
 
 export const grammarCommand = {
   data: new SlashCommandBuilder()
@@ -20,7 +20,7 @@ export const grammarCommand = {
     await interaction.deferReply();
 
     try {
-      const grammarCheck = await openaiService.checkGrammar(text);
+      const grammarCheck = await translationService.checkGrammar(text);
       
       await interaction.editReply({
         content: `**Original text:** ${text}\n\n**Grammar check:**\n${grammarCheck}`

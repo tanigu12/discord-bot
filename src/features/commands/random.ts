@@ -1,8 +1,8 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { OpenAIService } from '../services/openai';
-import { NewsService } from '../services/newsService';
+import { DiaryAIService } from '../diary/diaryAIService';
+import { NewsService } from '../../services/newsService';
 
-const openaiService = new OpenAIService();
+const diaryAIService = new DiaryAIService();
 const newsService = new NewsService();
 
 export const randomCommand = {
@@ -20,7 +20,7 @@ export const randomCommand = {
       const newsTopics = await newsService.getTodaysTopics();
       
       // Generate diary prompts with AI
-      const diaryPrompts = await openaiService.generateDiaryTopics(newsTopics);
+      const diaryPrompts = await diaryAIService.generateDiaryTopics(newsTopics);
 
       // Create beautiful embed response
       const embed = new EmbedBuilder()

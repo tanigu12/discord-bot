@@ -1,0 +1,65 @@
+import OpenAI from 'openai';
+import { AIPartnerIntegration } from '../features/ai-partner/integration';
+
+// OpenAI API の基本機能を提供する共有サービス
+export class BaseAIService {
+  private openai: OpenAI | null = null;
+  protected aiPartnerIntegration: AIPartnerIntegration;
+
+  constructor() {
+    this.aiPartnerIntegration = new AIPartnerIntegration();
+  }
+
+  // OpenAI クライアントの取得（遅延初期化）
+  protected getOpenAI(): OpenAI {
+    if (!this.openai) {
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY environment variable is missing');
+      }
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    }
+    return this.openai;
+  }
+
+  // 基本的な OpenAI API 呼び出し
+  protected async callOpenAI(
+    systemPrompt: string,
+    userMessage: string,
+    options: {
+      model?: string;
+      maxTokens?: number;
+      temperature?: number;
+    } = {}
+  ): Promise<string> {
+    try {
+      const openai = this.getOpenAI();
+      const response = await openai.chat.completions.create({
+        model: options.model || 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: userMessage,
+          },
+        ],
+        max_tokens: options.maxTokens || 1000,
+        temperature: options.temperature || 0.3,
+      });
+
+      return response.choices[0]?.message?.content || 'AI response failed';
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      throw new Error('Failed to get AI response');
+    }
+  }
+
+  // Larry の人格統合へのアクセス
+  protected getAIPartnerIntegration(): AIPartnerIntegration {
+    return this.aiPartnerIntegration;
+  }
+}

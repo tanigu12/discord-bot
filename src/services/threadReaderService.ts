@@ -1,6 +1,6 @@
-import { ThreadChannel, Message, ChatInputCommandInteraction, Collection } from 'discord.js';
+import { ThreadChannel, ChatInputCommandInteraction } from 'discord.js';
 
-export interface ThreadMessage {
+interface ThreadMessage {
   id: string;
   author: string;
   authorId: string;
@@ -22,7 +22,6 @@ export interface ThreadData {
 }
 
 export class ThreadReaderService {
-
   async readThreadMessages(thread: ThreadChannel): Promise<ThreadData> {
     try {
       console.log(`📖 Reading messages from thread: ${thread.name} (ID: ${thread.id})`);
@@ -51,8 +50,10 @@ export class ThreadReaderService {
       allMessages
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
         .forEach(msg => {
-          console.log(`🔍 Processing message from ${msg.author.username}: "${msg.content.substring(0, 50)}..."`);
-          
+          console.log(
+            `🔍 Processing message from ${msg.author.username}: "${msg.content.substring(0, 50)}..."`
+          );
+
           // Include all messages, not just non-bot messages for formatting purposes
           // We'll let the AI decide what's important
           participants.add(msg.author.username);
@@ -65,7 +66,9 @@ export class ThreadReaderService {
             timestamp: msg.createdAt,
             attachments: msg.attachments.map(att => att.url),
             mentions: msg.mentions.users.map(user => user.username),
-            reactions: msg.reactions.cache.map(reaction => reaction.emoji.name || reaction.emoji.toString())
+            reactions: msg.reactions.cache.map(
+              reaction => reaction.emoji.name || reaction.emoji.toString()
+            ),
           });
         });
 
@@ -76,12 +79,13 @@ export class ThreadReaderService {
         createdAt: thread.createdAt?.toISOString().split('T')[0] || 'Unknown Date',
         participants: Array.from(participants),
         messages: processedMessages,
-        totalMessages: processedMessages.length
+        totalMessages: processedMessages.length,
       };
 
-      console.log(`✅ Successfully read ${processedMessages.length} messages from ${participants.size} participants`);
+      console.log(
+        `✅ Successfully read ${processedMessages.length} messages from ${participants.size} participants`
+      );
       return threadData;
-
     } catch (error) {
       console.error('❌ Error reading thread messages:', error);
       throw new Error('Failed to read thread messages');
@@ -125,7 +129,7 @@ export class ThreadReaderService {
   } {
     const messageCount = threadData.messages.length;
     const participantCount = threadData.participants.length;
-    
+
     const totalLength = threadData.messages.reduce((sum, msg) => sum + msg.content.length, 0);
     const averageMessageLength = messageCount > 0 ? Math.round(totalLength / messageCount) : 0;
 
@@ -144,16 +148,16 @@ export class ThreadReaderService {
     threadData.messages.forEach(msg => {
       userMessageCounts.set(msg.author, (userMessageCounts.get(msg.author) || 0) + 1);
     });
-    
-    const mostActiveUser = Array.from(userMessageCounts.entries())
-      .sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown';
+
+    const mostActiveUser =
+      Array.from(userMessageCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown';
 
     return {
       messageCount,
       participantCount,
       averageMessageLength,
       timespan,
-      mostActiveUser
+      mostActiveUser,
     };
   }
 }

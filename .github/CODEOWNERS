@@ -1,0 +1,15 @@
+# Global ownership
+* @tanigu12
+
+# AI Partner personality and knowledge
+/src/features/ai-partner/ @tanigu12
+
+# Core services
+/src/services/ @tanigu12
+
+# Configuration files
+/.github/ @tanigu12
+/knip.json @tanigu12
+/tsconfig.json @tanigu12
+/.eslintrc.js @tanigu12
+/.prettierrc @tanigu12

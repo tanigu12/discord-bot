@@ -6,11 +6,13 @@ import {
   Message,
   PartialMessage,
 } from "discord.js";
-import { OpenAIService } from "./openai";
-import { ContentFetcherService } from "./contentFetcherService";
+import { TranslationService } from "../translation/translationService";
+import { ContentAnalysisService } from "../search/contentAnalysisService";
+import { ContentFetcherService } from "../../services/contentFetcherService";
 
 export class ReactionHandler {
-  private openaiService: OpenAIService;
+  private translationService: TranslationService;
+  private contentAnalysisService: ContentAnalysisService;
   private contentFetcher: ContentFetcherService;
 
   // Emoji mappings for different functions
@@ -32,6 +34,9 @@ export class ReactionHandler {
 
     // Search emoji
     "🔍": "search_analyze",
+    
+    // AI Partner emoji
+    "🤝": "chat_partner",
   };
 
   private readonly LANGUAGE_MAP = {
@@ -45,7 +50,8 @@ export class ReactionHandler {
   };
 
   constructor() {
-    this.openaiService = new OpenAIService();
+    this.translationService = new TranslationService();
+    this.contentAnalysisService = new ContentAnalysisService();
     this.contentFetcher = new ContentFetcherService();
   }
 
@@ -101,7 +107,7 @@ export class ReactionHandler {
       if (action.startsWith("translate_")) {
         if (action === "translate_auto") {
           // Auto-detect and translate to English by default
-          response = await this.openaiService.translateText(
+          response = await this.translationService.translateText(
             messageContent,
             "English"
           );
@@ -109,27 +115,27 @@ export class ReactionHandler {
         } else {
           const targetLang =
             this.LANGUAGE_MAP[emoji as keyof typeof this.LANGUAGE_MAP];
-          response = await this.openaiService.translateText(
+          response = await this.translationService.translateText(
             messageContent,
             targetLang
           );
           response = `**Translation → ${targetLang}:**\n${response}`;
         }
       } else if (action === "grammar_check") {
-        response = await this.openaiService.checkGrammar(messageContent);
+        response = await this.translationService.checkGrammar(messageContent);
         response = `**Grammar Check:**\n${response}`;
       } else if (action === "explain_word") {
         // For single words, use word explanation
         const words = messageContent.trim().split(/\s+/);
         if (words.length === 1) {
-          response = await this.openaiService.explainWord(words[0]);
+          response = await this.translationService.explainWord(words[0]);
           response = `**Word Explanation: "${words[0]}"**\n${response}`;
         } else {
           response = `Please react with 📚 to a single word for explanation.`;
         }
       } else if (action === "explain_text") {
         // General text explanation/analysis
-        response = await this.openaiService.explainText(messageContent);
+        response = await this.translationService.explainText(messageContent);
         response = `**Text Analysis:**\n${response}`;
       } else if (action === "search_analyze") {
         // Search and analyze content (similar to /search command)
@@ -152,8 +158,15 @@ export class ReactionHandler {
         }
 
         // Generate AI analysis
-        const analysis = await this.openaiService.analyzeContent(content, isUrl);
+        const analysis = await this.contentAnalysisService.analyzeContent(content, isUrl);
         response = `🔍 **Content Analysis**\n\n${analysis}${sourceInfo}`;
+      } else if (action === "chat_partner") {
+        // Chat with AI Partner (simplified without user profile)
+        console.log('🤝 Processing AI partner chat reaction...');
+        
+        // Use text analysis with chat prompt instead
+        const aiResponse = await this.translationService.explainText(messageContent);
+        response = `🤝 **AIパートナー:**\n\n${aiResponse}`;
       }
 
       if (response) {
@@ -241,6 +254,9 @@ export class ReactionHandler {
 
 **Content Analysis:**
 🔍 - Search and analyze content/URLs (like /search command)
+
+**AI English Teacher:**
+🤝 - Chat with Alex, your personal AI English teacher
 
 **How to use:** Simply react to any message with these emojis and I'll reply with the AI response!`;
   }
