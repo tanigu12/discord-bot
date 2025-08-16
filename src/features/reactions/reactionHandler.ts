@@ -6,27 +6,15 @@ import {
   Message,
   PartialMessage,
 } from "discord.js";
-import { TranslationService } from "../translation/translationService";
 import { ContentAnalysisService } from "../search/contentAnalysisService";
 import { ContentFetcherService } from "../../services/contentFetcherService";
 
 export class ReactionHandler {
-  private translationService: TranslationService;
   private contentAnalysisService: ContentAnalysisService;
   private contentFetcher: ContentFetcherService;
 
   // Emoji mappings for different functions
   private readonly EMOJI_ACTIONS = {
-    // Translation emojis
-    "🌐": "translate_auto",
-    "🇺🇸": "translate_english",
-    "🇯🇵": "translate_japanese",
-    "🇪🇸": "translate_spanish",
-    "🇫🇷": "translate_french",
-    "🇩🇪": "translate_german",
-    "🇨🇳": "translate_chinese",
-    "🇰🇷": "translate_korean",
-
     // Study emojis
     "✅": "grammar_check",
     "📚": "explain_word",
@@ -39,18 +27,8 @@ export class ReactionHandler {
     "🤝": "chat_partner",
   };
 
-  private readonly LANGUAGE_MAP = {
-    "🇺🇸": "English",
-    "🇯🇵": "Japanese",
-    "🇪🇸": "Spanish",
-    "🇫🇷": "French",
-    "🇩🇪": "German",
-    "🇨🇳": "Chinese",
-    "🇰🇷": "Korean",
-  };
 
   constructor() {
-    this.translationService = new TranslationService();
     this.contentAnalysisService = new ContentAnalysisService();
     this.contentFetcher = new ContentFetcherService();
   }
@@ -104,38 +82,27 @@ export class ReactionHandler {
     try {
       let response = "";
 
-      if (action.startsWith("translate_")) {
-        if (action === "translate_auto") {
-          // Auto-detect and translate to English by default
-          response = await this.translationService.translateText(
-            messageContent,
-            "English"
-          );
-          response = `**Translation (Auto → English):**\n${response}`;
-        } else {
-          const targetLang =
-            this.LANGUAGE_MAP[emoji as keyof typeof this.LANGUAGE_MAP];
-          response = await this.translationService.translateText(
-            messageContent,
-            targetLang
-          );
-          response = `**Translation → ${targetLang}:**\n${response}`;
-        }
-      } else if (action === "grammar_check") {
-        response = await this.translationService.checkGrammar(messageContent);
+      if (action === "grammar_check") {
+        response = await this.contentAnalysisService.analyzeContent(
+          `Please check the grammar and provide corrections for this text: ${messageContent}`,
+          false
+        );
         response = `**Grammar Check:**\n${response}`;
       } else if (action === "explain_word") {
         // For single words, use word explanation
         const words = messageContent.trim().split(/\s+/);
         if (words.length === 1) {
-          response = await this.translationService.explainWord(words[0]);
+          response = await this.contentAnalysisService.analyzeContent(
+            `Please explain the meaning, usage, and provide examples for this word: ${words[0]}`,
+            false
+          );
           response = `**Word Explanation: "${words[0]}"**\n${response}`;
         } else {
           response = `Please react with 📚 to a single word for explanation.`;
         }
       } else if (action === "explain_text") {
         // General text explanation/analysis
-        response = await this.translationService.explainText(messageContent);
+        response = await this.contentAnalysisService.analyzeContent(messageContent, false);
         response = `**Text Analysis:**\n${response}`;
       } else if (action === "search_analyze") {
         // Search and analyze content (similar to /search command)
@@ -165,7 +132,10 @@ export class ReactionHandler {
         console.log('🤝 Processing AI partner chat reaction...');
         
         // Use text analysis with chat prompt instead
-        const aiResponse = await this.translationService.explainText(messageContent);
+        const aiResponse = await this.contentAnalysisService.analyzeContent(
+          `As a helpful AI assistant, please respond to this message: ${messageContent}`,
+          false
+        );
         response = `🤝 **AIパートナー:**\n\n${aiResponse}`;
       }
 
@@ -236,16 +206,6 @@ export class ReactionHandler {
 
   getEmojiGuide(): string {
     return `**🤖 AI Assistant - Emoji Reactions Guide**
-
-**Translation:**
-🌐 - Auto-translate to English
-🇺🇸 - Translate to English
-🇯🇵 - Translate to Japanese
-🇪🇸 - Translate to Spanish
-🇫🇷 - Translate to French
-🇩🇪 - Translate to German
-🇨🇳 - Translate to Chinese
-🇰🇷 - Translate to Korean
 
 **English Study:**
 ✅ - Check grammar and get corrections

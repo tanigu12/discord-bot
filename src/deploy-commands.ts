@@ -1,9 +1,6 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 import dotenv from 'dotenv';
 import {
-  translateCommand,
-  grammarCommand,
-  explainCommand,
   randomCommand,
   formatCommand,
   searchCommand,
@@ -19,9 +16,6 @@ const commands = [
   new SlashCommandBuilder()
     .setName('help')
     .setDescription('Show emoji reaction guide for AI assistant'),
-  translateCommand.data,
-  grammarCommand.data,
-  explainCommand.data,
   randomCommand.data,
   formatCommand.data,
   searchCommand.data,
