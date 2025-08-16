@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
-import { OpenAIService } from '../services/openai';
+import { TranslationService } from '../translation/translationService';
 
-const openaiService = new OpenAIService();
+const translationService = new TranslationService();
 
 export const translateCommand = {
   data: new SlashCommandBuilder()
@@ -39,7 +39,7 @@ export const translateCommand = {
     await interaction.deferReply();
 
     try {
-      const translatedText = await openaiService.translateText(text, targetLanguage);
+      const translatedText = await translationService.translateText(text, targetLanguage);
       
       await interaction.editReply({
         content: `**Original:** ${text}\n**Translated to ${targetLanguage}:** ${translatedText}`

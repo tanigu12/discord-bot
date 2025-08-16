@@ -1,14 +1,16 @@
 import { Client, Events, GatewayIntentBits, Collection } from "discord.js";
 import dotenv from "dotenv";
-import { translateCommand } from "./commands/translate";
-import { grammarCommand } from "./commands/grammar";
-import { explainCommand } from "./commands/explain";
-import { randomCommand } from "./commands/random";
-import { formatCommand } from "./commands/format";
-import { searchCommand } from "./commands/search";
-import { bskyCommand } from "./commands/bsky";
-import { ReactionHandler } from "./services/reactionHandler";
-import { DiaryHandler } from "./services/diaryHandler";
+import {
+  translateCommand,
+  grammarCommand,
+  explainCommand,
+  randomCommand,
+  formatCommand,
+  searchCommand,
+  bskyCommand
+} from "./features/commands";
+import { ReactionHandler } from "./features/reactions";
+import { DiaryHandler } from "./features/diary";
 
 dotenv.config();
 

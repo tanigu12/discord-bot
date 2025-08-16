@@ -1,12 +1,14 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 import dotenv from 'dotenv';
-import { translateCommand } from './commands/translate';
-import { grammarCommand } from './commands/grammar';
-import { explainCommand } from './commands/explain';
-import { randomCommand } from './commands/random';
-import { formatCommand } from './commands/format';
-import { searchCommand } from './commands/search';
-import { bskyCommand } from './commands/bsky';
+import {
+  translateCommand,
+  grammarCommand,
+  explainCommand,
+  randomCommand,
+  formatCommand,
+  searchCommand,
+  bskyCommand
+} from './features/commands';
 
 dotenv.config();
 

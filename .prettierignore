@@ -1,0 +1,7 @@
+dist/
+node_modules/
+*.min.js
+*.map
+package-lock.json
+CLAUDE.md
+README.md

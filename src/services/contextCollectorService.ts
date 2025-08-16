@@ -1,12 +1,12 @@
-import { 
-  ChatInputCommandInteraction, 
-  Message, 
-  TextChannel, 
-  ThreadChannel, 
-  Collection 
+import {
+  ChatInputCommandInteraction,
+  Message,
+  TextChannel,
+  ThreadChannel,
+  Collection,
 } from 'discord.js';
 
-export interface ContextMessage {
+interface ContextMessage {
   id: string;
   author: string;
   authorId: string;
@@ -26,8 +26,10 @@ export interface ChannelContext {
 }
 
 export class ContextCollectorService {
-
-  async collectChannelContext(interaction: ChatInputCommandInteraction, maxMessages: number = 50): Promise<ChannelContext> {
+  async collectChannelContext(
+    interaction: ChatInputCommandInteraction,
+    maxMessages: number = 50
+  ): Promise<ChannelContext> {
     try {
       const channel = interaction.channel;
       if (!channel) {
@@ -46,13 +48,13 @@ export class ContextCollectorService {
         channelType = 'thread';
         channelName = channel.name || 'Unknown Thread';
         parentChannelName = channel.parent?.name;
-        
+
         console.log(`🧵 Reading thread: ${channelName} in ${parentChannelName}`);
         messages = await this.fetchThreadMessages(channel, maxMessages);
       } else if (channel.isTextBased() && 'messages' in channel) {
         channelType = 'text';
-        channelName = 'name' in channel ? (channel.name || 'Unknown Channel') : 'DM';
-        
+        channelName = 'name' in channel ? channel.name || 'Unknown Channel' : 'DM';
+
         console.log(`💬 Reading channel: ${channelName}`);
         messages = await this.fetchChannelMessages(channel as TextChannel, maxMessages);
       } else {
@@ -64,8 +66,9 @@ export class ContextCollectorService {
       const participants = new Set<string>();
 
       // Sort messages chronologically (oldest first)
-      const sortedMessages = Array.from(messages.values())
-        .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+      const sortedMessages = Array.from(messages.values()).sort(
+        (a, b) => a.createdTimestamp - b.createdTimestamp
+      );
 
       for (const msg of sortedMessages) {
         // Skip empty messages but include bot messages for context
@@ -79,7 +82,7 @@ export class ContextCollectorService {
           authorId: msg.author.id,
           content: msg.content,
           timestamp: msg.createdAt,
-          isBot: msg.author.bot
+          isBot: msg.author.bot,
         });
       }
 
@@ -89,11 +92,13 @@ export class ContextCollectorService {
         const firstMessage = processedMessages[0];
         const lastMessage = processedMessages[processedMessages.length - 1];
         const timeDiff = lastMessage.timestamp.getTime() - firstMessage.timestamp.getTime();
-        
-        if (timeDiff < 1000 * 60 * 60) { // Less than 1 hour
+
+        if (timeDiff < 1000 * 60 * 60) {
+          // Less than 1 hour
           const minutes = Math.ceil(timeDiff / (1000 * 60));
           timespan = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-        } else if (timeDiff < 1000 * 60 * 60 * 24) { // Less than 1 day
+        } else if (timeDiff < 1000 * 60 * 60 * 24) {
+          // Less than 1 day
           const hours = Math.ceil(timeDiff / (1000 * 60 * 60));
           timespan = `${hours} hour${hours !== 1 ? 's' : ''}`;
         } else {
@@ -109,26 +114,30 @@ export class ContextCollectorService {
         messages: processedMessages,
         messageCount: processedMessages.length,
         participants: Array.from(participants),
-        timespan
+        timespan,
       };
 
-      console.log(`✅ Context collected: ${processedMessages.length} messages from ${participants.size} participants over ${timespan}`);
+      console.log(
+        `✅ Context collected: ${processedMessages.length} messages from ${participants.size} participants over ${timespan}`
+      );
       return context;
-
     } catch (error) {
       console.error('❌ Error collecting channel context:', error);
       throw new Error('Failed to collect channel context');
     }
   }
 
-  private async fetchThreadMessages(thread: ThreadChannel, maxMessages: number): Promise<Collection<string, Message>> {
+  private async fetchThreadMessages(
+    thread: ThreadChannel,
+    maxMessages: number
+  ): Promise<Collection<string, Message>> {
     const messages: Collection<string, Message> = new Collection();
     let lastMessage: string | undefined;
     let fetched = 0;
 
     while (fetched < maxMessages) {
       const remainingMessages = Math.min(100, maxMessages - fetched);
-      
+
       const batch = await thread.messages.fetch({
         limit: remainingMessages,
         before: lastMessage,
@@ -138,7 +147,7 @@ export class ContextCollectorService {
 
       // Merge messages
       batch.forEach((msg, id) => messages.set(id, msg));
-      
+
       lastMessage = batch.lastKey();
       fetched += batch.size;
 
@@ -148,14 +157,17 @@ export class ContextCollectorService {
     return messages;
   }
 
-  private async fetchChannelMessages(channel: TextChannel, maxMessages: number): Promise<Collection<string, Message>> {
+  private async fetchChannelMessages(
+    channel: TextChannel,
+    maxMessages: number
+  ): Promise<Collection<string, Message>> {
     const messages: Collection<string, Message> = new Collection();
     let lastMessage: string | undefined;
     let fetched = 0;
 
     while (fetched < maxMessages) {
       const remainingMessages = Math.min(100, maxMessages - fetched);
-      
+
       const batch = await channel.messages.fetch({
         limit: remainingMessages,
         before: lastMessage,
@@ -165,7 +177,7 @@ export class ContextCollectorService {
 
       // Merge messages
       batch.forEach((msg, id) => messages.set(id, msg));
-      
+
       lastMessage = batch.lastKey();
       fetched += batch.size;
 
@@ -191,7 +203,7 @@ export class ContextCollectorService {
     }
 
     formatted += `**Recent Conversation:**\n`;
-    
+
     for (const msg of context.messages) {
       const timestamp = msg.timestamp.toISOString().split('T')[0];
       const author = msg.isBot ? `🤖 ${msg.author}` : msg.author;
@@ -205,19 +217,19 @@ export class ContextCollectorService {
   summarizeContext(context: ChannelContext): string {
     const recentMessages = context.messages.slice(-10); // Last 10 messages
     let summary = `Recent discussion in ${context.channelName}`;
-    
+
     if (context.channelType === 'thread' && context.parentChannelName) {
       summary += ` (thread in ${context.parentChannelName})`;
     }
-    
+
     summary += ` with ${context.participants.length} participants over ${context.timespan}:\n\n`;
-    
+
     for (const msg of recentMessages) {
       if (msg.content.trim()) {
         summary += `${msg.author}: ${msg.content.substring(0, 100)}${msg.content.length > 100 ? '...' : ''}\n`;
       }
     }
-    
+
     return summary;
   }
 }

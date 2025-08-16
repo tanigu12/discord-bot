@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
-import { BlueskyService } from '../services/blueskyService';
+import { BlueskyService } from '../../services/blueskyService';
 import axios from 'axios';
 
 const blueskyService = new BlueskyService();

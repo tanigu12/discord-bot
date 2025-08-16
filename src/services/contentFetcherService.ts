@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export interface FetchedContent {
+interface FetchedContent {
   title?: string;
   content: string;
   url: string;
@@ -8,11 +8,10 @@ export interface FetchedContent {
 }
 
 export class ContentFetcherService {
-
   async fetchContent(url: string): Promise<FetchedContent> {
     try {
       console.log(`🌐 Fetching content from: ${url}`);
-      
+
       // Validate URL format
       const urlObj = new URL(url);
       if (!['http:', 'https:'].includes(urlObj.protocol)) {
@@ -25,7 +24,7 @@ export class ContentFetcherService {
         maxRedirects: 5,
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; DiscordBot/1.0; AI Content Analyzer)',
-          'Accept': 'text/html,application/xhtml+xml,text/plain,*/*',
+          Accept: 'text/html,application/xhtml+xml,text/plain,*/*',
           'Accept-Language': 'en-US,en;q=0.9',
         },
         maxContentLength: 1024 * 1024, // 1MB limit
@@ -60,12 +59,11 @@ export class ContentFetcherService {
         title,
         content,
         url,
-        contentType: contentType
+        contentType: contentType,
       };
-
     } catch (error) {
       console.error('❌ Error fetching content:', error);
-      
+
       if (axios.isAxiosError(error)) {
         if (error.code === 'ECONNABORTED') {
           throw new Error('Request timeout - the website took too long to respond');
@@ -80,12 +78,14 @@ export class ContentFetcherService {
           throw new Error('Server error - the website is currently unavailable');
         }
       }
-      
-      throw new Error(`Failed to fetch content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      throw new Error(
+        `Failed to fetch content: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  private parseHtmlContent(html: string): { title?: string, content: string } {
+  private parseHtmlContent(html: string): { title?: string; content: string } {
     try {
       // Extract title
       const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
@@ -94,7 +94,7 @@ export class ContentFetcherService {
       // Remove script and style tags
       let cleanHtml = html.replace(/<script[^>]*>.*?<\/script>/gis, '');
       cleanHtml = cleanHtml.replace(/<style[^>]*>.*?<\/style>/gis, '');
-      
+
       // Remove HTML tags and decode entities
       let content = cleanHtml.replace(/<[^>]*>/g, ' ');
       content = content.replace(/&nbsp;/g, ' ');
@@ -103,7 +103,7 @@ export class ContentFetcherService {
       content = content.replace(/&gt;/g, '>');
       content = content.replace(/&quot;/g, '"');
       content = content.replace(/&#x27;/g, "'");
-      
+
       // Clean up whitespace
       content = content.replace(/\s+/g, ' ').trim();
 
@@ -119,15 +119,15 @@ export class ContentFetcherService {
       const urlObj = new URL(url);
       const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
       const lastSegment = pathSegments[pathSegments.length - 1] || urlObj.hostname;
-      
+
       // Clean up the segment (remove file extensions, decode URI)
       let title = decodeURIComponent(lastSegment);
       title = title.replace(/\.[^.]*$/, ''); // Remove file extension
       title = title.replace(/[-_]/g, ' '); // Replace dashes and underscores with spaces
       title = title.replace(/\b\w/g, char => char.toUpperCase()); // Title case
-      
+
       return title || urlObj.hostname;
-    } catch (error) {
+    } catch {
       return 'Unknown Title';
     }
   }
@@ -135,7 +135,7 @@ export class ContentFetcherService {
   private cleanContent(content: string): string {
     // Truncate very long content to avoid API limits
     const maxLength = 8000; // Conservative limit for AI processing
-    
+
     if (content.length > maxLength) {
       content = content.substring(0, maxLength) + '\n\n[Content truncated due to length...]';
     }
@@ -143,7 +143,7 @@ export class ContentFetcherService {
     // Remove excessive whitespace
     content = content.replace(/\n\s*\n\s*\n/g, '\n\n'); // Reduce multiple newlines
     content = content.replace(/[ \t]+/g, ' '); // Normalize spaces
-    
+
     return content.trim();
   }
 
@@ -152,18 +152,26 @@ export class ContentFetcherService {
     try {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.toLowerCase();
-      
+
       // Common content sites
       const contentSites = [
-        'wikipedia.org', 'github.com', 'stackoverflow.com',
-        'medium.com', 'dev.to', 'news.ycombinator.com',
-        'reddit.com', 'quora.com', 'arxiv.org'
+        'wikipedia.org',
+        'github.com',
+        'stackoverflow.com',
+        'medium.com',
+        'dev.to',
+        'news.ycombinator.com',
+        'reddit.com',
+        'quora.com',
+        'arxiv.org',
       ];
-      
-      return contentSites.some(site => hostname.includes(site)) || 
-             urlObj.pathname.includes('.html') ||
-             urlObj.pathname.includes('/blog') ||
-             urlObj.pathname.includes('/article');
+
+      return (
+        contentSites.some(site => hostname.includes(site)) ||
+        urlObj.pathname.includes('.html') ||
+        urlObj.pathname.includes('/blog') ||
+        urlObj.pathname.includes('/article')
+      );
     } catch {
       return false;
     }

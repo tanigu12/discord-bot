@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
-import { ThreadReaderService } from '../services/threadReaderService';
-import { OpenAIService } from '../services/openai';
+import { ThreadReaderService } from '../../services/threadReaderService';
+import { ContentAnalysisService } from '../search/contentAnalysisService';
 
 const threadReaderService = new ThreadReaderService();
-const openaiService = new OpenAIService();
+const contentAnalysisService = new ContentAnalysisService();
 
 export const formatCommand = {
   data: new SlashCommandBuilder()
@@ -43,7 +43,7 @@ export const formatCommand = {
       }
 
       // Generate formatted content with AI
-      const formattedContent = await openaiService.formatToObsidianBlog(threadData);
+      const formattedContent = await contentAnalysisService.formatToObsidianBlog(threadData);
 
       // Create file attachment
       const fileName = `${threadData.threadName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_formatted.md`;

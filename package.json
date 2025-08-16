@@ -9,6 +9,17 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "deploy-commands": "tsx src/deploy-commands.ts",
+    "knip": "knip",
+    "knip:fix": "knip --fix",
+    "knip:production": "knip --production",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.{ts,js,json}",
+    "format:check": "prettier --check src/**/*.{ts,js,json}",
+    "audit:security": "npm audit --audit-level=moderate",
+    "audit:better": "better-npm-audit audit",
+    "check:all": "npm run type-check && npm run lint && npm run format:check && npm run knip",
+    "check:security": "npm run audit:security && npm run audit:better",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -30,15 +41,22 @@
   "dependencies": {
     "@atproto/api": "^0.16.2",
     "axios": "^1.11.0",
-    "dayjs": "^1.11.13",
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
     "openai": "^5.12.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.33.0",
     "@types/node": "^24.2.1",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
+    "@typescript-eslint/parser": "^8.39.1",
+    "better-npm-audit": "^3.11.0",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "knip": "^5.62.0",
     "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2"
   }
