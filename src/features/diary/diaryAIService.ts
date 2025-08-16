@@ -1,14 +1,10 @@
 import { BaseAIService } from "../../services/baseAIService";
-import { TranslationService } from "../translation/translationService";
 import { NewsItem } from "../../services/newsService";
 
 // Larry による日記専用AIサービス
 export class DiaryAIService extends BaseAIService {
-  private translationService: TranslationService;
-
   constructor() {
     super();
-    this.translationService = new TranslationService();
   }
 
   // 日記専用翻訳
@@ -52,7 +48,16 @@ export class DiaryAIService extends BaseAIService {
   }> {
     try {
       // 言語検出
-      const detectedLanguage = await this.translationService.detectLanguage(text);
+      const languageDetectionResult = await this.callOpenAI(
+        "Detect the language of the given text and return just 'japanese', 'english', or 'other'.",
+        text,
+        { model: 'gpt-4o-mini', maxTokens: 50, temperature: 0.1 }
+      );
+      
+      // 型安全な言語判定
+      const detectedLanguage: 'japanese' | 'english' | 'other' = 
+        languageDetectionResult.toLowerCase().includes('japanese') ? 'japanese' :
+        languageDetectionResult.toLowerCase().includes('english') ? 'english' : 'other';
       
       // 言語に基づいて処理を分岐
       let translation = '';

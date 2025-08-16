@@ -1,6 +1,6 @@
 import { BaseAIService } from '../../services/baseAIService';
 import { ChannelContext } from '../../services/contextCollectorService';
-import { ThreadData } from '../../services/threadReaderService';
+import { ThreadData } from '../../services/conversationReaderService';
 
 // Content analysis and search functionality using Larry's knowledge
 export class ContentAnalysisService extends BaseAIService {

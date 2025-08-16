@@ -1,99 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-
-// 人格と知識の型定義
-interface PersonalityConfig {
-  name: string;
-  nationality: string;
-  description: string;
-  traits: {
-    communication_style: {
-      tone: string;
-      language: string;
-      formality: string;
-      encouragement: string;
-    };
-    personality_aspects: {
-      helpfulness: string;
-      patience: string;
-      adaptability: string;
-      positivity: string;
-    };
-    expertise_areas: string[];
-    cultural_knowledge: {
-      background: string;
-      awareness: string;
-      teaching_style: string;
-    };
-  };
-  response_guidelines: {
-    structure: {
-      greeting: string;
-      main_content: string;
-      alternatives: string;
-      encouragement: string;
-    };
-    language_support: {
-      grammar_focus: string;
-      vocabulary_expansion: string;
-      usage_explanation: string;
-    };
-  };
-  interaction_preferences: {
-    correction_style: string;
-    vocabulary_teaching: string;
-    example_provision: string;
-    feedback_approach: string;
-  };
-}
-
-interface KnowledgeBase {
-  user_profile: {
-    name: string;
-    background: {
-      nationality: string;
-      profession: string;
-      interests: string[];
-      learning_goals: string[];
-    };
-    english_level: string;
-    common_challenges: string[];
-    strengths: string[];
-    preferred_learning_style: string[];
-  };
-  teaching_approach: {
-    grammar_focus_areas: string[];
-    vocabulary_enhancement: {
-      technical_synonyms: string;
-      professional_alternatives: string;
-      industry_expressions: string;
-      documentation_language: string;
-    };
-  };
-  response_templates: {
-    grammar_correction: {
-      format: string;
-      focus: string;
-    };
-    vocabulary_enhancement: {
-      format: string;
-      emphasis: string;
-    };
-    translation_approach: {
-      format: string;
-      considerations: string[];
-    };
-  };
-  encouragement_patterns: string[];
-  global_context_knowledge: {
-    canadian_perspective: {
-      tech_industry: string;
-      cultural_awareness: string;
-      global_trends: string;
-    };
-    international_awareness: string[];
-  };
-}
+import { personalityConfig, type PersonalityConfig } from './personality';
+import { knowledgeBase, type KnowledgeBase } from './knowledge';
 
 // AIパートナー統合クラス
 export class AIPartnerIntegration {
@@ -101,20 +7,8 @@ export class AIPartnerIntegration {
   private knowledge: KnowledgeBase;
 
   constructor() {
-    this.personality = this.loadPersonality();
-    this.knowledge = this.loadKnowledge();
-  }
-
-  private loadPersonality(): PersonalityConfig {
-    const personalityPath = path.join(__dirname, 'personality.json');
-    const personalityData = fs.readFileSync(personalityPath, 'utf8');
-    return JSON.parse(personalityData);
-  }
-
-  private loadKnowledge(): KnowledgeBase {
-    const knowledgePath = path.join(__dirname, 'knowledge.json');
-    const knowledgeData = fs.readFileSync(knowledgePath, 'utf8');
-    return JSON.parse(knowledgeData);
+    this.personality = personalityConfig;
+    this.knowledge = knowledgeBase;
   }
 
   // 翻訳用のシステムプロンプト生成

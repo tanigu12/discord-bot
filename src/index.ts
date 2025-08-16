@@ -1,9 +1,6 @@
 import { Client, Events, GatewayIntentBits, Collection } from "discord.js";
 import dotenv from "dotenv";
 import {
-  translateCommand,
-  grammarCommand,
-  explainCommand,
   randomCommand,
   formatCommand,
   searchCommand,
@@ -29,9 +26,6 @@ const client = new Client({
 
 // Initialize commands collection
 client.commands = new Collection();
-client.commands.set(translateCommand.data.name, translateCommand);
-client.commands.set(grammarCommand.data.name, grammarCommand);
-client.commands.set(explainCommand.data.name, explainCommand);
 client.commands.set(randomCommand.data.name, randomCommand);
 client.commands.set(formatCommand.data.name, formatCommand);
 client.commands.set(searchCommand.data.name, searchCommand);

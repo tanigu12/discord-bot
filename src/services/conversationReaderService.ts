@@ -21,7 +21,7 @@ export interface ThreadData {
   totalMessages: number;
 }
 
-export class ThreadReaderService {
+export class ConversationReaderService {
   async readThreadMessages(thread: ThreadChannel): Promise<ThreadData> {
     try {
       console.log(`📖 Reading messages from thread: ${thread.name} (ID: ${thread.id})`);
@@ -42,20 +42,25 @@ export class ThreadReaderService {
       const allMessages = Array.from(fetchedMessages.values());
       console.log(`📊 Total messages collected: ${allMessages.length}`);
 
+      // Filter to only reply-related messages to reduce noise
+      const relatedMessages = this.filterReplyRelatedMessages(allMessages);
+      console.log(
+        `🔗 Reply-related messages: ${relatedMessages.length} (filtered from ${allMessages.length})`
+      );
+
       // Process messages and extract data
       const processedMessages: ThreadMessage[] = [];
       const participants = new Set<string>();
 
       // Sort messages by timestamp (oldest first)
-      allMessages
+      relatedMessages
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
         .forEach(msg => {
           console.log(
             `🔍 Processing message from ${msg.author.username}: "${msg.content.substring(0, 50)}..."`
           );
 
-          // Include all messages, not just non-bot messages for formatting purposes
-          // We'll let the AI decide what's important
+          // Include relevant messages for formatting purposes
           participants.add(msg.author.username);
 
           processedMessages.push({
@@ -64,10 +69,10 @@ export class ThreadReaderService {
             authorId: msg.author.id,
             content: msg.content,
             timestamp: msg.createdAt,
-            attachments: msg.attachments.map(att => att.url),
-            mentions: msg.mentions.users.map(user => user.username),
+            attachments: msg.attachments.map((att: any) => att.url),
+            mentions: msg.mentions.users.map((user: any) => user.username),
             reactions: msg.reactions.cache.map(
-              reaction => reaction.emoji.name || reaction.emoji.toString()
+              (reaction: any) => reaction.emoji.name || reaction.emoji.toString()
             ),
           });
         });
@@ -119,45 +124,49 @@ export class ThreadReaderService {
       .trim();
   }
 
-  // Helper method to generate thread summary statistics
-  generateThreadStats(threadData: ThreadData): {
-    messageCount: number;
-    participantCount: number;
-    averageMessageLength: number;
-    timespan: string;
-    mostActiveUser: string;
-  } {
-    const messageCount = threadData.messages.length;
-    const participantCount = threadData.participants.length;
+  // Filter messages to only include reply-related messages to reduce noise
+  private filterReplyRelatedMessages(messages: any[]): any[] {
+    const messageMap = new Map(messages.map(msg => [msg.id, msg]));
+    const relatedMessages = new Set<string>();
 
-    const totalLength = threadData.messages.reduce((sum, msg) => sum + msg.content.length, 0);
-    const averageMessageLength = messageCount > 0 ? Math.round(totalLength / messageCount) : 0;
+    // First pass: identify all messages that are replies or being replied to
+    messages.forEach(msg => {
+      // If this message is a reply, include both the reply and the original
+      if (msg.reference?.messageId) {
+        relatedMessages.add(msg.id); // The reply itself
+        relatedMessages.add(msg.reference.messageId); // The original message being replied to
+      }
 
-    // Calculate timespan
-    let timespan = 'Unknown';
-    if (threadData.messages.length > 0) {
-      const firstMessage = threadData.messages[0];
-      const lastMessage = threadData.messages[threadData.messages.length - 1];
-      const timeDiff = lastMessage.timestamp.getTime() - firstMessage.timestamp.getTime();
-      const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-      timespan = `${days} day${days !== 1 ? 's' : ''}`;
-    }
+      // If this message has substantial content (not just reactions/short responses)
+      // and is from a human user, include it
+      if (!msg.author.bot && msg.content.trim().length > 20) {
+        relatedMessages.add(msg.id);
+      }
 
-    // Find most active user
-    const userMessageCounts = new Map<string, number>();
-    threadData.messages.forEach(msg => {
-      userMessageCounts.set(msg.author, (userMessageCounts.get(msg.author) || 0) + 1);
+      // Include messages with attachments as they're likely important
+      if (msg.attachments.size > 0) {
+        relatedMessages.add(msg.id);
+      }
     });
 
-    const mostActiveUser =
-      Array.from(userMessageCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown';
+    // Second pass: include messages that mention other users (likely part of conversation)
+    messages.forEach(msg => {
+      if (msg.mentions.users.size > 0 && msg.content.trim().length > 10) {
+        relatedMessages.add(msg.id);
+      }
+    });
 
-    return {
-      messageCount,
-      participantCount,
-      averageMessageLength,
-      timespan,
-      mostActiveUser,
-    };
+    // Always include the first few messages to provide context
+    const sortedMessages = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+    sortedMessages.slice(0, 3).forEach(msg => {
+      relatedMessages.add(msg.id);
+    });
+
+    // Always include the most recent messages for context
+    sortedMessages.slice(-3).forEach(msg => {
+      relatedMessages.add(msg.id);
+    });
+
+    return messages.filter(msg => relatedMessages.has(msg.id));
   }
 }

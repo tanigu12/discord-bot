@@ -1,8 +1,8 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
-import { ThreadReaderService } from '../../services/threadReaderService';
+import { ConversationReaderService } from '../../services/conversationReaderService';
 import { ContentAnalysisService } from '../search/contentAnalysisService';
 
-const threadReaderService = new ThreadReaderService();
+const conversationReaderService = new ConversationReaderService();
 const contentAnalysisService = new ContentAnalysisService();
 
 export const formatCommand = {
@@ -15,7 +15,7 @@ export const formatCommand = {
 
     try {
       // Check if command is used in idea channel thread
-      if (!threadReaderService.isIdeaChannel(interaction)) {
+      if (!conversationReaderService.isIdeaChannel(interaction)) {
         await interaction.editReply({
           content: '❌ This command can only be used in threads within the "idea" channel!'
         });
@@ -33,7 +33,7 @@ export const formatCommand = {
       console.log(`🔍 Thread ID: ${interaction.channel.id}, Parent: ${interaction.channel.parentId}`);
 
       // Read thread messages
-      const threadData = await threadReaderService.readThreadMessages(interaction.channel);
+      const threadData = await conversationReaderService.readThreadMessages(interaction.channel);
       
       if (threadData.messages.length === 0) {
         await interaction.editReply({
