@@ -43,9 +43,12 @@ Bot は以下のスラッシュコマンドをサポートしています：
   - 英語学習のためのライティング支援
 
 #### `/format` - スレッド整形
-- **機能**: ideaチャンネルのスレッドメッセージをObsidian対応のブログ記事に整形
-- **使用方法**: `/format` (ideaチャンネルのスレッド内で実行)
-- **出力**: Markdownファイルとして整形されたブログ記事
+- **機能**: スレッドメッセージを日英両言語対応のObsidian向けブログ記事に整形
+- **使用方法**: `/format` (スレッド内で実行)
+- **オプション**: 
+  - `include_all` - 全メッセージを含める (デフォルト: 会話関連のみ)
+  - `title` - カスタムタイトルを指定
+- **出力**: 日英両言語対応のMarkdownファイル
 
 #### `/bsky` - Blueskyへの投稿
 - **機能**: Bluesky Social (@taka1415.bsky.social) にメッセージを投稿
@@ -54,6 +57,14 @@ Bot は以下のスラッシュコマンドをサポートしています：
   - メッセージは300文字以内
   - 画像は1MB以下 (JPEG, PNG, GIF, WebP対応)
 - **例**: `/bsky message:Hello from Discord! image:photo.jpg`
+
+#### `/asana` - Asanaタスク管理
+- **機能**: Asanaプロジェクトのタスク管理（作成、一覧表示、完了）
+- **使用方法**: 
+  - `/asana action:create name:[タスク名] notes:[詳細]` - タスク作成
+  - `/asana action:list` - タスク一覧表示
+  - `/asana action:complete task_id:[タスクID]` - タスク完了
+- **例**: `/asana action:create name:新機能実装 notes:ユーザー認証機能を追加`
 
 ### 絵文字リアクション機能
 
@@ -77,14 +88,30 @@ Bot は以下のスラッシュコマンドをサポートしています：
 #### コンテンツ分析
 - 🔍 - URLやテキストの詳細分析（/searchコマンドと同じ機能）
 
+#### AIパートナー・相談機能
+- 🤝 - AI英語教師Alexとのチャット
+- 🧙‍♂️ - Larry相談（ideaチャンネルでのアイデア相談、Web検索対応）
+
+#### アイデア管理（ideaチャンネル専用）
+- 💡 - アイデアスレッド作成
+- 📋 - アイデアのカテゴリ分け
+- 👍 - アイデア承認
+- 🔥 - 高優先度設定
+- 🧙‍♂️ - Larry相談（最新情報を含む専門的アドバイス）
+- ✨ - 実装済みマーク
+- 🗂️ - アイデアアーカイブ
+
 **使用方法**: 任意のメッセージに上記の絵文字でリアクションするだけで、自動でAIが返答します。
 
 ## 🛠️ 技術仕様
 
 - **Discord.js**: v14
 - **TypeScript**: 5.x
-- **AI Service**: OpenAI GPT-4o-mini
+- **AI Service**: OpenAI GPT-4o-mini (+ gpt-4o-search-preview for web search)
 - **Node.js**: 18.x以上推奨
+- **Web検索**: OpenAI Web Search API統合
+- **タスク管理**: Asana API v3統合
+- **SNS連携**: Bluesky API対応
 
 ## 🔧 セットアップ
 
@@ -98,6 +125,10 @@ CLIENT_ID=your_discord_client_id
 OPENAI_API_KEY=your_openai_api_key
 BLUESKY_USERNAME=your_bluesky_handle
 BLUESKY_PASSWORD=your_bluesky_app_password
+ASANA_PERSONAL_ACCESS_TOKEN=your_asana_pat
+ASANA_DEFAULT_WORKSPACE_GID=your_workspace_gid
+ASANA_DEFAULT_PROJECT_GID=your_project_gid
+ASANA_DEFAULT_USER_GID=your_user_gid
 GUILD_ID=your_guild_id_for_development
 ```
 
@@ -180,6 +211,20 @@ Bot (🇺🇸リアクション): Translation → English: It's nice weather tod
 → 今日のニュースベースのトピック3つと個人的な振り返り質問を提案
 ```
 
+### アイデア管理とLarry相談
+```
+ideaチャンネルでアイデアを投稿
+→ 💡絵文字が自動追加される
+→ 💡をクリックでスレッド作成
+→ 🧙‍♂️をクリックでLarryの専門的アドバイス（Web検索付き）
+```
+
+### Asanaタスク管理
+```
+/asana action:create name:新機能開発 notes:ユーザー認証システムの実装
+→ Asanaプロジェクトにタスクを作成し、URLを返却
+```
+
 ## 🎓 English学習への活用
 
 このBotは特に以下のような学習スタイルに最適です：
@@ -188,6 +233,8 @@ Bot (🇺🇸リアクション): Translation → English: It's nice weather tod
 2. **語彙力向上**: 知らない単語に📚リアクションで詳細解説
 3. **ライティング練習**: /randomで日記トピックを取得し、定期的な英語ライティング
 4. **情報収集とまとめ**: /searchでWebコンテンツを分析し、理解を深める
+5. **アイデア発展**: ideaチャンネルでのブレインストーミングとLarry相談による専門的フィードバック
+6. **プロジェクト管理**: Asana連携による学習タスクの体系的管理
 
 ## 🔍 トラブルシューティング
 
@@ -205,6 +252,14 @@ Bot (🇺🇸リアクション): Translation → English: It's nice weather tod
 **Bluesky投稿エラー**
 - `BLUESKY_USERNAME`と`BLUESKY_PASSWORD`が正しく設定されていることを確認
 - Blueskyのアプリパスワードを使用していることを確認（通常パスワードではない）
+
+**Asana連携エラー**
+- `ASANA_PERSONAL_ACCESS_TOKEN`が有効であることを確認
+- 適切なワークスペースとプロジェクトのGIDが設定されていることを確認
+
+**Web検索機能が動作しない**
+- OpenAI APIキーが`gpt-4o-search-preview`モデルへのアクセス権を持っていることを確認
+- インターネット接続が正常であることを確認
 
 ## 🤝 Contributing
 
