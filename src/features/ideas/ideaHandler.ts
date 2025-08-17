@@ -313,8 +313,7 @@ When you use web search results, naturally integrate the findings into your anal
         {
           model: 'gpt-4o-mini',
           maxTokens: 1500,
-          temperature: 0.7,
-          enableWebSearch: true
+          temperature: 0.7
         }
       );
 

@@ -22,7 +22,10 @@ export interface ThreadData {
 }
 
 export class ConversationReaderService {
-  async readThreadMessages(thread: ThreadChannel, includeAllMessages: boolean = false): Promise<ThreadData> {
+  async readThreadMessages(
+    thread: ThreadChannel,
+    includeAllMessages: boolean = false
+  ): Promise<ThreadData> {
     try {
       console.log(`📖 Reading messages from thread: ${thread.name} (ID: ${thread.id})`);
       console.log(`🔧 Thread archived: ${thread.archived}, locked: ${thread.locked}`);
@@ -43,10 +46,10 @@ export class ConversationReaderService {
       console.log(`📊 Total messages collected: ${allMessages.length}`);
 
       // Filter messages based on includeAllMessages parameter
-      const messagesToProcess = includeAllMessages 
-        ? allMessages 
+      const messagesToProcess = includeAllMessages
+        ? allMessages
         : this.filterReplyRelatedMessages(allMessages);
-      
+
       console.log(
         `🔗 Messages to process: ${messagesToProcess.length} (${includeAllMessages ? 'all messages' : 'filtered conversations'})`
       );
@@ -129,7 +132,7 @@ export class ConversationReaderService {
         isThread: false,
         threadName: '',
         parentChannelName: '',
-        isIdeaThread: false
+        isIdeaThread: false,
       };
     }
 
@@ -137,7 +140,7 @@ export class ConversationReaderService {
       isThread: true,
       threadName: interaction.channel.name || 'Unnamed Thread',
       parentChannelName: interaction.channel.parent?.name || 'Unknown Channel',
-      isIdeaThread: this.isIdeaChannel(interaction)
+      isIdeaThread: this.isIdeaChannel(interaction),
     };
   }
 
