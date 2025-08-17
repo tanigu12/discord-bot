@@ -22,7 +22,7 @@ export interface ThreadData {
 }
 
 export class ConversationReaderService {
-  async readThreadMessages(thread: ThreadChannel): Promise<ThreadData> {
+  async readThreadMessages(thread: ThreadChannel, includeAllMessages: boolean = false): Promise<ThreadData> {
     try {
       console.log(`📖 Reading messages from thread: ${thread.name} (ID: ${thread.id})`);
       console.log(`🔧 Thread archived: ${thread.archived}, locked: ${thread.locked}`);
@@ -42,10 +42,13 @@ export class ConversationReaderService {
       const allMessages = Array.from(fetchedMessages.values());
       console.log(`📊 Total messages collected: ${allMessages.length}`);
 
-      // Filter to only reply-related messages to reduce noise
-      const relatedMessages = this.filterReplyRelatedMessages(allMessages);
+      // Filter messages based on includeAllMessages parameter
+      const messagesToProcess = includeAllMessages 
+        ? allMessages 
+        : this.filterReplyRelatedMessages(allMessages);
+      
       console.log(
-        `🔗 Reply-related messages: ${relatedMessages.length} (filtered from ${allMessages.length})`
+        `🔗 Messages to process: ${messagesToProcess.length} (${includeAllMessages ? 'all messages' : 'filtered conversations'})`
       );
 
       // Process messages and extract data
@@ -53,7 +56,7 @@ export class ConversationReaderService {
       const participants = new Set<string>();
 
       // Sort messages by timestamp (oldest first)
-      relatedMessages
+      messagesToProcess
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
         .forEach(msg => {
           console.log(
@@ -97,6 +100,7 @@ export class ConversationReaderService {
     }
   }
 
+  // Helper method to check if channel is idea-related (kept for potential future use)
   isIdeaChannel(interaction: ChatInputCommandInteraction): boolean {
     // Check if we're in a thread
     if (!interaction.channel?.isThread()) {
@@ -111,6 +115,30 @@ export class ConversationReaderService {
 
     const channelName = parentChannel.name.toLowerCase();
     return channelName.includes('idea');
+  }
+
+  // Helper method to get thread context information
+  getThreadContext(interaction: ChatInputCommandInteraction): {
+    isThread: boolean;
+    threadName: string;
+    parentChannelName: string;
+    isIdeaThread: boolean;
+  } {
+    if (!interaction.channel?.isThread()) {
+      return {
+        isThread: false,
+        threadName: '',
+        parentChannelName: '',
+        isIdeaThread: false
+      };
+    }
+
+    return {
+      isThread: true,
+      threadName: interaction.channel.name || 'Unnamed Thread',
+      parentChannelName: interaction.channel.parent?.name || 'Unknown Channel',
+      isIdeaThread: this.isIdeaChannel(interaction)
+    };
   }
 
   // Helper method to clean and format message content
@@ -138,8 +166,8 @@ export class ConversationReaderService {
       }
 
       // If this message has substantial content (not just reactions/short responses)
-      // and is from a human user, include it
-      if (!msg.author.bot && msg.content.trim().length > 20) {
+      // and is from a human user, include it (reduced threshold for better coverage)
+      if (!msg.author.bot && msg.content.trim().length > 10) {
         relatedMessages.add(msg.id);
       }
 

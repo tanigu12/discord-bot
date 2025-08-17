@@ -1,0 +1,1 @@
+export { IdeaHandler } from './ideaHandler';

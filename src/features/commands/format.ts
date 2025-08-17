@@ -8,62 +8,78 @@ const contentAnalysisService = new ContentAnalysisService();
 export const formatCommand = {
   data: new SlashCommandBuilder()
     .setName('format')
-    .setDescription('Format thread messages into Obsidian-ready blog post with organized structure'),
+    .setDescription('Format thread messages into Obsidian-ready blog post with organized structure')
+    .addBooleanOption(option =>
+      option.setName('include_all')
+        .setDescription('Include all messages (default: only conversation-related messages)')
+        .setRequired(false))
+    .addStringOption(option =>
+      option.setName('title')
+        .setDescription('Custom title for the formatted document (default: thread name)')
+        .setRequired(false)),
 
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     try {
-      // Check if command is used in idea channel thread
-      if (!conversationReaderService.isIdeaChannel(interaction)) {
+      // Check if command is used in a thread
+      if (!interaction.channel?.isThread()) {
         await interaction.editReply({
-          content: '❌ This command can only be used in threads within the "idea" channel!'
+          content: '❌ This command can only be used within a thread!\n\nℹ️ **How to use:**\n• Go to any thread\n• Use `/format` to convert thread messages to Obsidian format\n• Optional: Add custom title or include all messages'
         });
         return;
       }
 
-      if (!interaction.channel?.isThread()) {
-        await interaction.editReply({
-          content: '❌ This command can only be used within a thread!'
-        });
-        return;
-      }
+      // Get command options
+      const includeAll = interaction.options.getBoolean('include_all') ?? false;
+      const customTitle = interaction.options.getString('title');
 
       console.log(`📋 Formatting thread content for ${interaction.user.tag} in thread: ${interaction.channel.name}`);
       console.log(`🔍 Thread ID: ${interaction.channel.id}, Parent: ${interaction.channel.parentId}`);
+      console.log(`⚙️ Options: includeAll=${includeAll}, customTitle=${customTitle}`);
 
-      // Read thread messages
-      const threadData = await conversationReaderService.readThreadMessages(interaction.channel);
+      // Read thread messages with options
+      const threadData = await conversationReaderService.readThreadMessages(interaction.channel, includeAll);
       
       if (threadData.messages.length === 0) {
         await interaction.editReply({
-          content: '📝 No messages found in this thread to format.'
+          content: '📝 No messages found in this thread to format.\n\n💡 **Tip:** Try using `include_all: true` option to include all messages including bot responses.'
         });
         return;
+      }
+
+      // Override title if custom title is provided
+      if (customTitle) {
+        threadData.threadName = customTitle;
       }
 
       // Generate formatted content with AI
       const formattedContent = await contentAnalysisService.formatToObsidianBlog(threadData);
 
-      // Create file attachment
-      const fileName = `${threadData.threadName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_formatted.md`;
+      // Create file attachment with better naming
+      const baseFileName = customTitle || threadData.threadName;
+      const fileName = `${baseFileName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.md`;
       const attachment = new AttachmentBuilder(Buffer.from(formattedContent.markdown, 'utf8'), {
         name: fileName
       });
 
-      // Send response with formatted content
+      // Enhanced response with more details
+      const channelInfo = interaction.channel.parent ? ` (from #${interaction.channel.parent.name})` : '';
+      
       await interaction.editReply({
         content: `✨ **Thread formatted successfully!**\n\n` +
                 `📊 **Statistics:**\n` +
                 `• Messages processed: ${threadData.messages.length}\n` +
                 `• Participants: ${threadData.participants.length}\n` +
-                `• Thread: "${threadData.threadName}"\n` +
-                `• Created: ${threadData.createdAt}\n\n` +
+                `• Thread: "${threadData.threadName}"${channelInfo}\n` +
+                `• Created: ${threadData.createdAt}\n` +
+                `• Processing mode: ${includeAll ? 'All messages' : 'Conversation-focused'}\n\n` +
                 `📄 **Generated content:**\n` +
                 `• Title: ${formattedContent.title}\n` +
                 `• Sections: ${formattedContent.sections}\n` +
                 `• Word count: ~${formattedContent.wordCount}\n\n` +
-                `💡 Ready for Obsidian import and blog publishing!`,
+                `💡 Ready for Obsidian import and blog publishing!\n` +
+                `📎 Download the .md file above to import into your notes.`,
         files: [attachment]
       });
 

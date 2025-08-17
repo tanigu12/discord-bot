@@ -1,14 +1,15 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { AsanaService } from '../../services/asanaService';
 
-const asanaService = new AsanaService({
-  clientId: process.env.ASANA_CLIENT_ID || '',
-  clientSecret: process.env.ASANA_CLIENT_SECRET || '',
-  redirectUri: process.env.ASANA_REDIRECT_URI || 'urn:ietf:wg:oauth:2.0:oob'
-});
+// Initialize Asana service with Personal Access Token
+let asanaService: AsanaService;
 
-// Store user tokens temporarily (in production, use a database)
-const userTokens = new Map<string, string>();
+try {
+  asanaService = AsanaService.createFromEnvironment();
+  console.log('✅ Asana service initialized successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize Asana service:', error);
+}
 
 export const asanaCommand = {
   data: new SlashCommandBuilder()
@@ -16,14 +17,8 @@ export const asanaCommand = {
     .setDescription('Manage Asana tasks from Discord')
     .addSubcommand(subcommand =>
       subcommand
-        .setName('auth')
-        .setDescription('Authenticate with Asana')
-        .addStringOption(option =>
-          option
-            .setName('code')
-            .setDescription('OAuth authorization code from Asana')
-            .setRequired(false)
-        )
+        .setName('me')
+        .setDescription('Show your Asana user information')
     )
     .addSubcommand(subcommand =>
       subcommand
@@ -101,27 +96,35 @@ export const asanaCommand = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     const subcommand = interaction.options.getSubcommand();
-    const userId = interaction.user.id;
+
+    // Check if Asana service is available
+    if (!asanaService?.isReady()) {
+      await interaction.reply({
+        content: '❌ **Asana service unavailable**\n\nThe Asana Personal Access Token is not configured. Please check the `ASANA_PERSONAL_ACCESS_TOKEN` environment variable.',
+        ephemeral: true
+      });
+      return;
+    }
 
     try {
       switch (subcommand) {
-        case 'auth':
-          await handleAuth(interaction, userId);
+        case 'me':
+          await handleUserInfo(interaction);
           break;
         case 'create':
-          await handleCreateTask(interaction, userId);
+          await handleCreateTask(interaction);
           break;
         case 'list':
-          await handleListTasks(interaction, userId);
+          await handleListTasks(interaction);
           break;
         case 'complete':
-          await handleCompleteTask(interaction, userId);
+          await handleCompleteTask(interaction);
           break;
         case 'workspaces':
-          await handleListWorkspaces(interaction, userId);
+          await handleListWorkspaces(interaction);
           break;
         case 'projects':
-          await handleListProjects(interaction, userId);
+          await handleListProjects(interaction);
           break;
         default:
           await interaction.reply({
@@ -131,80 +134,58 @@ export const asanaCommand = {
       }
     } catch (error) {
       console.error('Asana command error:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const isAuthError = errorMessage.includes('401') || errorMessage.includes('authentication') || errorMessage.includes('unauthorized');
+      
       await interaction.reply({
-        content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+        content: `❌ **Asana Error**\n\n${errorMessage}${isAuthError ? '\n\n💡 This may be due to an invalid or expired Personal Access Token.' : ''}`,
         ephemeral: true
       });
     }
   }
 };
 
-async function handleAuth(interaction: ChatInputCommandInteraction, userId: string) {
-  const code = interaction.options.getString('code');
-
-  if (!code) {
-    // Generate authorization URL
-    const authUrl = asanaService.getAuthorizationUrl();
-    
-    const embed = new EmbedBuilder()
-      .setTitle('🔐 Asana Authentication')
-      .setDescription('To authenticate with Asana, please follow these steps:')
-      .addFields(
-        {
-          name: 'Step 1',
-          value: `[Click here to authorize](${authUrl})`,
-          inline: false
-        },
-        {
-          name: 'Step 2',
-          value: 'Copy the authorization code from the response',
-          inline: false
-        },
-        {
-          name: 'Step 3',
-          value: 'Run `/asana auth code:<your_code>`',
-          inline: false
-        }
-      )
-      .setColor(0x00ff00)
-      .setFooter({ text: 'This authorization expires in 1 hour' });
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
-    return;
-  }
+async function handleUserInfo(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply();
 
   try {
-    const accessToken = await asanaService.authenticateWithCode(code);
-    userTokens.set(userId, accessToken);
-
-    // Get user info to confirm authentication
-    await asanaService.authenticateWithToken(accessToken);
     const user = await asanaService.getCurrentUser();
+    const workspaces = await asanaService.getWorkspaces();
 
     const embed = new EmbedBuilder()
-      .setTitle('✅ Authentication Successful')
-      .setDescription(`Successfully authenticated as **${user.name}** (${user.email})`)
-      .setColor(0x00ff00)
+      .setTitle('👤 Your Asana Information')
+      .setDescription(`Connected as **${user.name}**`)
+      .addFields(
+        { name: 'Email', value: user.email, inline: true },
+        { name: 'User ID', value: user.gid, inline: true },
+        { name: 'Workspaces', value: `${workspaces.length} workspace(s)`, inline: true }
+      )
+      .setColor(0x0099ff)
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    if (workspaces.length > 0) {
+      const workspaceList = workspaces.slice(0, 3).map(ws => `• **${ws.name}** (${ws.gid})`).join('\n');
+      embed.addFields({ 
+        name: 'Available Workspaces', 
+        value: workspaceList + (workspaces.length > 3 ? `\n... and ${workspaces.length - 3} more` : ''),
+        inline: false 
+      });
+    }
+
+    await interaction.editReply({ embeds: [embed] });
   } catch (error) {
-    throw new Error(`Authentication failed: ${error}`);
+    throw new Error(`Failed to get user information: ${error}`);
   }
 }
 
-async function handleCreateTask(interaction: ChatInputCommandInteraction, userId: string) {
-  const accessToken = userTokens.get(userId);
-  if (!accessToken) {
-    throw new Error('Please authenticate with Asana first using `/asana auth`');
-  }
+async function handleCreateTask(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply();
 
   const name = interaction.options.getString('name', true);
   const notes = interaction.options.getString('notes') || '';
   const projectGid = interaction.options.getString('project') || undefined;
   const dueDate = interaction.options.getString('due_date');
-
-  await asanaService.authenticateWithToken(accessToken);
 
   const taskData: any = {
     name,
@@ -241,27 +222,21 @@ async function handleCreateTask(interaction: ChatInputCommandInteraction, userId
     embed.addFields({ name: 'Due Date', value: dueDate, inline: true });
   }
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.editReply({ embeds: [embed] });
 }
 
-async function handleListTasks(interaction: ChatInputCommandInteraction, userId: string) {
-  const accessToken = userTokens.get(userId);
-  if (!accessToken) {
-    throw new Error('Please authenticate with Asana first using `/asana auth`');
-  }
+async function handleListTasks(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply();
 
   const projectGid = interaction.options.getString('project') || undefined;
   const showCompleted = interaction.options.getBoolean('completed') || false;
-
-  await asanaService.authenticateWithToken(accessToken);
   const tasks = await asanaService.getTasks(projectGid);
 
   const filteredTasks = showCompleted ? tasks : tasks.filter(task => !task.completed);
 
   if (filteredTasks.length === 0) {
-    await interaction.reply({
-      content: '📝 No tasks found.',
-      ephemeral: true
+    await interaction.editReply({
+      content: '📝 No tasks found.'
     });
     return;
   }
@@ -283,18 +258,13 @@ async function handleListTasks(interaction: ChatInputCommandInteraction, userId:
     embed.setFooter({ text: `Showing 10 of ${filteredTasks.length} tasks` });
   }
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.editReply({ embeds: [embed] });
 }
 
-async function handleCompleteTask(interaction: ChatInputCommandInteraction, userId: string) {
-  const accessToken = userTokens.get(userId);
-  if (!accessToken) {
-    throw new Error('Please authenticate with Asana first using `/asana auth`');
-  }
+async function handleCompleteTask(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply();
 
   const taskGid = interaction.options.getString('task_gid', true);
-
-  await asanaService.authenticateWithToken(accessToken);
   const task = await asanaService.completeTask(taskGid);
 
   const embed = new EmbedBuilder()
@@ -307,16 +277,11 @@ async function handleCompleteTask(interaction: ChatInputCommandInteraction, user
     .setColor(0x00ff00)
     .setTimestamp();
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.editReply({ embeds: [embed] });
 }
 
-async function handleListWorkspaces(interaction: ChatInputCommandInteraction, userId: string) {
-  const accessToken = userTokens.get(userId);
-  if (!accessToken) {
-    throw new Error('Please authenticate with Asana first using `/asana auth`');
-  }
-
-  await asanaService.authenticateWithToken(accessToken);
+async function handleListWorkspaces(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply();
   const workspaces = await asanaService.getWorkspaces();
 
   const embed = new EmbedBuilder()
@@ -330,18 +295,13 @@ async function handleListWorkspaces(interaction: ChatInputCommandInteraction, us
 
   embed.setDescription(workspaceList);
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.editReply({ embeds: [embed] });
 }
 
-async function handleListProjects(interaction: ChatInputCommandInteraction, userId: string) {
-  const accessToken = userTokens.get(userId);
-  if (!accessToken) {
-    throw new Error('Please authenticate with Asana first using `/asana auth`');
-  }
+async function handleListProjects(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply();
 
   const workspaceGid = interaction.options.getString('workspace') as string;
-
-  await asanaService.authenticateWithToken(accessToken);
   const projects = await asanaService.getProjects(workspaceGid);
 
   const embed = new EmbedBuilder()
@@ -359,5 +319,5 @@ async function handleListProjects(interaction: ChatInputCommandInteraction, user
     embed.setDescription(projectList);
   }
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.editReply({ embeds: [embed] });
 }

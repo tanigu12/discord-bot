@@ -9,6 +9,7 @@ import {
 } from "./features/commands";
 import { ReactionHandler } from "./features/reactions";
 import { DiaryHandler } from "./features/diary";
+import { IdeaHandler } from "./features/ideas";
 
 dotenv.config();
 
@@ -33,9 +34,10 @@ client.commands.set(searchCommand.data.name, searchCommand);
 client.commands.set(bskyCommand.data.name, bskyCommand);
 client.commands.set(asanaCommand.data.name, asanaCommand);
 
-// Initialize reaction handler and diary handler
+// Initialize reaction handler, diary handler, and idea handler
 const reactionHandler = new ReactionHandler();
 const diaryHandler = new DiaryHandler();
+const ideaHandler = new IdeaHandler();
 
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
@@ -93,7 +95,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// Handle new messages - check for diary channel and emoji reactions
+// Handle new messages - check for diary channel, idea channel and emoji reactions
 client.on(Events.MessageCreate, async (message) => {
   try {
     if (!message.author.bot) {
@@ -103,6 +105,12 @@ client.on(Events.MessageCreate, async (message) => {
       if (diaryHandler.isDiaryChannel(message)) {
         console.log('📔 Diary channel detected, processing auto-translation...');
         await diaryHandler.handleDiaryMessage(message);
+      }
+      
+      // Check if this is an idea channel message
+      if (ideaHandler.isIdeaChannel(message)) {
+        console.log('💡 Idea channel detected, processing idea message...');
+        await ideaHandler.handleIdeaMessage(message);
       }
     }
   } catch (error) {
