@@ -68,6 +68,7 @@ Provide practical insights that will be helpful and informative.`;
   // 汎用分析プロンプト生成
   generateAnalysisPrompt(content: string): string {
     const userProfile = this.knowledge.user_profile;
+    const analysisTemplate = this.knowledge.response_templates.analysis;
     const encouragementPhrase = this.getRandomEncouragementPhrase();
 
     return `You are ${this.personality.name}, ${this.personality.description}. You're analyzing content for ${userProfile.name}, a ${userProfile.background.profession}.
@@ -85,20 +86,40 @@ Provide practical insights that will be helpful and informative.`;
 "${content}"
 
 **Analysis Guidelines:**
-- Be informative and practical
-- Provide context where helpful
-- Consider multiple perspectives
-- Focus on key insights and takeaways
+${analysisTemplate.guidelines.map(guideline => `- ${guideline}`).join('\n')}
 
 ${encouragementPhrase}
 
 Provide a thoughtful analysis that will be useful and informative.`;
   }
 
-  // 日記翻訳用のプロンプト生成（簡素化版）
+  // 日記翻訳用のプロンプト生成（拡張版）
   generateDiaryTranslationPrompt(targetLanguage: string, originalText: string): string {
     const userProfile = this.knowledge.user_profile;
+    const translationTemplates = this.knowledge.response_templates.translation;
     
+    // 日本語から英語への翻訳の場合、文法説明と語彙を含める
+    if (targetLanguage.toLowerCase() === 'english') {
+      const template = translationTemplates.japanese_to_english;
+      return `You are ${this.personality.name}, ${this.personality.description}. You're helping ${userProfile.name} with comprehensive diary translation from Japanese to English.
+
+**User Language Level:** TOEIC ${userProfile.background.language_level.toeic_score}, Versant ${userProfile.background.language_level.versant_level} (Upper-Intermediate)
+
+**Translation Task:**
+Translate this Japanese diary entry to English with educational support:
+
+"${originalText}"
+
+**Format your response exactly like this:**
+
+${template.format}
+
+**Guidelines:**
+${template.guidelines.map(guideline => `- ${guideline}`).join('\n')}`;
+    }
+    
+    // その他の言語翻訳の場合は従来通り
+    const template = translationTemplates.other_languages;
     return `You are ${this.personality.name}, ${this.personality.description}. You're helping ${userProfile.name} with diary translation.
 
 **Translation Task:**
@@ -107,16 +128,15 @@ Translate this diary entry to ${targetLanguage}:
 "${originalText}"
 
 **Guidelines:**
-- Keep the personal, diary-like tone
-- Use natural, conversational language
-- Maintain the emotional tone of the original
+${template.guidelines.map(guideline => `- ${guideline}`).join('\n')}
 
-Provide just the translation without extra formatting or explanations.`;
+Provide ${template.format}.`;
   }
 
   // 日記文法チェック用のプロンプト生成（簡素化版）
   generateDiaryGrammarPrompt(originalText: string): string {
     const userProfile = this.knowledge.user_profile;
+    const grammarTemplate = this.knowledge.response_templates.grammar_feedback;
     const encouragementPhrase = this.getRandomEncouragementPhrase();
     
     return `You are ${this.personality.name}, ${this.personality.description}. You're providing feedback on ${userProfile.name}'s diary entry.
@@ -125,20 +145,12 @@ Provide just the translation without extra formatting or explanations.`;
 "${originalText}"
 
 **Feedback Style:**
-- Focus on 2-3 most important improvements
-- Suggest alternative expressions where helpful
-- Keep it encouraging for diary writing practice
+${grammarTemplate.style_guidelines.map(guideline => `- ${guideline}`).join('\n')}
 
 ${encouragementPhrase}
 
 **Format your response as:**
-✅ **What's working well:** [positive feedback]
-
-📝 **Suggestions:** [specific improvements with explanations]
-
-🚀 **Alternative expressions:** [more natural ways to say the same thing]
-
-Keep it concise and encouraging!`;
+${grammarTemplate.format}`;
   }
 
   // ランダムな励ましフレーズを取得

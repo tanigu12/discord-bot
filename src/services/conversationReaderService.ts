@@ -157,7 +157,6 @@ export class ConversationReaderService {
 
   // Filter messages to only include reply-related messages to reduce noise
   private filterReplyRelatedMessages(messages: any[]): any[] {
-    const messageMap = new Map(messages.map(msg => [msg.id, msg]));
     const relatedMessages = new Set<string>();
 
     // First pass: identify all messages that are replies or being replied to
