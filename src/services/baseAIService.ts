@@ -31,7 +31,8 @@ export class BaseAIService {
       model?: string;
       maxTokens?: number;
       temperature?: number;
-      response_format?: 
+      enableWebSearch?: boolean;
+      response_format?:
         | { type: 'text' | 'json_object' }
         | {
             type: 'json_schema';
@@ -45,8 +46,13 @@ export class BaseAIService {
   ): Promise<string> {
     try {
       const openai = this.getOpenAI();
+      // Use search model if web search is enabled
+      const model = options.enableWebSearch 
+        ? 'gpt-4o-search-preview' 
+        : (options.model || 'gpt-4o-mini');
+
       const requestConfig: any = {
-        model: options.model || 'gpt-4o-mini',
+        model: model,
         messages: [
           {
             role: 'system',
@@ -60,6 +66,11 @@ export class BaseAIService {
         max_tokens: options.maxTokens || 1000,
         temperature: options.temperature || 0.3,
       };
+
+      // Add web search tool if enabled
+      if (options.enableWebSearch) {
+        requestConfig.tools = [{ type: 'web_search' }];
+      }
 
       // Add response_format if specified
       if (options.response_format) {
