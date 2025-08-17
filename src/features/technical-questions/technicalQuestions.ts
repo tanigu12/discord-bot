@@ -1,5 +1,5 @@
 // Technical interview questions organized by category
-export const TECHNICAL_QUESTIONS = {
+const TECHNICAL_QUESTIONS = {
   algorithms: [
     'Explain the difference between Array and LinkedList. When would you use each?',
     'What is Big O notation? Explain with examples of O(1), O(n), and O(log n).',

@@ -1,5 +1,5 @@
 // English phrases organized by category for learning
-export const ENGLISH_PHRASES = {
+const ENGLISH_PHRASES = {
   business: [
     "Let's touch base on this later - Let's discuss this again later",
     "I'm swamped with work - I'm very busy with work",

@@ -51,7 +51,7 @@ export class ContentAggregationService {
     const {
       technicalQuestionCount = 3,
       englishPhraseCount = 3,
-      maxAsanaTasks = 5,
+      maxAsanaTasks = 10,
       includeNews = true,
       includeDiary = true,
       includeAsana = true,
@@ -90,14 +90,15 @@ export class ContentAggregationService {
       }
     }
 
-    // Get Asana tasks if requested and configured
+    // Get Asana tasks if requested and configured (same logic as asana list command)
     if (includeAsana) {
       try {
         if (process.env.ASANA_PERSONAL_ACCESS_TOKEN) {
           const asanaService = AsanaService.createFromEnvironment();
-          const allTasks = await asanaService.getTasks();
-          const incompleteTasks = allTasks.filter(task => !task.completed);
-          result.asanaTasks = incompleteTasks.slice(0, maxAsanaTasks);
+          // Use same logic as asana list command
+          const allTasks = await asanaService.getTasks(); // Get all tasks (same as asana list)
+          const incompleteTasks = allTasks.filter(task => !task.completed); // Filter incomplete (same as asana list)
+          result.asanaTasks = incompleteTasks.slice(0, maxAsanaTasks); // Limit results
           console.log(`✅ Retrieved ${result.asanaTasks.length} incomplete tasks from Asana`);
         }
       } catch (error) {

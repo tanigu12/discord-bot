@@ -19,16 +19,14 @@ export const randomCommand = {
       const content = await contentAggregationService.aggregateRandomContent({
         technicalQuestionCount: 3,
         englishPhraseCount: 3,
-        maxAsanaTasks: 5,
+        maxAsanaTasks: 10,
         includeNews: true,
         includeDiary: true,
         includeAsana: true,
       });
 
-      // Create embed using the formatter
-      const embed = embedFormatter.createMainEmbed(content, interaction.user);
-
-      await interaction.editReply({ embeds: [embed] });
+      // Create comprehensive response with main embed and follow-up messages
+      await embedFormatter.createRandomContentResponse(content, interaction.user, interaction);
       console.log('✅ Random content generated successfully');
 
     } catch (error) {

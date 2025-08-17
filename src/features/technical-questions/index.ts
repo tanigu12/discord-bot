@@ -1,2 +1,2 @@
-export { TechnicalQuestionService, TECHNICAL_QUESTIONS } from './technicalQuestions';
-export type { TechnicalQuestion, QuestionCategory } from './technicalQuestions';
+export { TechnicalQuestionService } from './technicalQuestions';
+export type { TechnicalQuestion } from './technicalQuestions';
