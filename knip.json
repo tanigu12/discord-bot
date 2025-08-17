@@ -15,16 +15,19 @@
   "rules": {
     "files": "error",
     "dependencies": "error",
+    "devDependencies": "error",
     "unlisted": "error",
+    "binaries": "error",
     "exports": "error",
     "nsExports": "error",
-    "classMembers": "warn",
-    "types": "warn",
-    "nsTypes": "warn",
-    "enumMembers": "warn",
+    "classMembers": "error",
+    "types": "error",
+    "nsTypes": "error",
+    "enumMembers": "error",
     "duplicates": "error"
   },
   "exclude": [
     "unresolved"
-  ]
+  ],
+  "includeEntryExports": true
 }

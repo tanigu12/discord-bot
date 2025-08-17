@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { BlueskyService } from '../../services/blueskyService';
 import axios from 'axios';
 

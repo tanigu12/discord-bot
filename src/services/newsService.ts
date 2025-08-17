@@ -102,18 +102,6 @@ export class NewsService {
     ];
   }
 
-  // Method to integrate with actual news APIs in the future
-  private async fetchFromNewsAPI(): Promise<NewsItem[]> {
-    // Placeholder for future news API integration
-    // Could integrate with:
-    // - News API (newsapi.org)
-    // - Reddit API for trending topics
-    // - RSS feeds from major news sources
-    // - Google News RSS
-
-    throw new Error('News API integration not implemented yet');
-  }
-
   // Helper method to clean and format news titles for diary prompts
   formatForDiary(newsItem: NewsItem): string {
     const title = newsItem.title;

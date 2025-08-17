@@ -8,7 +8,7 @@
     "start": "tsx src/index.ts",
     "type-check": "tsc --noEmit",
     "deploy-commands": "tsx src/deploy-commands.ts",
-    "knip": "knip",
+    "knip": "knip --include classMembers --include-entry-exports",
     "knip:fix": "knip --fix",
     "knip:production": "knip --production",
     "lint": "eslint src/**/*.ts",

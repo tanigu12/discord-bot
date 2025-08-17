@@ -183,7 +183,7 @@ export class AsanaService {
 
       // Create task with required data structure - API v1 requires data wrapper
       const requestPayload = {
-        data: taskRequestData
+        data: taskRequestData,
       };
 
       console.log('Creating Asana task with payload:', JSON.stringify(requestPayload, null, 2));
@@ -280,9 +280,13 @@ export class AsanaService {
     this.ensureInitialized();
 
     try {
-      const result = await this.tasksApi.updateTask(taskGid, { completed: true }, {
-        opt_fields: 'gid,name,completed',
-      });
+      const result = await this.tasksApi.updateTask(
+        taskGid,
+        { completed: true },
+        {
+          opt_fields: 'gid,name,completed',
+        }
+      );
       return result.data;
     } catch (error) {
       throw new Error(`Failed to complete task: ${error}`);

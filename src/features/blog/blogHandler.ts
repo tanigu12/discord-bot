@@ -148,7 +148,7 @@ export class BlogHandler {
    */
   private async processTextAttachment(
     attachment: Attachment,
-    user: User | PartialUser
+    _user: User | PartialUser
   ): Promise<string> {
     console.log(`📄 Processing text attachment: ${attachment.name}`);
     

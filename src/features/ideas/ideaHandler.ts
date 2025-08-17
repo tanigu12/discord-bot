@@ -342,7 +342,7 @@ When you use web search results, naturally integrate the findings into your anal
     }
   }
 
-  private generateDeepDiveQuestions(ideaContent: string): string {
+  private generateDeepDiveQuestions(_ideaContent: string): string {
     const questions = [
       "🤔 **Let's explore this idea deeper:**",
       "",

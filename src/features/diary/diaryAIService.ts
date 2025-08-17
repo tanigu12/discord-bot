@@ -8,7 +8,7 @@ export class DiaryAIService extends BaseAIService {
   }
 
   // 日記トピック生成用のJSONスキーマ定義（OpenAI Structured Outputs対応）
-  private getDiaryTopicsSchema(newsTopicsCount: number, personalPromptsCount: number) {
+  private getDiaryTopicsSchema(_newsTopicsCount: number, _personalPromptsCount: number) {
     return {
       name: 'diary_topics_response',
       strict: true,

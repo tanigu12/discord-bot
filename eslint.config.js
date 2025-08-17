@@ -27,8 +27,14 @@ export default [
       prettier: prettier,
     },
     rules: {
-      // TypeScript specific rules
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // TypeScript specific rules - enhanced unused variable detection
+      '@typescript-eslint/no-unused-vars': ['error', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+        ignoreRestSiblings: true
+      }],
       '@typescript-eslint/no-explicit-any': 'warn',
       
       // General rules
@@ -36,6 +42,9 @@ export default [
       'prefer-const': 'error',
       'no-var': 'error',
       'no-undef': 'off', // TypeScript handles this
+      
+      // Unused code detection
+      'no-unused-private-class-members': 'error', // Detect unused private methods and fields (JS # syntax)
       
       // Prettier integration
       'prettier/prettier': 'error',

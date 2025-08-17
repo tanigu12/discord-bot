@@ -108,7 +108,7 @@ export class ReactionHandler {
     action: string,
     message: Message | PartialMessage,
     _user: User | PartialUser,
-    emoji: string
+    _emoji: string
   ): Promise<void> {
     const messageContent = message.content || '';
 

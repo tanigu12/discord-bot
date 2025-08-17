@@ -1,4 +1,4 @@
-import { EmbedBuilder, User, Message, ChatInputCommandInteraction } from 'discord.js';
+import { EmbedBuilder, User, ChatInputCommandInteraction } from 'discord.js';
 import { RandomContentResult } from './contentAggregationService';
 import { TechnicalQuestion } from '../technical-questions';
 import { EnglishPhrase } from '../english-phrases';
@@ -43,7 +43,7 @@ export class RandomContentEmbedFormatter {
     this.addTipsAndResourcesFields(embed, content.resources);
 
     // Send main embed
-    const reply = await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 
     // Send long diary content as separate messages (use followUp for interactions)
     if (content.diaryPrompts) {
@@ -169,47 +169,6 @@ export class RandomContentEmbedFormatter {
     }
   }
 
-  /**
-   * Send complete diary content as separate messages (for regular messages)
-   */
-  private async sendLongDiaryContent(content: RandomContentResult, replyMessage: Message): Promise<void> {
-    if (!content.diaryPrompts) return;
-
-    // Send news-inspired topics
-    if (content.diaryPrompts.newsTopics && content.diaryPrompts.newsTopics.length > 0) {
-      const newsText = content.diaryPrompts.newsTopics
-        .map((topic, index) => `**${index + 1}.** ${topic}`)
-        .join('\n');
-      
-      await this.sendLongContent("📰 Today's News-Inspired Topics", newsText, replyMessage);
-    }
-
-    // Send personal reflection prompts
-    if (content.diaryPrompts.personalPrompts && content.diaryPrompts.personalPrompts.length > 0) {
-      const personalText = content.diaryPrompts.personalPrompts
-        .map((prompt, index) => `**${index + 1}.** ${prompt}`)
-        .join('\n');
-      
-      await this.sendLongContent("💭 Personal Reflection Prompts", personalText, replyMessage);
-    }
-
-    // Send news sources if available
-    if (content.newsTopics && content.newsTopics.length > 0) {
-      const sourcesText = content.newsTopics
-        .filter(item => item.url)
-        .map((item, index) => `**${index + 1}.** [${item.title}](${item.url})`)
-        .join('\n');
-
-      if (sourcesText) {
-        await this.sendLongContent("🔗 News Sources", sourcesText, replyMessage);
-      }
-    }
-
-    // Send encouragement if available
-    if (content.diaryPrompts.encouragement) {
-      await this.sendLongContent("🌟 Your Daily Check-in", content.diaryPrompts.encouragement, replyMessage);
-    }
-  }
 
   /**
    * Add technical questions field
@@ -289,21 +248,6 @@ export class RandomContentEmbedFormatter {
     await this.sendLongContentInteraction(title, tasksText + remainingText, interaction);
   }
 
-  /**
-   * Send complete task list as separate message if there are many tasks
-   */
-  private async sendLongTasksContent(tasks: any[], replyMessage: Message): Promise<void> {
-    const tasksText = tasks
-      .map((task, index) => {
-        const status = task.completed ? '✅' : '⏳';
-        const dueDate = task.due_on ? ` (Due: ${task.due_on})` : '';
-        const projectName = task.projects && task.projects.length > 0 ? ` [${task.projects[0].name}]` : '';
-        return `${index + 1}. ${status} **${task.name}**${dueDate}${projectName}\n   \`GID: ${task.gid}\``;
-      })
-      .join('\n\n');
-
-    await this.sendLongContent(`📋 Complete Task List (${tasks.length} tasks)`, tasksText, replyMessage);
-  }
 
   /**
    * Add tips and resources fields
@@ -360,34 +304,6 @@ export class RandomContentEmbedFormatter {
     }
   }
 
-  /**
-   * Send long content in appropriate chunks (copied from diary formatter)
-   */
-  private async sendLongContent(title: string, content: string, replyMessage: Message): Promise<void> {
-    if (content.length <= 2000) {
-      // Single message
-      const embed = new EmbedBuilder()
-        .setTitle(title)
-        .setDescription(content)
-        .setColor(0x00d4aa)
-        .setTimestamp();
-      
-      await replyMessage.reply({ embeds: [embed] });
-    } else {
-      // Multiple messages
-      const chunks = this.splitTextIntoChunks(content, 2000);
-      
-      for (let i = 0; i < chunks.length; i++) {
-        const embed = new EmbedBuilder()
-          .setTitle(`${title} (${i + 1}/${chunks.length})`)
-          .setDescription(chunks[i])
-          .setColor(0x00d4aa)
-          .setTimestamp();
-        
-        await replyMessage.reply({ embeds: [embed] });
-      }
-    }
-  }
 
   /**
    * Split text into chunks at natural breakpoints (copied from diary formatter)
