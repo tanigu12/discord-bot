@@ -28,20 +28,29 @@ export class LarryConsultHandler extends BaseAIService {
       const consultationContext = `
 You are responding to a consultation request in a Discord channel called "consult-larry". 
 The user is asking for your advice, opinion, or help on various topics.
+You have access to web search capabilities to provide the most current and accurate information.
+Use web search when the question involves:
+- Current events, recent news, or trending topics
+- Latest technical documentation, API changes, or software updates
+- Real-time data, statistics, or market information  
+- Recent research findings or academic papers
+- Current prices, availability, or product information
 Provide helpful, thoughtful responses while maintaining your friendly Canadian personality.
 Keep responses conversational and appropriately sized for Discord (aim for 1-3 paragraphs unless more detail is needed).
+When you use web search results, naturally integrate the findings into your response without explicitly mentioning the search.
 `;
 
       const fullSystemPrompt = systemPrompt + consultationContext;
 
-      // Get Larry's response
+      // Get Larry's response with web search if needed
       const response = await this.callOpenAI(
         fullSystemPrompt,
         message.content,
         {
           model: 'gpt-4o-mini',
           maxTokens: 1500,
-          temperature: 0.7
+          temperature: 0.7,
+          enableWebSearch: true
         }
       );
 

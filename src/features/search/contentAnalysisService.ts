@@ -145,47 +145,54 @@ Please provide analysis that considers our ongoing conversation and how this top
         )
         .join('\n\n---\n\n');
 
-      const systemPrompt = `You are an expert content organizer specializing in creating concise, technical blog posts from Discord thread discussions.
+      const systemPrompt = `You are an expert content organizer specializing in creating bilingual technical blog posts from Discord thread discussions.
 
-Create a simple, structured blog post in ENGLISH following this EXACT format:
+Create a structured blog post with BOTH English and Japanese following this EXACT format:
 
 1. Clean title (no quotes, technical but readable)
-2. Brief definition/introduction (1-2 sentences)
+2. Brief definition/introduction (1-2 sentences in English, followed by Japanese translation)
 3. Referenced links in brackets [URL] if any mentioned
 4. Main content organized with clear hierarchy:
-   - Use simple headers for main topics
+   - Use simple headers for main topics (English first, then Japanese)
    - Use indented bullet points (spaces) for sub-points
+   - Each English section followed by Japanese translation
    - Keep explanations concise and technical
    - Focus on facts, features, and key differences
 5. No frontmatter, no conclusion section, no "Key Takeaways"
-6. IMPORTANT: Write everything in English
+6. BILINGUAL FORMAT: English content followed by Japanese translation for each section
 
 Style Guidelines:
-- Write in English (translate Japanese content if needed)
-- Technical but accessible language
+- Present content in both English and Japanese
+- Technical but accessible language in both languages  
 - Bullet points over paragraphs
 - Minimal fluff, maximum information density
 - Include version numbers, protocol names, technical details
 - Remove personal opinions and conversational elements
 - Focus on the technical substance
-- Translate technical Japanese terms to English equivalents
+- Provide accurate translations of technical terms
 
 Example format:
 Title
 Brief explanation of what it is.
+簡潔な説明（日本語）
 
 [relevant URLs if mentioned]
 
-Main Topic 1
+## Main Topic 1 / メイントピック1
     sub-point with technical details
+    技術的詳細のサブポイント
     another technical point
+    別の技術的ポイント
 
-Main Topic 2
+## Main Topic 2 / メイントピック2  
     feature explanation
+    機能の説明
     implementation details
+    実装の詳細
         deeper sub-point if needed
+        必要に応じてより詳細なサブポイント
 
-Transform the Discord discussion into this clean, reference-style format.`;
+Transform the Discord discussion into this clean, bilingual reference-style format.`;
 
       const userMessage = `Please format this Discord thread discussion into a structured blog post:
 
@@ -258,11 +265,12 @@ ${messagesContent}`;
   } {
     const title = threadData.threadName || 'Discussion Summary';
 
-    // Create a simple, clean format matching the new style (in English)
+    // Create a simple, clean bilingual format
     const markdown = `${title}
 Discussion summary from Discord thread with ${threadData.participants.length} participants.
+${threadData.participants.length}名の参加者によるDiscordスレッドからのディスカッション要約
 
-Main Points
+## Main Points / 主要ポイント
 ${threadData.messages
   .filter(msg => msg.content.trim().length > 0)
   .map(
@@ -271,7 +279,7 @@ ${threadData.messages
   )
   .join('\n')}
 
-Participants
+## Participants / 参加者
 ${threadData.participants.map(p => `    ${p}`).join('\n')}`;
 
     return {
