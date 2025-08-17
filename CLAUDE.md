@@ -22,6 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `OPENAI_API_KEY` - OpenAI API key for AI features
    - `BLUESKY_USERNAME` - Bluesky handle (e.g., taka1415.bsky.social)
    - `BLUESKY_PASSWORD` - Bluesky app password (create in Bluesky settings)
+   - `ASANA_PERSONAL_ACCESS_TOKEN` - Asana Personal Access Token for task management
    - `GUILD_ID` - (Optional) Guild ID for faster command deployment during development
 
 ## Architecture Overview

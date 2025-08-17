@@ -8,10 +8,12 @@ import {
 } from "discord.js";
 import { ContentAnalysisService } from "../search/contentAnalysisService";
 import { ContentFetcherService } from "../../services/contentFetcherService";
+import { IdeaHandler } from "../ideas/ideaHandler";
 
 export class ReactionHandler {
   private contentAnalysisService: ContentAnalysisService;
   private contentFetcher: ContentFetcherService;
+  private ideaHandler: IdeaHandler;
 
   // Emoji mappings for different functions
   private readonly EMOJI_ACTIONS = {
@@ -27,10 +29,13 @@ export class ReactionHandler {
     "🤝": "chat_partner",
   };
 
+  // Idea-specific emojis (handled separately)
+  private readonly IDEA_EMOJIS = ["💡", "📋", "✨", "🗂️", "👍", "🔥"];
 
   constructor() {
     this.contentAnalysisService = new ContentAnalysisService();
     this.contentFetcher = new ContentFetcherService();
+    this.ideaHandler = new IdeaHandler();
   }
 
   async handleReaction(
@@ -48,13 +53,27 @@ export class ReactionHandler {
     const emoji = reaction.emoji.name;
     console.log(`😀 Emoji: ${emoji}`);
     
-    if (!emoji || !this.EMOJI_ACTIONS[emoji as keyof typeof this.EMOJI_ACTIONS]) {
+    if (!emoji) {
+      console.log('❌ No emoji name found');
+      return;
+    }
+
+    const message = reaction.message;
+    
+    // Check if this is an idea channel and handle idea-specific reactions
+    if (this.ideaHandler.isIdeaChannel(message) && this.IDEA_EMOJIS.includes(emoji)) {
+      console.log('💡 Handling idea channel reaction');
+      await this.ideaHandler.handleIdeaReaction(reaction, user, emoji);
+      return;
+    }
+
+    // Handle regular reactions
+    if (!this.EMOJI_ACTIONS[emoji as keyof typeof this.EMOJI_ACTIONS]) {
       console.log(`❌ Emoji "${emoji}" not in action list`);
       console.log(`📋 Available emojis:`, Object.keys(this.EMOJI_ACTIONS));
       return;
     }
 
-    const message = reaction.message;
     console.log(`📝 Message content length: ${message.content?.length || 0}`);
     
     if (!message.content || !message.content.trim()) {
@@ -218,6 +237,18 @@ export class ReactionHandler {
 **AI English Teacher:**
 🤝 - Chat with Alex, your personal AI English teacher
 
+**Idea Management (in idea channels):**
+💡 - Create idea thread for discussion
+📋 - Categorize idea
+👍 - Approve idea
+🔥 - Mark as high priority
+✨ - Mark as implemented
+🗂️ - Archive idea
+
 **How to use:** Simply react to any message with these emojis and I'll reply with the AI response!`;
+  }
+
+  getIdeaGuide(): string {
+    return this.ideaHandler.getIdeaEmojiGuide();
   }
 }

@@ -1,9 +1,7 @@
 import Asana from 'asana';
 
 interface AsanaConfig {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
+  personalAccessToken: string;
 }
 
 interface TaskData {
@@ -22,64 +20,48 @@ interface User {
 }
 
 export class AsanaService {
-  private client: Asana.Client | null = null;
-  private config: AsanaConfig;
+  private client: Asana.Client;
+  private isInitialized: boolean = false;
 
   constructor(config: AsanaConfig) {
-    this.config = config;
-  }
-
-  public getAuthorizationUrl(): string {
-    const baseUrl = 'https://app.asana.com/-/oauth_authorize';
-    const state = Math.random().toString(36).substring(7) || 'default-state';
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: this.config.clientId,
-      redirect_uri: this.config.redirectUri,
-      state: state
-    });
-    
-    return `${baseUrl}?${params.toString()}`;
-  }
-
-  public async authenticateWithCode(code: string): Promise<string> {
-    try {
-      const client = Asana.Client.create({
-        clientId: this.config.clientId,
-        clientSecret: this.config.clientSecret,
-        redirectUri: this.config.redirectUri
-      });
-
-      const credentials = await client.app.accessTokenFromCode(code);
-      const accessToken = credentials.access_token;
-      
-      if (!accessToken) {
-        throw new Error('No access token received from Asana');
-      }
-      
-      this.client = Asana.Client.create().useAccessToken(accessToken);
-      
-      return accessToken;
-    } catch (error) {
-      throw new Error(`Failed to authenticate with Asana: ${error}`);
+    if (!config.personalAccessToken) {
+      throw new Error('Personal Access Token is required for Asana service');
     }
+    
+    // Initialize client with Personal Access Token
+    this.client = Asana.Client.create().useAccessToken(config.personalAccessToken);
+    this.isInitialized = true;
+    
+    console.log('✅ Asana service initialized with Personal Access Token');
   }
 
-  public async authenticateWithToken(accessToken: string): Promise<void> {
-    this.client = Asana.Client.create().useAccessToken(accessToken);
+  // Static method to create service instance from environment
+  public static createFromEnvironment(): AsanaService {
+    const personalAccessToken = process.env.ASANA_PERSONAL_ACCESS_TOKEN;
+    
+    if (!personalAccessToken) {
+      throw new Error('ASANA_PERSONAL_ACCESS_TOKEN environment variable is required');
+    }
+    
+    return new AsanaService({ personalAccessToken });
   }
 
-  private ensureAuthenticated(): void {
-    if (!this.client) {
-      throw new Error('Not authenticated with Asana. Please authenticate first.');
+  // Check if service is properly initialized
+  public isReady(): boolean {
+    return this.isInitialized && !!this.client;
+  }
+
+  private ensureInitialized(): void {
+    if (!this.isInitialized || !this.client) {
+      throw new Error('Asana service not initialized. Please check your Personal Access Token.');
     }
   }
 
   public async getCurrentUser(): Promise<User> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
-      const user = await this.client!.users.me();
+      const user = await this.client.users.me();
       return {
         gid: user.gid,
         name: user.name,
@@ -91,10 +73,10 @@ export class AsanaService {
   }
 
   public async getWorkspaces(): Promise<any[]> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
-      const workspacesList = await this.client!.workspaces.findAll();
+      const workspacesList = await this.client.workspaces.findAll();
       // Convert ResourceList to array using spread operator
       return [...(workspacesList as any)];
     } catch (error) {
@@ -103,10 +85,10 @@ export class AsanaService {
   }
 
   public async getProjects(workspaceGid: string): Promise<any[]> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
-      const projectsList = await this.client!.projects.findByWorkspace(workspaceGid);
+      const projectsList = await this.client.projects.findByWorkspace(workspaceGid);
       // Convert ResourceList to array using spread operator
       return [...(projectsList as any)];
     } catch (error) {
@@ -115,7 +97,7 @@ export class AsanaService {
   }
 
   public async createTask(taskData: TaskData): Promise<any> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
       // Ensure workspace is set
@@ -134,14 +116,14 @@ export class AsanaService {
         workspace: taskData.workspace as string
       };
       
-      return await this.client!.tasks.create(taskDataWithWorkspace);
+      return await this.client.tasks.create(taskDataWithWorkspace);
     } catch (error) {
       throw new Error(`Failed to create task: ${error}`);
     }
   }
 
   public async getTasks(projectGid?: string, assignee?: string): Promise<any[]> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
       const params: any = {
@@ -150,7 +132,7 @@ export class AsanaService {
       
       let tasksList;
       if (projectGid) {
-        tasksList = await this.client!.tasks.findByProject(projectGid, params);
+        tasksList = await this.client.tasks.findByProject(projectGid, params);
       } else {
         if (assignee) {
           params.assignee = assignee;
@@ -158,7 +140,7 @@ export class AsanaService {
           const user = await this.getCurrentUser();
           params.assignee = user.gid;
         }
-        tasksList = await this.client!.tasks.findAll(params);
+        tasksList = await this.client.tasks.findAll(params);
       }
       
       // Convert ResourceList to array using spread operator
@@ -169,30 +151,30 @@ export class AsanaService {
   }
 
   public async updateTask(taskGid: string, updates: Partial<TaskData>): Promise<any> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
-      return await this.client!.tasks.update(taskGid, updates);
+      return await this.client.tasks.update(taskGid, updates);
     } catch (error) {
       throw new Error(`Failed to update task: ${error}`);
     }
   }
 
   public async completeTask(taskGid: string): Promise<any> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
-      return await this.client!.tasks.update(taskGid, { completed: true });
+      return await this.client.tasks.update(taskGid, { completed: true });
     } catch (error) {
       throw new Error(`Failed to complete task: ${error}`);
     }
   }
 
   public async deleteTask(taskGid: string): Promise<void> {
-    this.ensureAuthenticated();
+    this.ensureInitialized();
     
     try {
-      await this.client!.tasks.delete(taskGid);
+      await this.client.tasks.delete(taskGid);
     } catch (error) {
       throw new Error(`Failed to delete task: ${error}`);
     }
