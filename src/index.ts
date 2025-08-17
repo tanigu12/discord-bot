@@ -4,7 +4,8 @@ import {
   randomCommand,
   formatCommand,
   searchCommand,
-  bskyCommand
+  bskyCommand,
+  asanaCommand
 } from "./features/commands";
 import { ReactionHandler } from "./features/reactions";
 import { DiaryHandler } from "./features/diary";
@@ -30,6 +31,7 @@ client.commands.set(randomCommand.data.name, randomCommand);
 client.commands.set(formatCommand.data.name, formatCommand);
 client.commands.set(searchCommand.data.name, searchCommand);
 client.commands.set(bskyCommand.data.name, bskyCommand);
+client.commands.set(asanaCommand.data.name, asanaCommand);
 
 // Initialize reaction handler and diary handler
 const reactionHandler = new ReactionHandler();
