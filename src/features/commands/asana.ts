@@ -138,10 +138,17 @@ export const asanaCommand = {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       const isAuthError = errorMessage.includes('401') || errorMessage.includes('authentication') || errorMessage.includes('unauthorized');
       
-      await interaction.reply({
+      const errorResponse = {
         content: `❌ **Asana Error**\n\n${errorMessage}${isAuthError ? '\n\n💡 This may be due to an invalid or expired Personal Access Token.' : ''}`,
         ephemeral: true
-      });
+      };
+
+      // Check if interaction has already been replied to or deferred
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply(errorResponse);
+      } else {
+        await interaction.reply(errorResponse);
+      }
     }
   }
 };

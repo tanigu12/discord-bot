@@ -7,6 +7,39 @@ export class DiaryAIService extends BaseAIService {
     super();
   }
 
+  // 日記トピック生成用のJSONスキーマ定義（OpenAI Structured Outputs対応）
+  private getDiaryTopicsSchema(newsTopicsCount: number, personalPromptsCount: number) {
+    return {
+      name: "diary_topics_response",
+      strict: true,
+      schema: {
+        type: "object",
+        properties: {
+          newsTopics: {
+            type: "array",
+            description: "News-inspired diary topics that connect current events to personal experiences",
+            items: {
+              type: "string"
+            }
+          },
+          personalPrompts: {
+            type: "array", 
+            description: "Personal reflection prompts focusing on different aspects of life and growth",
+            items: {
+              type: "string"
+            }
+          },
+          encouragement: {
+            type: "string",
+            description: "A supportive and encouraging message for the user"
+          }
+        },
+        required: ["newsTopics", "personalPrompts", "encouragement"],
+        additionalProperties: false
+      }
+    };
+  }
+
   // 日記専用翻訳
   async translateDiaryText(text: string, targetLanguage: string): Promise<string> {
     try {
@@ -105,21 +138,33 @@ export class DiaryAIService extends BaseAIService {
       const randomSeed = this.generateRandomSeed();
       const userMessage = `Today's news context:\n${newsContext}\n\nRandom seed: ${randomSeed}\n\nPlease generate ${topicConfig.totalTopics} diary topics with variety and creativity.`;
 
+      // Get structured JSON schema for diary topics
+      const jsonSchema = this.getDiaryTopicsSchema(topicConfig.newsTopicsCount, topicConfig.personalPromptsCount);
+      
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
         model: "gpt-4o-mini",
         maxTokens: 1500,
-        temperature: 0.9,
+        temperature: 0.7,
+        response_format: {
+          type: "json_schema",
+          json_schema: jsonSchema
+        }
       });
       
       try {
+        // With structured outputs, OpenAI guarantees the JSON is valid and follows our schema
         const parsedResponse = JSON.parse(responseText);
+        console.log("✅ Successfully received structured output from OpenAI");
+        
         return {
-          newsTopics: parsedResponse.newsTopics || [],
-          personalPrompts: parsedResponse.personalPrompts || [],
-          encouragement: parsedResponse.encouragement || "Hello! I'm here to support your English learning journey through diary writing. Let's explore your thoughts together! 😊"
+          newsTopics: parsedResponse.newsTopics,
+          personalPrompts: parsedResponse.personalPrompts,
+          encouragement: parsedResponse.encouragement
         };
       } catch (parseError) {
-        console.error("Failed to parse AI response, using fallback");
+        console.error("❌ Unexpected: Structured output failed to parse");
+        console.error("Response:", responseText.substring(0, 200) + "...");
+        console.error("Parse error:", parseError);
         return this.getFallbackDiaryTopics(newsItems);
       }
 
@@ -128,6 +173,7 @@ export class DiaryAIService extends BaseAIService {
       return this.getFallbackDiaryTopics(newsItems);
     }
   }
+
 
   // ランダムトピック設定生成（元のメソッドから移動）
   private generateRandomTopicConfig(): {
@@ -213,19 +259,10 @@ RANDOMIZATION FOCUS: Create varied, unique topics each time. Avoid repetitive pa
 
 Based on today's news and the following theme categories: ${categoriesText}
 
-Create:
+Create exactly:
 1. ${config.newsTopicsCount} news-inspired diary topics that creatively connect current events to personal experiences
 2. ${config.personalPromptsCount} personal reflection prompts focusing on different aspects of life and growth
-3. 1 encouraging message with a ${config.tone} approach
-
-Use ${config.style} approach for maximum variety and engagement.
-
-Format your response as JSON with these exact keys:
-{
-  "newsTopics": ["topic1", "topic2", ...],
-  "personalPrompts": ["prompt1", "prompt2", ...], 
-  "encouragement": "supportive message"
-}
+3. 1 encouraging message with a ${config.tone} approach using ${config.style}
 
 VARIETY GUIDELINES:
 - Generate completely different topics from typical diary suggestions
@@ -236,7 +273,9 @@ VARIETY GUIDELINES:
 - Ensure each topic feels fresh and unique
 - Include both simple and more complex prompts
 - Mix abstract and concrete topics
-- Encourage both English and Japanese writing practice`;
+- Encourage both English and Japanese writing practice
+- Make topics personal and thought-provoking
+- Connect news to everyday life experiences`;
   }
 
   // ランダムシード生成（元のメソッドから移動）

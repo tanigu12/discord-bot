@@ -31,11 +31,21 @@ export class BaseAIService {
       model?: string;
       maxTokens?: number;
       temperature?: number;
+      response_format?: 
+        | { type: 'text' | 'json_object' }
+        | {
+            type: 'json_schema';
+            json_schema: {
+              name: string;
+              strict?: boolean;
+              schema: any;
+            };
+          };
     } = {}
   ): Promise<string> {
     try {
       const openai = this.getOpenAI();
-      const response = await openai.chat.completions.create({
+      const requestConfig: any = {
         model: options.model || 'gpt-4o-mini',
         messages: [
           {
@@ -49,7 +59,14 @@ export class BaseAIService {
         ],
         max_tokens: options.maxTokens || 1000,
         temperature: options.temperature || 0.3,
-      });
+      };
+
+      // Add response_format if specified
+      if (options.response_format) {
+        requestConfig.response_format = options.response_format;
+      }
+
+      const response = await openai.chat.completions.create(requestConfig);
 
       return response.choices[0]?.message?.content || 'AI response failed';
     } catch (error) {

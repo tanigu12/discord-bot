@@ -153,22 +153,37 @@ export class AsanaService {
     
     try {
       let result;
+      
       if (projectGid) {
+        // Get tasks from specific project
         result = await this.tasksApi.getTasks({
           project: projectGid,
-          opt_fields: 'gid,name,notes,completed,due_on,assignee.name,projects.name'
+          opt_fields: 'gid,name,notes,completed,due_on,assignee.name,projects.name',
+          limit: 50  // Add limit to prevent large dataset issues
         });
       } else {
+        // Get tasks by assignee - need workspace parameter
         const targetAssignee = assignee || (await this.getCurrentUser()).gid;
+        const workspaces = await this.getWorkspaces();
+        
+        if (workspaces.length === 0) {
+          throw new Error('No workspace available');
+        }
+        
         result = await this.tasksApi.getTasks({
           assignee: targetAssignee,
-          opt_fields: 'gid,name,notes,completed,due_on,assignee.name,projects.name'
+          workspace: workspaces[0].gid,  // Required for assignee queries
+          opt_fields: 'gid,name,notes,completed,due_on,assignee.name,projects.name',
+          limit: 50,  // Add limit to prevent large dataset issues
+          completed_since: 'now'  // Only get incomplete tasks by default
         });
       }
       
-      return result.data;
+      return result.data || [];
     } catch (error) {
-      throw new Error(`Failed to get tasks: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Asana getTasks error details:', (error as any).response?.body || errorMessage);
+      throw new Error(`Failed to get tasks: ${errorMessage}`);
     }
   }
 
