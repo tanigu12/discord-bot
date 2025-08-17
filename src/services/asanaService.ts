@@ -1,4 +1,4 @@
-import Asana from 'asana';
+const Asana = require('asana');
 
 interface AsanaConfig {
   personalAccessToken: string;
@@ -20,7 +20,11 @@ interface User {
 }
 
 export class AsanaService {
-  private client: Asana.Client;
+  private client: any;
+  private usersApi: any;
+  private tasksApi: any;
+  private projectsApi: any;
+  private workspacesApi: any;
   private isInitialized: boolean = false;
 
   constructor(config: AsanaConfig) {
@@ -28,11 +32,19 @@ export class AsanaService {
       throw new Error('Personal Access Token is required for Asana service');
     }
     
-    // Initialize client with Personal Access Token
-    this.client = Asana.Client.create().useAccessToken(config.personalAccessToken);
-    this.isInitialized = true;
+    // Initialize client with v3.x syntax
+    this.client = Asana.ApiClient.instance;
+    const token = this.client.authentications['token'];
+    token.accessToken = config.personalAccessToken;
     
-    console.log('✅ Asana service initialized with Personal Access Token');
+    // Initialize API instances
+    this.usersApi = new Asana.UsersApi();
+    this.tasksApi = new Asana.TasksApi();
+    this.projectsApi = new Asana.ProjectsApi();
+    this.workspacesApi = new Asana.WorkspacesApi();
+    
+    this.isInitialized = true;
+    console.log('✅ Asana service initialized with Personal Access Token (v3.x)');
   }
 
   // Static method to create service instance from environment
@@ -61,7 +73,10 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      const user = await this.client.users.me();
+      const result = await this.usersApi.getUser("me", {
+        opt_fields: "gid,name,email"
+      });
+      const user = result.data;
       return {
         gid: user.gid,
         name: user.name,
@@ -76,9 +91,10 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      const workspacesList = await this.client.workspaces.findAll();
-      // Convert ResourceList to array using spread operator
-      return [...(workspacesList as any)];
+      const result = await this.workspacesApi.getWorkspaces({
+        opt_fields: "gid,name"
+      });
+      return result.data;
     } catch (error) {
       throw new Error(`Failed to get workspaces: ${error}`);
     }
@@ -88,9 +104,11 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      const projectsList = await this.client.projects.findByWorkspace(workspaceGid);
-      // Convert ResourceList to array using spread operator
-      return [...(projectsList as any)];
+      const result = await this.projectsApi.getProjects({
+        workspace: workspaceGid,
+        opt_fields: "gid,name"
+      });
+      return result.data;
     } catch (error) {
       throw new Error(`Failed to get projects: ${error}`);
     }
@@ -110,13 +128,21 @@ export class AsanaService {
         }
       }
       
-      // Ensure workspace is defined before creating task
-      const taskDataWithWorkspace = {
-        ...taskData,
-        workspace: taskData.workspace as string
+      // Create task with v3.x API
+      const taskRequest = {
+        data: {
+          name: taskData.name,
+          notes: taskData.notes,
+          projects: taskData.projects,
+          assignee: taskData.assignee,
+          due_on: taskData.due_on
+        }
       };
       
-      return await this.client.tasks.create(taskDataWithWorkspace);
+      const result = await this.tasksApi.createTask(taskRequest, {
+        opt_fields: "gid,name,notes,permalink_url"
+      });
+      return result.data;
     } catch (error) {
       throw new Error(`Failed to create task: ${error}`);
     }
@@ -126,25 +152,21 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      const params: any = {
-        opt_fields: 'name,notes,completed,due_on,assignee.name,projects.name'
-      };
-      
-      let tasksList;
+      let result;
       if (projectGid) {
-        tasksList = await this.client.tasks.findByProject(projectGid, params);
+        result = await this.tasksApi.getTasks({
+          project: projectGid,
+          opt_fields: 'gid,name,notes,completed,due_on,assignee.name,projects.name'
+        });
       } else {
-        if (assignee) {
-          params.assignee = assignee;
-        } else {
-          const user = await this.getCurrentUser();
-          params.assignee = user.gid;
-        }
-        tasksList = await this.client.tasks.findAll(params);
+        const targetAssignee = assignee || (await this.getCurrentUser()).gid;
+        result = await this.tasksApi.getTasks({
+          assignee: targetAssignee,
+          opt_fields: 'gid,name,notes,completed,due_on,assignee.name,projects.name'
+        });
       }
       
-      // Convert ResourceList to array using spread operator
-      return [...(tasksList as any)];
+      return result.data;
     } catch (error) {
       throw new Error(`Failed to get tasks: ${error}`);
     }
@@ -154,7 +176,13 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      return await this.client.tasks.update(taskGid, updates);
+      const updateRequest = {
+        data: updates
+      };
+      const result = await this.tasksApi.updateTask(updateRequest, taskGid, {
+        opt_fields: "gid,name,notes,completed"
+      });
+      return result.data;
     } catch (error) {
       throw new Error(`Failed to update task: ${error}`);
     }
@@ -164,7 +192,13 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      return await this.client.tasks.update(taskGid, { completed: true });
+      const updateRequest = {
+        data: { completed: true }
+      };
+      const result = await this.tasksApi.updateTask(updateRequest, taskGid, {
+        opt_fields: "gid,name,completed"
+      });
+      return result.data;
     } catch (error) {
       throw new Error(`Failed to complete task: ${error}`);
     }
@@ -174,7 +208,7 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      await this.client.tasks.delete(taskGid);
+      await this.tasksApi.deleteTask(taskGid);
     } catch (error) {
       throw new Error(`Failed to delete task: ${error}`);
     }
