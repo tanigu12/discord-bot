@@ -5,10 +5,10 @@ import {
   PartialUser,
   Message,
   PartialMessage,
-} from "discord.js";
-import { ContentAnalysisService } from "../search/contentAnalysisService";
-import { ContentFetcherService } from "../../services/contentFetcherService";
-import { IdeaHandler } from "../ideas/ideaHandler";
+} from 'discord.js';
+import { ContentAnalysisService } from '../search/contentAnalysisService';
+import { ContentFetcherService } from '../../services/contentFetcherService';
+import { IdeaHandler } from '../ideas/ideaHandler';
 
 export class ReactionHandler {
   private contentAnalysisService: ContentAnalysisService;
@@ -18,19 +18,20 @@ export class ReactionHandler {
   // Emoji mappings for different functions
   private readonly EMOJI_ACTIONS = {
     // Study emojis
-    "✅": "grammar_check",
-    "📚": "explain_word",
-    "💡": "explain_text",
+    '✅': 'grammar_check',
+    '📚': 'explain_word',
+    '💡': 'explain_text',
 
     // Search emoji
-    "🔍": "search_analyze",
-    
+    '🔍': 'search_analyze',
+
     // AI Partner emoji
-    "🤝": "chat_partner",
+    '🤝': 'chat_partner',
+    '🧙‍♂️': 'consult_larry',
   };
 
   // Idea-specific emojis (handled separately)
-  private readonly IDEA_EMOJIS = ["💡", "📋", "✨", "🗂️", "👍", "🔥", "🧙‍♂️"];
+  private readonly IDEA_EMOJIS = ['💡', '📋', '✨', '🗂️', '👍', '🔥', '🧙‍♂️'];
 
   constructor() {
     this.contentAnalysisService = new ContentAnalysisService();
@@ -43,7 +44,7 @@ export class ReactionHandler {
     user: User | PartialUser
   ): Promise<void> {
     console.log(`👤 User: ${user.tag} (bot: ${user.bot})`);
-    
+
     // Ignore bot reactions
     if (user.bot) {
       console.log('🤖 Ignoring bot reaction');
@@ -52,14 +53,14 @@ export class ReactionHandler {
 
     const emoji = reaction.emoji.name;
     console.log(`😀 Emoji: ${emoji}`);
-    
+
     if (!emoji) {
       console.log('❌ No emoji name found');
       return;
     }
 
     const message = reaction.message;
-    
+
     // Check if this is an idea channel and handle idea-specific reactions
     if (this.ideaHandler.isIdeaChannel(message) && this.IDEA_EMOJIS.includes(emoji)) {
       console.log('💡 Handling idea channel reaction');
@@ -75,7 +76,7 @@ export class ReactionHandler {
     }
 
     console.log(`📝 Message content length: ${message.content?.length || 0}`);
-    
+
     if (!message.content || !message.content.trim()) {
       console.log('⚠️  Skipping empty message');
       return;
@@ -96,18 +97,18 @@ export class ReactionHandler {
     _user: User | PartialUser,
     emoji: string
   ): Promise<void> {
-    const messageContent = message.content || "";
+    const messageContent = message.content || '';
 
     try {
-      let response = "";
+      let response = '';
 
-      if (action === "grammar_check") {
+      if (action === 'grammar_check') {
         response = await this.contentAnalysisService.analyzeContent(
           `Please check the grammar and provide corrections for this text: ${messageContent}`,
           false
         );
         response = `**Grammar Check:**\n${response}`;
-      } else if (action === "explain_word") {
+      } else if (action === 'explain_word') {
         // For single words, use word explanation
         const words = messageContent.trim().split(/\s+/);
         if (words.length === 1) {
@@ -119,11 +120,11 @@ export class ReactionHandler {
         } else {
           response = `Please react with 📚 to a single word for explanation.`;
         }
-      } else if (action === "explain_text") {
+      } else if (action === 'explain_text') {
         // General text explanation/analysis
         response = await this.contentAnalysisService.analyzeContent(messageContent, false);
         response = `**Text Analysis:**\n${response}`;
-      } else if (action === "search_analyze") {
+      } else if (action === 'search_analyze') {
         // Search and analyze content (similar to /search command)
         console.log('🔍 Processing search reaction...');
         const isUrl = this.isValidUrl(messageContent);
@@ -146,16 +147,25 @@ export class ReactionHandler {
         // Generate AI analysis
         const analysis = await this.contentAnalysisService.analyzeContent(content, isUrl);
         response = `🔍 **Content Analysis**\n\n${analysis}${sourceInfo}`;
-      } else if (action === "chat_partner") {
+      } else if (action === 'chat_partner') {
         // Chat with AI Partner (simplified without user profile)
         console.log('🤝 Processing AI partner chat reaction...');
-        
+
         // Use text analysis with chat prompt instead
         const aiResponse = await this.contentAnalysisService.analyzeContent(
           `As a helpful AI assistant, please respond to this message: ${messageContent}`,
           false
         );
         response = `🤝 **AIパートナー:**\n\n${aiResponse}`;
+      } else if (action === 'consult_larry') {
+        // Consult with Larry (Web search enabled)
+        console.log('🧙‍♂️ Processing Larry consultation reaction...');
+        
+        const aiResponse = await this.contentAnalysisService.analyzeContent(
+          `As Larry, a knowledgeable consultant with web search capabilities, please provide expert advice on this topic: ${messageContent}`,
+          false
+        );
+        response = `🧙‍♂️ **Larry's Consultation:**\n\n${aiResponse}`;
       }
 
       if (response) {
@@ -166,13 +176,9 @@ export class ReactionHandler {
         }
       }
     } catch (error) {
-      await message.reply(
-        `Sorry, I encountered an error processing your request: ${error}`
-      );
+      await message.reply(`Sorry, I encountered an error processing your request: ${error}`);
     }
   }
-
-
 
   private splitMessage(content: string, maxLength: number = 2000): string[] {
     if (content.length <= maxLength) {
@@ -180,14 +186,14 @@ export class ReactionHandler {
     }
 
     const chunks: string[] = [];
-    let currentChunk = "";
-    const lines = content.split("\n");
+    let currentChunk = '';
+    const lines = content.split('\n');
 
     for (const line of lines) {
-      if ((currentChunk + line + "\n").length > maxLength) {
+      if ((currentChunk + line + '\n').length > maxLength) {
         if (currentChunk) {
           chunks.push(currentChunk.trim());
-          currentChunk = "";
+          currentChunk = '';
         }
         // If single line is too long, split it
         if (line.length > maxLength) {
@@ -197,13 +203,13 @@ export class ReactionHandler {
             remaining = remaining.substring(maxLength);
           }
           if (remaining) {
-            currentChunk = remaining + "\n";
+            currentChunk = remaining + '\n';
           }
         } else {
-          currentChunk = line + "\n";
+          currentChunk = line + '\n';
         }
       } else {
-        currentChunk += line + "\n";
+        currentChunk += line + '\n';
       }
     }
 
