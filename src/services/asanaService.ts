@@ -48,7 +48,7 @@ export class AsanaService {
     this.workspacesApi = this.client.workspaces;
     
     this.isInitialized = true;
-    console.log('✅ Asana service initialized with Personal Access Token (v3.x)');
+    console.log('✅ Asana service initialized with Personal Access Token (v1.x)');
     console.log(`🎯 Default workspace: ${config.defaultWorkspaceGid || 'not set'}`);
     console.log(`📁 Default project: ${config.defaultProjectGid || 'not set'}`);
   }
