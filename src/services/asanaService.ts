@@ -1,4 +1,4 @@
-const Asana = require('asana');
+import * as Asana from 'asana';
 
 interface AsanaConfig {
   personalAccessToken: string;
@@ -38,16 +38,14 @@ export class AsanaService {
     
     this.config = config;
     
-    // Initialize client with v3.x syntax
-    this.client = Asana.ApiClient.instance;
-    const token = this.client.authentications['token'];
-    token.accessToken = config.personalAccessToken;
+    // Initialize client with proper Asana client
+    this.client = Asana.Client.create().useAccessToken(config.personalAccessToken);
     
-    // Initialize API instances
-    this.usersApi = new Asana.UsersApi();
-    this.tasksApi = new Asana.TasksApi();
-    this.projectsApi = new Asana.ProjectsApi();
-    this.workspacesApi = new Asana.WorkspacesApi();
+    // For backward compatibility, set these to the client
+    this.usersApi = this.client.users;
+    this.tasksApi = this.client.tasks;
+    this.projectsApi = this.client.projects;
+    this.workspacesApi = this.client.workspaces;
     
     this.isInitialized = true;
     console.log('✅ Asana service initialized with Personal Access Token (v3.x)');
