@@ -19,12 +19,25 @@ export class DiaryService {
   async processDiaryEntry(content: string): Promise<DiaryProcessingResult> {
     try {
       console.log(`📔 Larry is analyzing diary entry: "${content.substring(0, 50)}..."`);
-      
-      const result = await this.diaryAIService.detectLanguageAndTranslate(content);
-      
+
+      // 言語検出と翻訳を実行
+      const translateResult = await this.diaryAIService.detectLanguageAndTranslate(content);
+
+      // 英語の場合は文法チェックを追加
+      let grammarCheck: string | undefined;
+      if (translateResult.detectedLanguage === 'english') {
+        console.log('🔍 Running grammar check for English diary entry...');
+        grammarCheck = await this.diaryAIService.checkDiaryGrammar(content);
+      }
+
+      const result: DiaryProcessingResult = {
+        detectedLanguage: translateResult.detectedLanguage,
+        translation: translateResult.translation,
+        grammarCheck,
+      };
+
       console.log(`✅ Larry completed diary analysis - detected: ${result.detectedLanguage}`);
       return result;
-      
     } catch (error) {
       console.error('❌ Larry encountered error processing diary:', error);
       throw new Error('Failed to process diary entry');

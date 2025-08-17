@@ -27,17 +27,16 @@ export class DiaryHandler {
 
       // フィードバック応答を作成・送信（長いメッセージも完全に送信）
       await this.diaryFormatter.createFeedbackResponse(
-        result, 
-        message.content, 
+        result,
+        message.content,
         message.author,
         message
       );
-      
+
       console.log('✅ Larry completed diary feedback');
-      
     } catch (error) {
       console.error('❌ Error processing diary message:', error);
-      
+
       // エラーメッセージをユーザーに送信
       const errorEmbed = this.diaryFormatter.createErrorEmbed();
 

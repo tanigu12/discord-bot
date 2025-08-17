@@ -1,5 +1,5 @@
-import { BaseAIService } from "../../services/baseAIService";
-import { NewsItem } from "../../services/newsService";
+import { BaseAIService } from '../../services/baseAIService';
+import { NewsItem } from '../../services/newsService';
 
 // Larry による日記専用AIサービス
 export class DiaryAIService extends BaseAIService {
@@ -10,50 +10,55 @@ export class DiaryAIService extends BaseAIService {
   // 日記トピック生成用のJSONスキーマ定義（OpenAI Structured Outputs対応）
   private getDiaryTopicsSchema(newsTopicsCount: number, personalPromptsCount: number) {
     return {
-      name: "diary_topics_response",
+      name: 'diary_topics_response',
       strict: true,
       schema: {
-        type: "object",
+        type: 'object',
         properties: {
           newsTopics: {
-            type: "array",
-            description: "News-inspired diary topics that connect current events to personal experiences",
+            type: 'array',
+            description:
+              'News-inspired diary topics that connect current events to personal experiences',
             items: {
-              type: "string"
-            }
+              type: 'string',
+            },
           },
           personalPrompts: {
-            type: "array", 
-            description: "Personal reflection prompts focusing on different aspects of life and growth",
+            type: 'array',
+            description:
+              'Personal reflection prompts focusing on different aspects of life and growth',
             items: {
-              type: "string"
-            }
+              type: 'string',
+            },
           },
           encouragement: {
-            type: "string",
-            description: "A supportive and encouraging message for the user"
-          }
+            type: 'string',
+            description: 'A supportive and encouraging message for the user',
+          },
         },
-        required: ["newsTopics", "personalPrompts", "encouragement"],
-        additionalProperties: false
-      }
+        required: ['newsTopics', 'personalPrompts', 'encouragement'],
+        additionalProperties: false,
+      },
     };
   }
 
   // 日記専用翻訳
   async translateDiaryText(text: string, targetLanguage: string): Promise<string> {
     try {
-      const systemPrompt = this.aiPartnerIntegration.generateDiaryTranslationPrompt(targetLanguage, text);
+      const systemPrompt = this.aiPartnerIntegration.generateDiaryTranslationPrompt(
+        targetLanguage,
+        text
+      );
       const userMessage = `Please translate this diary entry: "${text}". Include brief grammar explanations and related vocabulary.`;
-      
+
       return await this.callOpenAI(systemPrompt, userMessage, {
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         maxTokens: 1000,
         temperature: 0.3,
       });
     } catch (error) {
-      console.error("Diary translation error:", error);
-      throw new Error("Failed to translate diary text");
+      console.error('Diary translation error:', error);
+      throw new Error('Failed to translate diary text');
     }
   }
 
@@ -62,15 +67,15 @@ export class DiaryAIService extends BaseAIService {
     try {
       const systemPrompt = this.aiPartnerIntegration.generateDiaryGrammarPrompt(text);
       const userMessage = `Please provide grammar feedback on this diary entry: "${text}"`;
-      
+
       return await this.callOpenAI(systemPrompt, userMessage, {
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         maxTokens: 1500,
         temperature: 0.4,
       });
     } catch (error) {
-      console.error("Diary grammar check error:", error);
-      throw new Error("Failed to check diary grammar");
+      console.error('Diary grammar check error:', error);
+      throw new Error('Failed to check diary grammar');
     }
   }
 
@@ -86,15 +91,19 @@ export class DiaryAIService extends BaseAIService {
         text,
         { model: 'gpt-4o-mini', maxTokens: 50, temperature: 0.1 }
       );
-      
+
       // 型安全な言語判定
-      const detectedLanguage: 'japanese' | 'english' | 'other' = 
-        languageDetectionResult.toLowerCase().includes('japanese') ? 'japanese' :
-        languageDetectionResult.toLowerCase().includes('english') ? 'english' : 'other';
-      
+      const detectedLanguage: 'japanese' | 'english' | 'other' = languageDetectionResult
+        .toLowerCase()
+        .includes('japanese')
+        ? 'japanese'
+        : languageDetectionResult.toLowerCase().includes('english')
+          ? 'english'
+          : 'other';
+
       // 言語に基づいて処理を分岐
       let translation = '';
-      
+
       if (detectedLanguage === 'japanese') {
         // 日本語を英語に翻訳
         translation = await this.translateDiaryText(text, 'English');
@@ -108,11 +117,11 @@ export class DiaryAIService extends BaseAIService {
 
       return {
         detectedLanguage,
-        translation
+        translation,
       };
     } catch (error) {
-      console.error("Language detection and translation error:", error);
-      throw new Error("Failed to detect language and translate");
+      console.error('Language detection and translation error:', error);
+      throw new Error('Failed to detect language and translate');
     }
   }
 
@@ -125,55 +134,62 @@ export class DiaryAIService extends BaseAIService {
     try {
       // ランダムトピック設定を生成
       const topicConfig = this.generateRandomTopicConfig();
-      
+
       // ニュースコンテキストを準備
-      const newsContext = newsItems.length > 0 
-        ? newsItems.map((item, index) => `${index + 1}. ${item.title}${item.description ? ': ' + item.description : ''}`).join('\n')
-        : "No specific news available today";
+      const newsContext =
+        newsItems.length > 0
+          ? newsItems
+              .map(
+                (item, index) =>
+                  `${index + 1}. ${item.title}${item.description ? ': ' + item.description : ''}`
+              )
+              .join('\n')
+          : 'No specific news available today';
 
       // 動的システムプロンプトを構築
       const systemPrompt = this.buildDynamicSystemPrompt(topicConfig);
-      
+
       // ランダムシードを生成
       const randomSeed = this.generateRandomSeed();
       const userMessage = `Today's news context:\n${newsContext}\n\nRandom seed: ${randomSeed}\n\nPlease generate ${topicConfig.totalTopics} diary topics with variety and creativity.`;
 
       // Get structured JSON schema for diary topics
-      const jsonSchema = this.getDiaryTopicsSchema(topicConfig.newsTopicsCount, topicConfig.personalPromptsCount);
-      
+      const jsonSchema = this.getDiaryTopicsSchema(
+        topicConfig.newsTopicsCount,
+        topicConfig.personalPromptsCount
+      );
+
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         maxTokens: 1500,
         temperature: 0.7,
         response_format: {
-          type: "json_schema",
-          json_schema: jsonSchema
-        }
+          type: 'json_schema',
+          json_schema: jsonSchema,
+        },
       });
-      
+
       try {
         // With structured outputs, OpenAI guarantees the JSON is valid and follows our schema
         const parsedResponse = JSON.parse(responseText);
-        console.log("✅ Successfully received structured output from OpenAI");
-        
+        console.log('✅ Successfully received structured output from OpenAI');
+
         return {
           newsTopics: parsedResponse.newsTopics,
           personalPrompts: parsedResponse.personalPrompts,
-          encouragement: parsedResponse.encouragement
+          encouragement: parsedResponse.encouragement,
         };
       } catch (parseError) {
-        console.error("❌ Unexpected: Structured output failed to parse");
-        console.error("Response:", responseText.substring(0, 200) + "...");
-        console.error("Parse error:", parseError);
+        console.error('❌ Unexpected: Structured output failed to parse');
+        console.error('Response:', responseText.substring(0, 200) + '...');
+        console.error('Parse error:', parseError);
         return this.getFallbackDiaryTopics(newsItems);
       }
-
     } catch (error) {
-      console.error("Diary topic generation error:", error);
+      console.error('Diary topic generation error:', error);
       return this.getFallbackDiaryTopics(newsItems);
     }
   }
-
 
   // ランダムトピック設定生成（元のメソッドから移動）
   private generateRandomTopicConfig(): {
@@ -204,7 +220,7 @@ export class DiaryAIService extends BaseAIService {
       'art-creativity',
       'career-education',
       'health-wellness',
-      'philosophical-thinking'
+      'philosophical-thinking',
     ];
 
     const tones = [
@@ -215,7 +231,7 @@ export class DiaryAIService extends BaseAIService {
       'gentle and supportive',
       'curious and exploratory',
       'inspiring and uplifting',
-      'friendly and conversational'
+      'friendly and conversational',
     ];
 
     const styles = [
@@ -226,7 +242,7 @@ export class DiaryAIService extends BaseAIService {
       'reflection exercises',
       'creative challenges',
       'opinion exploration',
-      'memory-based writing'
+      'memory-based writing',
     ];
 
     // Randomly select 4-6 categories
@@ -245,14 +261,14 @@ export class DiaryAIService extends BaseAIService {
       personalPromptsCount,
       totalTopics: newsTopicsCount + personalPromptsCount,
       tone: tones[Math.floor(Math.random() * tones.length)],
-      style: styles[Math.floor(Math.random() * styles.length)]
+      style: styles[Math.floor(Math.random() * styles.length)],
     };
   }
 
   // 動的システムプロンプト構築（元のメソッドから移動）
   private buildDynamicSystemPrompt(config: any): string {
     const categoriesText = config.categories.slice(0, 5).join(', '); // Limit for prompt length
-    
+
     return `You are a creative and supportive English learning partner and diary writing assistant. Your goal is to help users practice English through diverse, engaging diary writing topics.
 
 RANDOMIZATION FOCUS: Create varied, unique topics each time. Avoid repetitive patterns or similar suggestions.
@@ -285,7 +301,7 @@ VARIETY GUIDELINES:
     const hourStr = String(today.getHours()).padStart(2, '0');
     const randomNum = Math.floor(Math.random() * 10000);
     const timeBasedRandom = Date.now() % 1000;
-    
+
     return `${dateStr}-${hourStr}-${randomNum}-${timeBasedRandom}`;
   }
 
@@ -298,45 +314,42 @@ VARIETY GUIDELINES:
     // Create randomized fallback topics to maintain variety even when AI fails
     const fallbackNewsTopics = [
       "What's happening in your community that interests you?",
-      "Describe a recent change in the world that affects you personally", 
+      'Describe a recent change in the world that affects you personally',
       "Write about a current trend or topic you've been thinking about",
-      "If you could ask a world leader one question, what would it be and why?",
-      "How do you think technology will change daily life in the next 5 years?",
-      "What global issue do you wish more people talked about?",
-      "Describe a news story that made you change your perspective on something"
+      'If you could ask a world leader one question, what would it be and why?',
+      'How do you think technology will change daily life in the next 5 years?',
+      'What global issue do you wish more people talked about?',
+      'Describe a news story that made you change your perspective on something',
     ];
 
     const fallbackPersonalPrompts = [
       "How are you feeling today, and what's influencing your mood?",
       "What's one thing you want to accomplish this week, and why is it important to you?",
-      "Describe a moment today when you felt proud of yourself, no matter how small",
+      'Describe a moment today when you felt proud of yourself, no matter how small',
       "What's a skill you've always wanted to learn, and what's stopping you?",
-      "Write about someone who inspired you recently and why",
-      "What would your ideal day look like from start to finish?",
-      "Describe a challenge you overcame and what you learned from it",
+      'Write about someone who inspired you recently and why',
+      'What would your ideal day look like from start to finish?',
+      'Describe a challenge you overcame and what you learned from it',
       "What's something you used to believe that you no longer think is true?",
-      "If you could have dinner with any three people, who would they be and why?"
+      'If you could have dinner with any three people, who would they be and why?',
     ];
 
     const fallbackEncouragements = [
       "Hey there! 😊 I'm your English learning companion, and I believe in you! Writing is such a powerful way to practice language and reflect on life. Don't worry about making it perfect - just let your thoughts flow. I'm here to help you along the way! 🌟",
       "Hello, my friend! 🌸 Every time you write, you're getting stronger at English. Remember, even professional writers make mistakes - what matters is expressing your thoughts and feelings. Let's explore your ideas together!",
       "Hi! 💫 Your English journey is unique and wonderful. Writing is like a conversation with yourself, so be kind and patient. I'm excited to see what thoughts you'll share today!",
-      "Greetings! 🎯 You're doing amazing work by practicing English through writing. Don't worry about perfect grammar - focus on sharing your authentic thoughts and experiences. I'm here to support you!"
+      "Greetings! 🎯 You're doing amazing work by practicing English through writing. Don't worry about perfect grammar - focus on sharing your authentic thoughts and experiences. I'm here to support you!",
     ];
 
     // Randomly select items to maintain variety
-    const selectedNewsTopics = [...fallbackNewsTopics]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 3);
+    const selectedNewsTopics = [...fallbackNewsTopics].sort(() => 0.5 - Math.random()).slice(0, 3);
 
     const selectedPersonalPrompts = [...fallbackPersonalPrompts]
       .sort(() => 0.5 - Math.random())
       .slice(0, 3);
 
-    const selectedEncouragement = fallbackEncouragements[
-      Math.floor(Math.random() * fallbackEncouragements.length)
-    ];
+    const selectedEncouragement =
+      fallbackEncouragements[Math.floor(Math.random() * fallbackEncouragements.length)];
 
     // If news items are available, add one news-specific topic
     if (newsItems.length > 0) {
@@ -347,7 +360,7 @@ VARIETY GUIDELINES:
     return {
       newsTopics: selectedNewsTopics,
       personalPrompts: selectedPersonalPrompts,
-      encouragement: selectedEncouragement
+      encouragement: selectedEncouragement,
     };
   }
 }
