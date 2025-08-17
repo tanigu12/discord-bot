@@ -129,9 +129,27 @@ export class AsanaService {
     this.ensureInitialized();
 
     try {
-      // Build task data object with only defined values
+      // Determine workspace - required for task creation
+      let workspaceGid = taskData.workspace;
+      if (!workspaceGid) {
+        if (this.config.defaultWorkspaceGid) {
+          workspaceGid = this.config.defaultWorkspaceGid;
+          console.log(`🎯 Using default workspace: ${workspaceGid}`);
+        } else {
+          // Get first available workspace if no default is set
+          const workspaces = await this.getWorkspaces();
+          if (workspaces.length === 0) {
+            throw new Error('No workspace available for task creation');
+          }
+          workspaceGid = workspaces[0].gid;
+          console.log(`🎯 Using first available workspace: ${workspaceGid}`);
+        }
+      }
+
+      // Build task data object with required parameters
       const taskRequestData: any = {
         name: taskData.name, // Name is required
+        workspace: workspaceGid, // Workspace is required for API v1
       };
 
       // Add optional fields only if they have values
@@ -163,14 +181,14 @@ export class AsanaService {
         }
       }
 
-      // Create task with clean data structure
-      const taskRequest = {
-        data: taskRequestData,
+      // Create task with required data structure - API v1 requires data wrapper
+      const requestPayload = {
+        data: taskRequestData
       };
 
-      console.log('Creating Asana task with data:', JSON.stringify(taskRequest, null, 2));
+      console.log('Creating Asana task with payload:', JSON.stringify(requestPayload, null, 2));
 
-      const result = await this.tasksApi.createTask(taskRequest, {
+      const result = await this.tasksApi.createTask(requestPayload, {
         opt_fields: 'gid,name,notes,permalink_url',
       });
       return result.data;
@@ -249,10 +267,7 @@ export class AsanaService {
     this.ensureInitialized();
 
     try {
-      const updateRequest = {
-        data: updates,
-      };
-      const result = await this.tasksApi.updateTask(updateRequest, taskGid, {
+      const result = await this.tasksApi.updateTask(taskGid, updates, {
         opt_fields: 'gid,name,notes,completed',
       });
       return result.data;
@@ -265,10 +280,7 @@ export class AsanaService {
     this.ensureInitialized();
 
     try {
-      const updateRequest = {
-        data: { completed: true },
-      };
-      const result = await this.tasksApi.updateTask(updateRequest, taskGid, {
+      const result = await this.tasksApi.updateTask(taskGid, { completed: true }, {
         opt_fields: 'gid,name,completed',
       });
       return result.data;
