@@ -79,7 +79,8 @@ export const formatCommand = {
                 `• Sections: ${formattedContent.sections}\n` +
                 `• Word count: ~${formattedContent.wordCount}\n\n` +
                 `💡 Ready for Obsidian import and blog publishing!\n` +
-                `📎 Download the .md file above to import into your notes.`,
+                `📎 Download the .md file above to import into your notes.\n` +
+                `🎯 **Tip:** React with blog emojis (📝 📄 ✍️ 📰) to push directly to your GitHub blog!`,
         files: [attachment]
       });
 
