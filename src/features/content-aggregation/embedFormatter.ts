@@ -133,25 +133,26 @@ export class RandomContentEmbedFormatter {
   private async sendLongDiaryContentInteraction(content: RandomContentResult, interaction: ChatInputCommandInteraction): Promise<void> {
     if (!content.diaryPrompts) return;
 
-    // Send news-inspired topics
+    // Collect all content in one text first
+    let allContent = '';
+
+    // Add news-inspired topics
     if (content.diaryPrompts.newsTopics && content.diaryPrompts.newsTopics.length > 0) {
       const newsText = content.diaryPrompts.newsTopics
         .map((topic, index) => `**${index + 1}.** ${topic}`)
         .join('\n');
-      
-      await this.sendLongContentInteraction("📰 Today's News-Inspired Topics", newsText, interaction);
+      allContent += `📰 **Today's News-Inspired Topics**\n${newsText}\n\n`;
     }
 
-    // Send personal reflection prompts
+    // Add personal reflection prompts
     if (content.diaryPrompts.personalPrompts && content.diaryPrompts.personalPrompts.length > 0) {
       const personalText = content.diaryPrompts.personalPrompts
         .map((prompt, index) => `**${index + 1}.** ${prompt}`)
         .join('\n');
-      
-      await this.sendLongContentInteraction("💭 Personal Reflection Prompts", personalText, interaction);
+      allContent += `💭 **Personal Reflection Prompts**\n${personalText}\n\n`;
     }
 
-    // Send news sources if available
+    // Add news sources if available
     if (content.newsTopics && content.newsTopics.length > 0) {
       const sourcesText = content.newsTopics
         .filter(item => item.url)
@@ -159,13 +160,18 @@ export class RandomContentEmbedFormatter {
         .join('\n');
 
       if (sourcesText) {
-        await this.sendLongContentInteraction("🔗 News Sources", sourcesText, interaction);
+        allContent += `🔗 **News Sources**\n${sourcesText}\n\n`;
       }
     }
 
-    // Send encouragement if available
+    // Add encouragement if available
     if (content.diaryPrompts.encouragement) {
-      await this.sendLongContentInteraction("🌟 Your Daily Check-in", content.diaryPrompts.encouragement, interaction);
+      allContent += `🌟 **Your Daily Check-in**\n${content.diaryPrompts.encouragement}\n\n`;
+    }
+
+    // Apply long content treatment function to the collected text
+    if (allContent.trim()) {
+      await this.sendLongContentInteraction("📝 Complete Diary Content", allContent.trim(), interaction);
     }
   }
 
