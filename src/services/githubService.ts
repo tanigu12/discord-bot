@@ -1,5 +1,3 @@
-import { Octokit } from '@octokit/rest';
-
 export interface BlogPostMetadata {
   title: string;
   content: string;
@@ -8,9 +6,10 @@ export interface BlogPostMetadata {
 }
 
 export class GitHubService {
-  private octokit: Octokit;
+  private octokit: any;
   private readonly owner: string;
   private readonly repo: string;
+  private initialized: boolean = false;
 
   constructor() {
     if (!process.env.GITHUB_PAT) {
@@ -20,10 +19,24 @@ export class GitHubService {
     // Initialize with your blog repository details
     this.owner = 'tanigu12';
     this.repo = 'tanigu12.github.io';
-    
-    this.octokit = new Octokit({
-      auth: process.env.GITHUB_PAT,
-    });
+  }
+
+  private async initializeOctokit() {
+    if (this.initialized) {
+      return;
+    }
+
+    try {
+      const { Octokit } = await import('@octokit/rest');
+      this.octokit = new Octokit({
+        auth: process.env.GITHUB_PAT,
+      });
+      this.initialized = true;
+      console.log('✅ GitHub Octokit initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize Octokit:', error);
+      throw new Error('Failed to initialize GitHub service');
+    }
   }
 
   /**
@@ -31,6 +44,9 @@ export class GitHubService {
    */
   async createBlogPost(metadata: BlogPostMetadata): Promise<string> {
     try {
+      // Initialize Octokit if not already done
+      await this.initializeOctokit();
+      
       console.log(`📝 Creating blog post: ${metadata.fileName}`);
       
       // Create the file content with Jekyll front matter
