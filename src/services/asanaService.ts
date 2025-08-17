@@ -2,6 +2,9 @@ const Asana = require('asana');
 
 interface AsanaConfig {
   personalAccessToken: string;
+  defaultWorkspaceGid?: string;
+  defaultProjectGid?: string;
+  defaultUserGid?: string;
 }
 
 interface TaskData {
@@ -26,11 +29,14 @@ export class AsanaService {
   private projectsApi: any;
   private workspacesApi: any;
   private isInitialized: boolean = false;
+  private config: AsanaConfig;
 
   constructor(config: AsanaConfig) {
     if (!config.personalAccessToken) {
       throw new Error('Personal Access Token is required for Asana service');
     }
+    
+    this.config = config;
     
     // Initialize client with v3.x syntax
     this.client = Asana.ApiClient.instance;
@@ -45,6 +51,8 @@ export class AsanaService {
     
     this.isInitialized = true;
     console.log('✅ Asana service initialized with Personal Access Token (v3.x)');
+    console.log(`🎯 Default workspace: ${config.defaultWorkspaceGid || 'not set'}`);
+    console.log(`📁 Default project: ${config.defaultProjectGid || 'not set'}`);
   }
 
   // Static method to create service instance from environment
@@ -55,7 +63,12 @@ export class AsanaService {
       throw new Error('ASANA_PERSONAL_ACCESS_TOKEN environment variable is required');
     }
     
-    return new AsanaService({ personalAccessToken });
+    return new AsanaService({ 
+      personalAccessToken,
+      defaultWorkspaceGid: process.env.ASANA_DEFAULT_WORKSPACE_GID,
+      defaultProjectGid: process.env.ASANA_DEFAULT_PROJECT_GID,
+      defaultUserGid: process.env.ASANA_DEFAULT_USER_GID
+    });
   }
 
   // Check if service is properly initialized
@@ -134,6 +147,10 @@ export class AsanaService {
         if (validProjects.length > 0) {
           taskRequestData.projects = validProjects;
         }
+      } else if (this.config.defaultProjectGid) {
+        // Use default project if no projects specified
+        taskRequestData.projects = [this.config.defaultProjectGid];
+        console.log(`📁 Using default project: ${this.config.defaultProjectGid}`);
       }
       
       if (taskData.assignee && taskData.assignee.trim()) {
@@ -191,16 +208,31 @@ export class AsanaService {
         });
       } else {
         // Get tasks by assignee - need workspace parameter
-        const targetAssignee = assignee || (await this.getCurrentUser()).gid;
-        const workspaces = await this.getWorkspaces();
+        let targetAssignee = assignee;
         
-        if (workspaces.length === 0) {
-          throw new Error('No workspace available');
+        // Use default user if no assignee specified
+        if (!targetAssignee && this.config.defaultUserGid) {
+          targetAssignee = this.config.defaultUserGid;
+          console.log(`👤 Using default user: ${this.config.defaultUserGid}`);
+        } else if (!targetAssignee) {
+          targetAssignee = (await this.getCurrentUser()).gid;
+        }
+        
+        // Use default workspace if available, otherwise get first workspace
+        let workspaceGid = this.config.defaultWorkspaceGid;
+        if (!workspaceGid) {
+          const workspaces = await this.getWorkspaces();
+          if (workspaces.length === 0) {
+            throw new Error('No workspace available');
+          }
+          workspaceGid = workspaces[0].gid;
+        } else {
+          console.log(`🎯 Using default workspace: ${workspaceGid}`);
         }
         
         result = await this.tasksApi.getTasks({
           assignee: targetAssignee,
-          workspace: workspaces[0].gid,  // Required for assignee queries
+          workspace: workspaceGid,  // Required for assignee queries
           opt_fields: 'gid,name,notes,completed,due_on,assignee.name,projects.name',
           limit: 50,  // Add limit to prevent large dataset issues
           completed_since: 'now'  // Only get incomplete tasks by default
