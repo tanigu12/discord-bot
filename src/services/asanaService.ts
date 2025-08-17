@@ -41,9 +41,6 @@ export class AsanaService {
     // Initialize client with proper Asana client
     this.client = Asana.Client.create().useAccessToken(config.personalAccessToken);
 
-    // Add deprecation header to suppress new_goal_memberships warning
-    this.client.defaultHeaders['Asana-Disable'] = 'new_goal_memberships';
-
     // For backward compatibility, set these to the client
     this.usersApi = this.client.users;
     this.tasksApi = this.client.tasks;
