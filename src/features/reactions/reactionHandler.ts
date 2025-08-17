@@ -30,7 +30,7 @@ export class ReactionHandler {
   };
 
   // Idea-specific emojis (handled separately)
-  private readonly IDEA_EMOJIS = ["💡", "📋", "✨", "🗂️", "👍", "🔥"];
+  private readonly IDEA_EMOJIS = ["💡", "📋", "✨", "🗂️", "👍", "🔥", "🧙‍♂️"];
 
   constructor() {
     this.contentAnalysisService = new ContentAnalysisService();
@@ -242,6 +242,7 @@ export class ReactionHandler {
 📋 - Categorize idea
 👍 - Approve idea
 🔥 - Mark as high priority
+🧙‍♂️ - Consult Larry for expert advice
 ✨ - Mark as implemented
 🗂️ - Archive idea
 
