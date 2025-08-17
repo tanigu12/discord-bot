@@ -25,15 +25,13 @@ export class DiaryHandler {
       // Larry による日記処理を実行
       const result = await this.diaryService.processDiaryEntry(message.content);
 
-      // フィードバック埋め込みメッセージを作成
-      const embed = this.diaryFormatter.createFeedbackEmbed(
+      // フィードバック応答を作成・送信（長いメッセージも完全に送信）
+      await this.diaryFormatter.createFeedbackResponse(
         result, 
         message.content, 
-        message.author
+        message.author,
+        message
       );
-
-      // 元のメッセージに返信
-      await message.reply({ embeds: [embed] });
       
       console.log('✅ Larry completed diary feedback');
       
