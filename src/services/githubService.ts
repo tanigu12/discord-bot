@@ -47,12 +47,13 @@ export class GitHubService {
         path: metadata.filePath,
         message: `Add new blog post draft: ${metadata.title}`,
         content: encodedContent,
+        branch: 'master',
       });
       
       console.log(`✅ Blog post created successfully: ${metadata.filePath}`);
       
       // Return the URL to the created file
-      return response.data.content?.html_url || `https://github.com/${this.owner}/${this.repo}/blob/main/${metadata.filePath}`;
+      return response.data.content?.html_url || `https://github.com/${this.owner}/${this.repo}/blob/master/${metadata.filePath}`;
       
     } catch (error) {
       console.error('❌ Error creating blog post:', error);
