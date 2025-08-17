@@ -1,0 +1,144 @@
+import { DiaryAIService } from '../diary/diaryAIService';
+import { NewsService } from '../../services/newsService';
+import { AsanaService } from '../../services/asanaService';
+import { TechnicalQuestionService, TechnicalQuestion } from '../technical-questions';
+import { EnglishPhraseService, EnglishPhrase } from '../english-phrases';
+
+export interface RandomContentResult {
+  newsTopics?: any[];
+  diaryPrompts?: {
+    newsTopics: string[];
+    personalPrompts: string[];
+    encouragement: string;
+  };
+  technicalQuestions: TechnicalQuestion[];
+  englishPhrases: EnglishPhrase[];
+  asanaTasks: any[];
+  resources: {
+    listening: string;
+    reading: string;
+  };
+}
+
+export interface ContentAggregationOptions {
+  technicalQuestionCount?: number;
+  englishPhraseCount?: number;
+  maxAsanaTasks?: number;
+  includeNews?: boolean;
+  includeDiary?: boolean;
+  includeAsana?: boolean;
+}
+
+export class ContentAggregationService {
+  private diaryAIService: DiaryAIService;
+  private newsService: NewsService;
+  private technicalQuestionService: TechnicalQuestionService;
+  private englishPhraseService: EnglishPhraseService;
+
+  constructor() {
+    this.diaryAIService = new DiaryAIService();
+    this.newsService = new NewsService();
+    this.technicalQuestionService = new TechnicalQuestionService();
+    this.englishPhraseService = new EnglishPhraseService();
+  }
+
+  /**
+   * Aggregate all content for the random command
+   */
+  async aggregateRandomContent(
+    options: ContentAggregationOptions = {}
+  ): Promise<RandomContentResult> {
+    const {
+      technicalQuestionCount = 3,
+      englishPhraseCount = 3,
+      maxAsanaTasks = 5,
+      includeNews = true,
+      includeDiary = true,
+      includeAsana = true,
+    } = options;
+
+    console.log('📝 Aggregating random content...');
+
+    // Get content that doesn't depend on external services first
+    const [technicalQuestions, englishPhrases] = await Promise.all([
+      Promise.resolve(this.technicalQuestionService.getRandomQuestions(technicalQuestionCount)),
+      Promise.resolve(this.englishPhraseService.getRandomPhrases(englishPhraseCount)),
+    ]);
+
+    const result: RandomContentResult = {
+      technicalQuestions,
+      englishPhrases,
+      asanaTasks: [],
+      resources: {
+        listening: 'https://www.youtube.com/feed/subscriptions',
+        reading: 'https://news.google.com/home?hl=en-US&gl=US&ceid=US:en',
+      },
+    };
+
+    // Get news and diary content in parallel if requested
+    if (includeNews || includeDiary) {
+      try {
+        const newsTopics = includeNews ? await this.newsService.getTodaysTopics() : [];
+        result.newsTopics = newsTopics;
+
+        if (includeDiary) {
+          result.diaryPrompts = await this.diaryAIService.generateDiaryTopics(newsTopics);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching news/diary content:', error);
+        // Continue without news/diary content
+      }
+    }
+
+    // Get Asana tasks if requested and configured
+    if (includeAsana) {
+      try {
+        if (process.env.ASANA_PERSONAL_ACCESS_TOKEN) {
+          const asanaService = AsanaService.createFromEnvironment();
+          const allTasks = await asanaService.getTasks();
+          const incompleteTasks = allTasks.filter(task => !task.completed);
+          result.asanaTasks = incompleteTasks.slice(0, maxAsanaTasks);
+          console.log(`✅ Retrieved ${result.asanaTasks.length} incomplete tasks from Asana`);
+        }
+      } catch (error) {
+        console.log('ℹ️ Asana tasks not available (service not configured or error occurred)');
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Get fallback content when services fail
+   */
+  getFallbackContent(
+    technicalQuestionCount: number = 3,
+    englishPhraseCount: number = 3
+  ): Pick<RandomContentResult, 'technicalQuestions' | 'englishPhrases' | 'resources'> {
+    return {
+      technicalQuestions: this.technicalQuestionService.getRandomQuestions(technicalQuestionCount),
+      englishPhrases: this.englishPhraseService.getRandomPhrases(englishPhraseCount),
+      resources: {
+        listening: 'https://www.youtube.com/feed/subscriptions',
+        reading: 'https://news.google.com/home?hl=en-US&gl=US&ceid=US:en',
+      },
+    };
+  }
+
+  /**
+   * Get content statistics
+   */
+  getContentStats(): {
+    totalTechnicalQuestions: number;
+    totalEnglishPhrases: number;
+    technicalCategories: string[];
+    phraseCategories: string[];
+  } {
+    return {
+      totalTechnicalQuestions: this.technicalQuestionService.getAllQuestions().length,
+      totalEnglishPhrases: this.englishPhraseService.getAllPhrases().length,
+      technicalCategories: this.technicalQuestionService.getCategories(),
+      phraseCategories: this.englishPhraseService.getCategories(),
+    };
+  }
+}
