@@ -1,0 +1,1 @@
+export { BlogHandler } from './blogHandler';

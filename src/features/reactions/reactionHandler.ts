@@ -9,11 +9,13 @@ import {
 import { ContentAnalysisService } from '../search/contentAnalysisService';
 import { ContentFetcherService } from '../../services/contentFetcherService';
 import { IdeaHandler } from '../ideas/ideaHandler';
+import { BlogHandler } from '../blog/blogHandler';
 
 export class ReactionHandler {
   private contentAnalysisService: ContentAnalysisService;
   private contentFetcher: ContentFetcherService;
   private ideaHandler: IdeaHandler;
+  private blogHandler: BlogHandler;
 
   // Emoji mappings for different functions
   private readonly EMOJI_ACTIONS = {
@@ -33,10 +35,14 @@ export class ReactionHandler {
   // Idea-specific emojis (handled separately)
   private readonly IDEA_EMOJIS = ['💡', '📋', '✨', '🗂️', '👍', '🔥', '🧙‍♂️'];
 
+  // Blog creation emojis (handled separately for messages with text attachments)
+  private readonly BLOG_EMOJIS = ['📝', '📄', '✍️', '📰'];
+
   constructor() {
     this.contentAnalysisService = new ContentAnalysisService();
     this.contentFetcher = new ContentFetcherService();
     this.ideaHandler = new IdeaHandler();
+    this.blogHandler = new BlogHandler();
   }
 
   async handleReaction(
@@ -65,6 +71,13 @@ export class ReactionHandler {
     if (this.ideaHandler.isIdeaChannel(message) && this.IDEA_EMOJIS.includes(emoji)) {
       console.log('💡 Handling idea channel reaction');
       await this.ideaHandler.handleIdeaReaction(reaction, user, emoji);
+      return;
+    }
+
+    // Check if this is a blog creation reaction in an idea channel
+    if (this.blogHandler.isIdeaChannel(message) && this.BLOG_EMOJIS.includes(emoji)) {
+      console.log('📝 Handling blog creation reaction');
+      await this.blogHandler.handleBlogReaction(reaction, user, emoji);
       return;
     }
 
@@ -251,6 +264,12 @@ export class ReactionHandler {
 🧙‍♂️ - Consult Larry for expert advice
 ✨ - Mark as implemented
 🗂️ - Archive idea
+
+**Blog Creation (in idea channels with text attachments):**
+📝 - Create blog post from text file
+📄 - Convert document to blog draft
+✍️ - Turn text into blog post
+📰 - Generate blog article
 
 **How to use:** Simply react to any message with these emojis and I'll reply with the AI response!`;
   }
