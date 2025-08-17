@@ -118,33 +118,61 @@ export class AsanaService {
     this.ensureInitialized();
     
     try {
-      // Ensure workspace is set
-      if (!taskData.workspace) {
-        const workspaces = await this.getWorkspaces();
-        if (workspaces.length > 0) {
-          taskData.workspace = workspaces[0].gid;
-        } else {
-          throw new Error('No workspace available for task creation');
+      // Build task data object with only defined values
+      const taskRequestData: any = {
+        name: taskData.name  // Name is required
+      };
+      
+      // Add optional fields only if they have values
+      if (taskData.notes && taskData.notes.trim()) {
+        taskRequestData.notes = taskData.notes.trim();
+      }
+      
+      if (taskData.projects && taskData.projects.length > 0) {
+        // Filter out empty strings and ensure valid GIDs
+        const validProjects = taskData.projects.filter(p => p && p.trim());
+        if (validProjects.length > 0) {
+          taskRequestData.projects = validProjects;
         }
       }
       
-      // Create task with v3.x API
-      const taskRequest = {
-        data: {
-          name: taskData.name,
-          notes: taskData.notes,
-          projects: taskData.projects,
-          assignee: taskData.assignee,
-          due_on: taskData.due_on
+      if (taskData.assignee && taskData.assignee.trim()) {
+        taskRequestData.assignee = taskData.assignee.trim();
+      }
+      
+      if (taskData.due_on && taskData.due_on.trim()) {
+        // Validate date format (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (dateRegex.test(taskData.due_on.trim())) {
+          taskRequestData.due_on = taskData.due_on.trim();
         }
+      }
+      
+      // Create task with clean data structure
+      const taskRequest = {
+        data: taskRequestData
       };
+      
+      console.log('Creating Asana task with data:', JSON.stringify(taskRequest, null, 2));
       
       const result = await this.tasksApi.createTask(taskRequest, {
         opt_fields: "gid,name,notes,permalink_url"
       });
       return result.data;
     } catch (error) {
-      throw new Error(`Failed to create task: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorDetails = (error as any).response?.body;
+      
+      console.error('Asana createTask error:', errorMessage);
+      console.error('Error response body:', errorDetails);
+      
+      if (errorDetails?.errors) {
+        console.error('Detailed errors:', JSON.stringify(errorDetails.errors, null, 2));
+        const detailedError = errorDetails.errors.map((e: any) => e.message).join('; ');
+        throw new Error(`Failed to create task: ${detailedError}`);
+      }
+      
+      throw new Error(`Failed to create task: ${errorMessage}`);
     }
   }
 
