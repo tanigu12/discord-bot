@@ -26,30 +26,19 @@ export class DiaryFormatter {
       inline: false,
     });
 
-    // 翻訳を追加（長い場合は別メッセージで送信）
-    const targetLang = result.detectedLanguage === 'japanese' ? 'English' : 'Japanese';
-
-    // 翻訳が短い場合のみembedに含める
-    if (result.translation.length <= 1000) {
-      embed.addFields({
-        name: `Translation (${targetLang})`,
-        value: result.translation,
-        inline: false,
-      });
-    }
-
     // メイン埋め込みを送信
     const reply = await message.reply({ embeds: [embed] });
 
-    // 長い翻訳を別メッセージで送信
-    if (result.translation.length > 1000) {
-      await this.sendLongContent(`Translation (${targetLang})`, result.translation, reply);
-    }
+    // 翻訳とフィードバックを連結してから送信
+    const targetLang = result.detectedLanguage === 'japanese' ? 'English' : 'Japanese';
+    let allContent = `**Translation (${targetLang}):**\n${result.translation}`;
 
     // Larry の文法フィードバックを追加（英語の場合）
     if (result.grammarCheck) {
-      await this.sendLongContent("📝 Larry's Grammar Feedback", result.grammarCheck, reply);
+      allContent += `\n\n**📝 Larry's Grammar Feedback:**\n${result.grammarCheck}`;
     }
+
+    await this.sendLongContent("Translation & Feedback", allContent, reply);
   }
 
   // エラー時の埋め込みメッセージを作成

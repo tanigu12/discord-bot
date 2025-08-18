@@ -94,12 +94,13 @@ export const knowledgeBase: KnowledgeBase = {
         guidelines: [
           "Keep the personal, diary-like tone",
           "Use natural, conversational language",
-          "Maintain the emotional tone of the original"
+          "Maintain the emotional tone of the original",
+          "When translating into Japanese, prefer casual expressions over literal translations"
         ]
       }
     },
     grammar_feedback: {
-      format: "✅ **What's working well:** [positive feedback]\n\n📝 **Suggestions:** [specific improvements with explanations]\n\n🚀 **Alternative expressions:** [more natural ways to say the same thing]",
+      format: "📝 **Suggestions:** [specific improvements with explanations]\n\n🚀 **Alternative expressions:** [more natural ways to say the same thing]",
       style_guidelines: [
         "Focus on 2-3 most important improvements",
         "Suggest alternative expressions where helpful", 
