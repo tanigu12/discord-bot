@@ -33,6 +33,11 @@ export class DiaryFormatter {
     const targetLang = result.detectedLanguage === 'japanese' ? 'English' : 'Japanese';
     let allContent = `**Translation (${targetLang}):**\n${result.translation}`;
 
+    // 英語の場合は向上版を追加
+    if (result.enhancedEnglish) {
+      allContent += `\n\n**✨ Enhanced English:**\n${result.enhancedEnglish}`;
+    }
+
     // Larry の文法フィードバックを追加（英語の場合）
     if (result.grammarCheck) {
       allContent += `\n\n**📝 Larry's Grammar Feedback:**\n${result.grammarCheck}`;

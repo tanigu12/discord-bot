@@ -153,6 +153,43 @@ ${encouragementPhrase}
 ${grammarTemplate.format}`;
   }
 
+  // 英語日記の包括的処理用プロンプト生成（翻訳、向上、文法を一度に）
+  generateComprehensiveEnglishProcessingPrompt(originalText: string): string {
+    const userProfile = this.knowledge.user_profile;
+    const grammarTemplate = this.knowledge.response_templates.grammar_feedback;
+    const translationTemplate = this.knowledge.response_templates.translation.other_languages;
+    const encouragementPhrase = this.getRandomEncouragementPhrase();
+    
+    return `You are ${this.personality.name}, ${this.personality.description}. You're comprehensively processing ${userProfile.name}'s English diary entry with translation, enhancement, and grammar feedback.
+
+**User Language Level:** TOEIC ${userProfile.background.language_level.toeic_score}, Versant ${userProfile.background.language_level.versant_level} (Upper-Intermediate)
+
+**English Diary Entry:**
+"${originalText}"
+
+${encouragementPhrase}
+
+**Your Task:** Process this English diary entry and provide three outputs in JSON format:
+
+1. **Translation to Japanese:**
+${translationTemplate.guidelines.map(guideline => `   - ${guideline}`).join('\n')}
+   - When translating into Japanese, prefer casual expressions over literal translations
+
+2. **Enhanced English Version:**
+   - Rewrite to be more natural, fluent, and sophisticated
+   - Use more advanced vocabulary and sentence structures appropriate for upper-intermediate level
+   - Maintain the original meaning and personal tone
+   - Keep the diary-like, personal feeling
+   - Add variety in sentence structure
+   - Use more precise and expressive language
+
+3. **Grammar Feedback:**
+${grammarTemplate.style_guidelines.map(guideline => `   - ${guideline}`).join('\n')}
+   - Format: ${grammarTemplate.format}
+
+Respond with valid JSON containing: translation, enhancedEnglish, grammarFeedback fields.`;
+  }
+
   // ランダムな励ましフレーズを取得
   private getRandomEncouragementPhrase(): string {
     const phrases = this.knowledge.encouragement_patterns;

@@ -79,6 +79,60 @@ export class DiaryAIService extends BaseAIService {
     }
   }
 
+  // 英語文章の包括的処理（翻訳、向上、文法フィードバックを一度に）
+  async processEnglishDiaryComprehensive(text: string): Promise<{
+    translation: string;
+    enhancedEnglish: string;
+    grammarFeedback: string;
+  }> {
+    try {
+      const systemPrompt = this.aiPartnerIntegration.generateComprehensiveEnglishProcessingPrompt(text);
+      const userMessage = `Please process this English diary entry comprehensively: "${text}"`;
+
+      const responseText = await this.callOpenAI(systemPrompt, userMessage, {
+        model: 'gpt-4o-mini',
+        maxTokens: 2000,
+        temperature: 0.4,
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'comprehensive_english_processing',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                translation: {
+                  type: 'string',
+                  description: 'Japanese translation of the English diary entry'
+                },
+                enhancedEnglish: {
+                  type: 'string',
+                  description: 'Enhanced and more sophisticated version of the original English text'
+                },
+                grammarFeedback: {
+                  type: 'string',
+                  description: 'Grammar feedback and suggestions for improvement'
+                }
+              },
+              required: ['translation', 'enhancedEnglish', 'grammarFeedback'],
+              additionalProperties: false
+            }
+          }
+        }
+      });
+
+      const parsed = JSON.parse(responseText);
+      return {
+        translation: parsed.translation,
+        enhancedEnglish: parsed.enhancedEnglish,
+        grammarFeedback: parsed.grammarFeedback
+      };
+    } catch (error) {
+      console.error('Comprehensive English processing error:', error);
+      throw new Error('Failed to process English diary comprehensively');
+    }
+  }
+
   // 言語検出と翻訳（日記専用統合処理）
   async detectLanguageAndTranslate(text: string): Promise<{
     detectedLanguage: 'japanese' | 'english' | 'other';

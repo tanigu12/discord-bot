@@ -5,6 +5,7 @@ export interface DiaryProcessingResult {
   detectedLanguage: 'japanese' | 'english' | 'other';
   translation: string;
   grammarCheck?: string;
+  enhancedEnglish?: string;
 }
 
 // 日記サービスクラス - Larry による日記処理のコア機能
@@ -23,17 +24,24 @@ export class DiaryService {
       // 言語検出と翻訳を実行
       const translateResult = await this.diaryAIService.detectLanguageAndTranslate(content);
 
-      // 英語の場合は文法チェックを追加
+      // 英語の場合は包括的処理を実行（1回のAI呼び出しで全て処理）
       let grammarCheck: string | undefined;
+      let enhancedEnglish: string | undefined;
+      let translation = translateResult.translation;
+
       if (translateResult.detectedLanguage === 'english') {
-        console.log('🔍 Running grammar check for English diary entry...');
-        grammarCheck = await this.diaryAIService.checkDiaryGrammar(content);
+        console.log('🔍 Running comprehensive English processing (translation, enhancement, grammar)...');
+        const comprehensiveResult = await this.diaryAIService.processEnglishDiaryComprehensive(content);
+        translation = comprehensiveResult.translation;
+        enhancedEnglish = comprehensiveResult.enhancedEnglish;
+        grammarCheck = comprehensiveResult.grammarFeedback;
       }
 
       const result: DiaryProcessingResult = {
         detectedLanguage: translateResult.detectedLanguage,
-        translation: translateResult.translation,
+        translation,
         grammarCheck,
+        enhancedEnglish,
       };
 
       console.log(`✅ Larry completed diary analysis - detected: ${result.detectedLanguage}`);
