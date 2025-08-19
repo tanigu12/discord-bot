@@ -184,8 +184,24 @@ ${grammarTemplate.format}`;
 - Focus on practical learning points
 - Be constructive in feedback
 - Maintain diary-like tone in translations
+- Always provide ALL fields: if not applicable, use null or empty values
 
-Respond with valid JSON containing: detectedLanguage, translation, grammarFeedback (optional), enhancedEnglish (optional), hasTryTranslation, tryTranslationFeedback (optional).`;
+**Required JSON Response Format:**
+{
+  "detectedLanguage": "japanese|english|other",
+  "translation": "string",
+  "grammarFeedback": "string or null if not applicable",
+  "enhancedEnglish": "string or null if not applicable", 
+  "hasTryTranslation": boolean,
+  "tryTranslationFeedback": {
+    "feedback": "string",
+    "threeVersions": {
+      "casual": "string",
+      "formal": "string", 
+      "advanced": "string"
+    }
+  } or null if not applicable
+}`;
   }
 
   // [try]付きの日本語日記の英語翻訳フィードバック用プロンプト生成 - DEPRECATED

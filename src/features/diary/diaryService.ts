@@ -37,10 +37,10 @@ export class DiaryService {
       return {
         detectedLanguage: result.detectedLanguage,
         translation: result.translation,
-        grammarCheck: result.grammarFeedback,
-        enhancedEnglish: result.enhancedEnglish,
+        grammarCheck: result.grammarFeedback || undefined,
+        enhancedEnglish: result.enhancedEnglish || undefined,
         hasTryTranslation: result.hasTryTranslation,
-        tryTranslationFeedback: result.tryTranslationFeedback,
+        tryTranslationFeedback: result.tryTranslationFeedback || undefined,
       };
     } catch (error) {
       console.error('❌ Larry encountered error processing diary:', error);

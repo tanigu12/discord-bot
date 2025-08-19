@@ -137,8 +137,8 @@ export class DiaryAIService extends BaseAIService {
   async processUnifiedDiary(text: string): Promise<{
     detectedLanguage: 'japanese' | 'english' | 'other';
     translation: string;
-    grammarFeedback?: string;
-    enhancedEnglish?: string;
+    grammarFeedback?: string | null;
+    enhancedEnglish?: string | null;
     hasTryTranslation?: boolean;
     tryTranslationFeedback?: {
       feedback: string;
@@ -147,7 +147,7 @@ export class DiaryAIService extends BaseAIService {
         formal: string;
         advanced: string;
       };
-    };
+    } | null;
   }> {
     try {
       const systemPrompt = this.aiPartnerIntegration.generateUnifiedDiaryProcessingPrompt(text);
@@ -175,19 +175,19 @@ export class DiaryAIService extends BaseAIService {
                   description: 'Translation of the diary entry with grammar points and vocabulary'
                 },
                 grammarFeedback: {
-                  type: 'string',
-                  description: 'Grammar feedback for English entries (optional)'
+                  type: ['string', 'null'],
+                  description: 'Grammar feedback for English entries (null if not applicable)'
                 },
                 enhancedEnglish: {
-                  type: 'string',
-                  description: 'Enhanced version of English entries (optional)'
+                  type: ['string', 'null'],
+                  description: 'Enhanced version of English entries (null if not applicable)'
                 },
                 hasTryTranslation: {
                   type: 'boolean',
                   description: 'Whether the entry contains [try] translation attempts'
                 },
                 tryTranslationFeedback: {
-                  type: 'object',
+                  type: ['object', 'null'],
                   properties: {
                     feedback: {
                       type: 'string',
@@ -215,10 +215,10 @@ export class DiaryAIService extends BaseAIService {
                   },
                   required: ['feedback', 'threeVersions'],
                   additionalProperties: false,
-                  description: 'Translation feedback for [try] entries (optional)'
+                  description: 'Translation feedback for [try] entries (null if not applicable)'
                 }
               },
-              required: ['detectedLanguage', 'translation', 'hasTryTranslation'],
+              required: ['detectedLanguage', 'translation', 'grammarFeedback', 'enhancedEnglish', 'hasTryTranslation', 'tryTranslationFeedback'],
               additionalProperties: false
             }
           }
@@ -229,10 +229,10 @@ export class DiaryAIService extends BaseAIService {
       return {
         detectedLanguage: parsed.detectedLanguage,
         translation: parsed.translation,
-        grammarFeedback: parsed.grammarFeedback,
-        enhancedEnglish: parsed.enhancedEnglish,
+        grammarFeedback: parsed.grammarFeedback || undefined,
+        enhancedEnglish: parsed.enhancedEnglish || undefined,
         hasTryTranslation: parsed.hasTryTranslation,
-        tryTranslationFeedback: parsed.tryTranslationFeedback
+        tryTranslationFeedback: parsed.tryTranslationFeedback || undefined
       };
     } catch (error) {
       console.error('Unified diary processing error:', error);
