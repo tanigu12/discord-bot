@@ -6,6 +6,15 @@ export interface DiaryProcessingResult {
   translation: string;
   grammarCheck?: string;
   enhancedEnglish?: string;
+  hasTryTranslation?: boolean;
+  tryTranslationFeedback?: {
+    feedback: string;
+    threeVersions: {
+      casual: string;
+      formal: string;
+      advanced: string;
+    };
+  };
 }
 
 // 日記サービスクラス - Larry による日記処理のコア機能
@@ -16,36 +25,23 @@ export class DiaryService {
     this.diaryAIService = new DiaryAIService();
   }
 
-  // 日記エントリを処理（言語検出、翻訳、文法チェック）
+  // 日記エントリを処理（統一された単一AI呼び出し）
   async processDiaryEntry(content: string): Promise<DiaryProcessingResult> {
     try {
-      console.log(`📔 Larry is analyzing diary entry: "${content.substring(0, 50)}..."`);
+      console.log(`📔 Larry is analyzing diary entry with unified processing: "${content.substring(0, 50)}..."`);
 
-      // 言語検出と翻訳を実行
-      const translateResult = await this.diaryAIService.detectLanguageAndTranslate(content);
+      // 統一された処理で全てを1回のAI呼び出しで実行
+      const result = await this.diaryAIService.processUnifiedDiary(content);
 
-      // 英語の場合は包括的処理を実行（1回のAI呼び出しで全て処理）
-      let grammarCheck: string | undefined;
-      let enhancedEnglish: string | undefined;
-      let translation = translateResult.translation;
-
-      if (translateResult.detectedLanguage === 'english') {
-        console.log('🔍 Running comprehensive English processing (translation, enhancement, grammar)...');
-        const comprehensiveResult = await this.diaryAIService.processEnglishDiaryComprehensive(content);
-        translation = comprehensiveResult.translation;
-        enhancedEnglish = comprehensiveResult.enhancedEnglish;
-        grammarCheck = comprehensiveResult.grammarFeedback;
-      }
-
-      const result: DiaryProcessingResult = {
-        detectedLanguage: translateResult.detectedLanguage,
-        translation,
-        grammarCheck,
-        enhancedEnglish,
+      console.log(`✅ Larry completed unified diary analysis - detected: ${result.detectedLanguage}`);
+      return {
+        detectedLanguage: result.detectedLanguage,
+        translation: result.translation,
+        grammarCheck: result.grammarFeedback,
+        enhancedEnglish: result.enhancedEnglish,
+        hasTryTranslation: result.hasTryTranslation,
+        tryTranslationFeedback: result.tryTranslationFeedback,
       };
-
-      console.log(`✅ Larry completed diary analysis - detected: ${result.detectedLanguage}`);
-      return result;
     } catch (error) {
       console.error('❌ Larry encountered error processing diary:', error);
       throw new Error('Failed to process diary entry');

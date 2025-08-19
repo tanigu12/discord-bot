@@ -22,11 +22,59 @@ interface User {
   email: string;
 }
 
+interface AsanaWorkspace {
+  gid: string;
+  name: string;
+}
+
+interface AsanaProject {
+  gid: string;
+  name: string;
+}
+
+interface AsanaTask {
+  gid: string;
+  name: string;
+  notes?: string;
+  completed?: boolean;
+  assignee?: {
+    gid: string;
+    name: string;
+  };
+  projects?: AsanaProject[];
+  due_on?: string;
+  created_at?: string;
+  modified_at?: string;
+  permalink_url?: string;
+}
+
+interface AsanaError {
+  message: string;
+  phrase?: string;
+}
+
+interface AsanaErrorResponse {
+  errors: AsanaError[];
+}
+
+interface TaskRequestData {
+  name: string;
+  workspace: string;
+  notes?: string;
+  projects?: string[];
+  assignee?: string;
+  due_on?: string;
+}
+
 export class AsanaService {
-  private client: any;
+  private client: Asana.Client;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private usersApi: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private tasksApi: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private projectsApi: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private workspacesApi: any;
   private isInitialized: boolean = false;
   private config: AsanaConfig;
@@ -87,7 +135,7 @@ export class AsanaService {
       const result = await this.usersApi.getUser('me', {
         opt_fields: 'gid,name,email',
       });
-      const user = result.data;
+      const user = result;
       return {
         gid: user.gid,
         name: user.name,
@@ -98,20 +146,20 @@ export class AsanaService {
     }
   }
 
-  public async getWorkspaces(): Promise<any[]> {
+  public async getWorkspaces(): Promise<AsanaWorkspace[]> {
     this.ensureInitialized();
 
     try {
       const result = await this.workspacesApi.getWorkspaces({
         opt_fields: 'gid,name',
       });
-      return result.data;
+      return result;
     } catch (error) {
       throw new Error(`Failed to get workspaces: ${error}`);
     }
   }
 
-  public async getProjects(workspaceGid: string): Promise<any[]> {
+  public async getProjects(workspaceGid: string): Promise<AsanaProject[]> {
     this.ensureInitialized();
 
     try {
@@ -119,13 +167,13 @@ export class AsanaService {
         workspace: workspaceGid,
         opt_fields: 'gid,name',
       });
-      return result.data;
+      return result;
     } catch (error) {
       throw new Error(`Failed to get projects: ${error}`);
     }
   }
 
-  public async createTask(taskData: TaskData): Promise<any> {
+  public async createTask(taskData: TaskData): Promise<AsanaTask> {
     this.ensureInitialized();
 
     try {
@@ -147,7 +195,7 @@ export class AsanaService {
       }
 
       // Build task data object with required parameters
-      const taskRequestData: any = {
+      const taskRequestData: TaskRequestData = {
         name: taskData.name, // Name is required
         workspace: workspaceGid, // Workspace is required for API v1
       };
@@ -191,17 +239,17 @@ export class AsanaService {
       const result = await this.tasksApi.createTask(requestPayload, {
         opt_fields: 'gid,name,notes,permalink_url',
       });
-      return result.data;
+      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorDetails = (error as any).response?.body;
+      const errorDetails = (error as { response?: { body: AsanaErrorResponse } }).response?.body;
 
       console.error('Asana createTask error:', errorMessage);
       console.error('Error response body:', errorDetails);
 
       if (errorDetails?.errors) {
         console.error('Detailed errors:', JSON.stringify(errorDetails.errors, null, 2));
-        const detailedError = errorDetails.errors.map((e: any) => e.message).join('; ');
+        const detailedError = errorDetails.errors.map((e: AsanaError) => e.message).join('; ');
         throw new Error(`Failed to create task: ${detailedError}`);
       }
 
@@ -209,7 +257,7 @@ export class AsanaService {
     }
   }
 
-  public async getTasks(projectGid?: string, assignee?: string): Promise<any[]> {
+  public async getTasks(projectGid?: string, assignee?: string): Promise<AsanaTask[]> {
     this.ensureInitialized();
 
     try {
@@ -255,28 +303,31 @@ export class AsanaService {
         });
       }
 
-      return result.data || [];
+      return result || [];
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Asana getTasks error details:', (error as any).response?.body || errorMessage);
+      console.error(
+        'Asana getTasks error details:',
+        (error as { response?: { body: unknown } }).response?.body || errorMessage
+      );
       throw new Error(`Failed to get tasks: ${errorMessage}`);
     }
   }
 
-  public async updateTask(taskGid: string, updates: Partial<TaskData>): Promise<any> {
+  public async updateTask(taskGid: string, updates: Partial<TaskData>): Promise<AsanaTask> {
     this.ensureInitialized();
 
     try {
       const result = await this.tasksApi.updateTask(taskGid, updates, {
         opt_fields: 'gid,name,notes,completed',
       });
-      return result.data;
+      return result;
     } catch (error) {
       throw new Error(`Failed to update task: ${error}`);
     }
   }
 
-  public async completeTask(taskGid: string): Promise<any> {
+  public async completeTask(taskGid: string): Promise<AsanaTask> {
     this.ensureInitialized();
 
     try {
@@ -287,7 +338,7 @@ export class AsanaService {
           opt_fields: 'gid,name,completed',
         }
       );
-      return result.data;
+      return result;
     } catch (error) {
       throw new Error(`Failed to complete task: ${error}`);
     }

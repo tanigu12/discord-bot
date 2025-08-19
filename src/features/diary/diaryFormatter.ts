@@ -29,21 +29,34 @@ export class DiaryFormatter {
     // メイン埋め込みを送信
     const reply = await message.reply({ embeds: [embed] });
 
-    // 翻訳とフィードバックを連結してから送信
-    const targetLang = result.detectedLanguage === 'japanese' ? 'English' : 'Japanese';
-    let allContent = `**Translation (${targetLang}):**\n${result.translation}`;
+    // [try]翻訳フィードバックがある場合の処理
+    if (result.hasTryTranslation && result.tryTranslationFeedback) {
+      // フィードバック内容を作成
+      let feedbackContent = `**🎯 Feedback on your English translation attempt:**\n${result.tryTranslationFeedback.feedback}`;
+      
+      feedbackContent += `\n\n**📚 Three Translation Patterns:**`;
+      feedbackContent += `\n\n**1. 💬 Casual (Conversational):**\n${result.tryTranslationFeedback.threeVersions.casual}`;
+      feedbackContent += `\n\n**2. ✍️ Formal (Polished):**\n${result.tryTranslationFeedback.threeVersions.formal}`;
+      feedbackContent += `\n\n**3. 🎓 Advanced (Sophisticated):**\n${result.tryTranslationFeedback.threeVersions.advanced}`;
+      
+      await this.sendLongContent("Translation Feedback & Examples", feedbackContent, reply);
+    } else {
+      // 通常の翻訳処理
+      const targetLang = result.detectedLanguage === 'japanese' ? 'English' : 'Japanese';
+      let allContent = `**Translation (${targetLang}):**\n${result.translation}`;
 
-    // 英語の場合は向上版を追加
-    if (result.enhancedEnglish) {
-      allContent += `\n\n**✨ Enhanced English:**\n${result.enhancedEnglish}`;
+      // 英語の場合は向上版を追加
+      if (result.enhancedEnglish) {
+        allContent += `\n\n**✨ Enhanced English:**\n${result.enhancedEnglish}`;
+      }
+
+      // Larry の文法フィードバックを追加（英語の場合）
+      if (result.grammarCheck) {
+        allContent += `\n\n**📝 Larry's Grammar Feedback:**\n${result.grammarCheck}`;
+      }
+
+      await this.sendLongContent("Translation & Feedback", allContent, reply);
     }
-
-    // Larry の文法フィードバックを追加（英語の場合）
-    if (result.grammarCheck) {
-      allContent += `\n\n**📝 Larry's Grammar Feedback:**\n${result.grammarCheck}`;
-    }
-
-    await this.sendLongContent("Translation & Feedback", allContent, reply);
   }
 
   // エラー時の埋め込みメッセージを作成

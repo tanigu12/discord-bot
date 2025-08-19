@@ -133,10 +133,189 @@ export class DiaryAIService extends BaseAIService {
     }
   }
 
+  // 統一された日記処理（単一AI呼び出しで全処理）
+  async processUnifiedDiary(text: string): Promise<{
+    detectedLanguage: 'japanese' | 'english' | 'other';
+    translation: string;
+    grammarFeedback?: string;
+    enhancedEnglish?: string;
+    hasTryTranslation?: boolean;
+    tryTranslationFeedback?: {
+      feedback: string;
+      threeVersions: {
+        casual: string;
+        formal: string;
+        advanced: string;
+      };
+    };
+  }> {
+    try {
+      const systemPrompt = this.aiPartnerIntegration.generateUnifiedDiaryProcessingPrompt(text);
+      const userMessage = `Please analyze and process this diary entry: "${text}"`;
+
+      const responseText = await this.callOpenAI(systemPrompt, userMessage, {
+        model: 'gpt-4o-mini',
+        maxTokens: 3000,
+        temperature: 0.4,
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'unified_diary_processing',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                detectedLanguage: {
+                  type: 'string',
+                  enum: ['japanese', 'english', 'other'],
+                  description: 'Detected language of the diary entry'
+                },
+                translation: {
+                  type: 'string',
+                  description: 'Translation of the diary entry with grammar points and vocabulary'
+                },
+                grammarFeedback: {
+                  type: 'string',
+                  description: 'Grammar feedback for English entries (optional)'
+                },
+                enhancedEnglish: {
+                  type: 'string',
+                  description: 'Enhanced version of English entries (optional)'
+                },
+                hasTryTranslation: {
+                  type: 'boolean',
+                  description: 'Whether the entry contains [try] translation attempts'
+                },
+                tryTranslationFeedback: {
+                  type: 'object',
+                  properties: {
+                    feedback: {
+                      type: 'string',
+                      description: 'Feedback on user translation attempt'
+                    },
+                    threeVersions: {
+                      type: 'object',
+                      properties: {
+                        casual: {
+                          type: 'string',
+                          description: 'Casual translation version'
+                        },
+                        formal: {
+                          type: 'string',
+                          description: 'Formal translation version'
+                        },
+                        advanced: {
+                          type: 'string',
+                          description: 'Advanced translation version'
+                        }
+                      },
+                      required: ['casual', 'formal', 'advanced'],
+                      additionalProperties: false
+                    }
+                  },
+                  required: ['feedback', 'threeVersions'],
+                  additionalProperties: false,
+                  description: 'Translation feedback for [try] entries (optional)'
+                }
+              },
+              required: ['detectedLanguage', 'translation', 'hasTryTranslation'],
+              additionalProperties: false
+            }
+          }
+        }
+      });
+
+      const parsed = JSON.parse(responseText);
+      return {
+        detectedLanguage: parsed.detectedLanguage,
+        translation: parsed.translation,
+        grammarFeedback: parsed.grammarFeedback,
+        enhancedEnglish: parsed.enhancedEnglish,
+        hasTryTranslation: parsed.hasTryTranslation,
+        tryTranslationFeedback: parsed.tryTranslationFeedback
+      };
+    } catch (error) {
+      console.error('Unified diary processing error:', error);
+      throw new Error('Failed to process diary entry');
+    }
+  }
+
+  // [try]付きの日本語日記の処理（英語翻訳のフィードバック付き）- DEPRECATED
+  async processJapaneseDiaryWithTry(text: string): Promise<{
+    translationFeedback: string;
+    threeVersions: {
+      casual: string;
+      formal: string;
+      advanced: string;
+    };
+  }> {
+    try {
+      const systemPrompt = this.aiPartnerIntegration.generateJapaneseTryTranslationPrompt(text);
+      const userMessage = `Please analyze this Japanese diary entry with English translation attempt: "${text}"`;
+
+      const responseText = await this.callOpenAI(systemPrompt, userMessage, {
+        model: 'gpt-4o-mini',
+        maxTokens: 2000,
+        temperature: 0.4,
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'japanese_try_translation_feedback',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                translationFeedback: {
+                  type: 'string',
+                  description: 'Feedback on the user\'s English translation attempt with corrections and suggestions'
+                },
+                threeVersions: {
+                  type: 'object',
+                  properties: {
+                    casual: {
+                      type: 'string',
+                      description: 'Casual, conversational English translation'
+                    },
+                    formal: {
+                      type: 'string', 
+                      description: 'More formal, polished English translation'
+                    },
+                    advanced: {
+                      type: 'string',
+                      description: 'Advanced, sophisticated English translation with complex vocabulary'
+                    }
+                  },
+                  required: ['casual', 'formal', 'advanced'],
+                  additionalProperties: false
+                }
+              },
+              required: ['translationFeedback', 'threeVersions'],
+              additionalProperties: false
+            }
+          }
+        }
+      });
+
+      const parsed = JSON.parse(responseText);
+      return {
+        translationFeedback: parsed.translationFeedback,
+        threeVersions: {
+          casual: parsed.threeVersions.casual,
+          formal: parsed.threeVersions.formal,
+          advanced: parsed.threeVersions.advanced
+        }
+      };
+    } catch (error) {
+      console.error('Japanese try translation processing error:', error);
+      throw new Error('Failed to process Japanese diary with try translation');
+    }
+  }
+
   // 言語検出と翻訳（日記専用統合処理）
   async detectLanguageAndTranslate(text: string): Promise<{
     detectedLanguage: 'japanese' | 'english' | 'other';
     translation: string;
+    hasTryTranslation?: boolean;
   }> {
     try {
       // 言語検出
@@ -155,6 +334,9 @@ export class DiaryAIService extends BaseAIService {
           ? 'english'
           : 'other';
 
+      // [try]マーカーをチェック
+      const hasTryTranslation = text.includes('[try]');
+
       // 言語に基づいて処理を分岐
       let translation = '';
 
@@ -172,6 +354,7 @@ export class DiaryAIService extends BaseAIService {
       return {
         detectedLanguage,
         translation,
+        hasTryTranslation,
       };
     } catch (error) {
       console.error('Language detection and translation error:', error);

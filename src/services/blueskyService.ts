@@ -6,6 +6,15 @@ interface BlueskyPostResult {
   url: string;
 }
 
+interface PostData {
+  text: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  facets?: any[];
+  createdAt: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  embed?: any;
+}
+
 export class BlueskyService {
   private agent: BskyAgent;
   private isAuthenticated = false;
@@ -79,7 +88,7 @@ export class BlueskyService {
       const richText = new RichText({ text });
       await richText.detectFacets(this.agent);
 
-      const postData: any = {
+      const postData: PostData = {
         text: richText.text,
         facets: richText.facets,
         createdAt: new Date().toISOString(),
@@ -109,7 +118,8 @@ export class BlueskyService {
       }
 
       // Create the post
-      const result = await this.agent.post(postData);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await this.agent.post(postData as any);
 
       // Generate Bluesky URL from the result
       const handle = process.env.BLUESKY_USERNAME?.replace('.bsky.social', '') || 'unknown';
@@ -128,7 +138,7 @@ export class BlueskyService {
 
       // Handle specific Bluesky API errors
       if (error && typeof error === 'object' && 'status' in error) {
-        const status = (error as any).status;
+        const status = (error as { status: number }).status;
 
         if (status === 429) {
           throw new Error(

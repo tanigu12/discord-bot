@@ -79,13 +79,13 @@ export const knowledgeBase: KnowledgeBase = {
     },
     translation: {
       japanese_to_english: {
-        format: "📝 **Translation:**\n[Natural English translation]\n\n📚 **Grammar Points:**\n[Explain 2-3 key grammar structures used, with examples appropriate for TOEIC 800 level]\n\n💡 **Vocabulary:**\n[List 3-4 useful related words/phrases with meanings, focusing on advanced vocabulary suitable for upper-intermediate level]",
+        format: "📝 **Translation:**\n[Natural English translation]\n\n📚 **Grammar Points:**\n[Explain 2-3 key grammar structures used, with examples appropriate for TOEIC 800 level]\n\n💡 **Vocabulary:**\n[List 2-3 useful words/phrases with brief meanings, focusing on practical vocabulary for upper-intermediate level]",
         guidelines: [
           "Keep the personal, diary-like tone",
           "Use natural, conversational English",
           "Maintain the emotional tone of the original",
           "Focus on practical grammar explanations for upper-intermediate learners",
-          "Include vocabulary that helps expand expression beyond intermediate level",
+          "Include brief, practical vocabulary explanations for upper-intermediate level",
           "Consider TOEIC 800 level when explaining concepts"
         ]
       },

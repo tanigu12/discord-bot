@@ -137,7 +137,6 @@ Provide ${template.format}.`;
   generateDiaryGrammarPrompt(originalText: string): string {
     const userProfile = this.knowledge.user_profile;
     const grammarTemplate = this.knowledge.response_templates.grammar_feedback;
-    const encouragementPhrase = this.getRandomEncouragementPhrase();
     
     return `You are ${this.personality.name}, ${this.personality.description}. You're providing feedback on ${userProfile.name}'s diary entry.
 
@@ -147,10 +146,80 @@ Provide ${template.format}.`;
 **Feedback Style:**
 ${grammarTemplate.style_guidelines.map(guideline => `- ${guideline}`).join('\n')}
 
-${encouragementPhrase}
-
 **Format your response as:**
 ${grammarTemplate.format}`;
+  }
+
+  // 統一された日記処理用プロンプト生成（単一AI呼び出し用）
+  generateUnifiedDiaryProcessingPrompt(originalText: string): string {
+    const userProfile = this.knowledge.user_profile;
+    const translationTemplate = this.knowledge.response_templates.translation;
+    
+    return `You are ${this.personality.name}, ${this.personality.description}. You're processing ${userProfile.name}'s diary entry with comprehensive language analysis.
+
+**User Language Level:** TOEIC ${userProfile.background.language_level.toeic_score}, Versant ${userProfile.background.language_level.versant_level} (Upper-Intermediate)
+
+**Diary Entry:**
+"${originalText}"
+
+**Instructions:**
+1. **Detect language** (japanese, english, or other)
+2. **Check for [try] markers** indicating translation attempts
+3. **Process based on detected scenario:**
+
+**For Japanese entries:**
+- Provide English translation with grammar points and vocabulary (format: ${translationTemplate.japanese_to_english.format})
+- If contains [try]: Give feedback on user's translation attempt + provide 3 versions (casual, formal, advanced)
+
+**For English entries:**
+- Provide Japanese translation
+- Include enhanced English version (more sophisticated)
+- Add grammar feedback with suggestions
+
+**For Other languages:**
+- Translate to English with basic explanation
+
+**Response Guidelines:**
+- Keep vocabulary explanations brief (2-3 words/phrases)
+- Focus on practical learning points
+- Be constructive in feedback
+- Maintain diary-like tone in translations
+
+Respond with valid JSON containing: detectedLanguage, translation, grammarFeedback (optional), enhancedEnglish (optional), hasTryTranslation, tryTranslationFeedback (optional).`;
+  }
+
+  // [try]付きの日本語日記の英語翻訳フィードバック用プロンプト生成 - DEPRECATED
+  generateJapaneseTryTranslationPrompt(originalText: string): string {
+    const userProfile = this.knowledge.user_profile;
+    
+    return `You are ${this.personality.name}, ${this.personality.description}. You're providing feedback on ${userProfile.name}'s English translation attempt of their Japanese diary entry.
+
+**User Language Level:** TOEIC ${userProfile.background.language_level.toeic_score}, Versant ${userProfile.background.language_level.versant_level} (Upper-Intermediate)
+
+**Task:** The user has written a Japanese diary entry and attempted to translate it to English (marked with [try]). You need to:
+
+1. **Analyze their translation attempt:** Give specific, constructive feedback on their English translation
+2. **Provide three different translation versions:** Create casual, formal, and advanced versions
+
+**Original Japanese diary entry with user's translation attempt:**
+"${originalText}"
+
+**Feedback Guidelines:**
+- Be encouraging and constructive, not critical
+- Point out what they did well before mentioning improvements
+- Focus on 2-3 key areas for improvement (grammar, vocabulary, natural expression)
+- Suggest specific alternatives for awkward phrases
+- Keep feedback concise but helpful
+
+**Three Translation Versions Guidelines:**
+- **Casual:** Natural, conversational style (like talking to a friend)
+- **Formal:** More polished, appropriate for writing (but not overly stiff)  
+- **Advanced:** Sophisticated vocabulary and complex structures (TOEIC 900+ level)
+- Keep the personal, diary-like tone in all versions
+- Maintain the original meaning and emotional content
+- Make each version distinctly different in style and complexity
+
+Respond with valid JSON containing: translationFeedback, threeVersions (casual, formal, advanced) fields.`;
   }
 
   // 英語日記の包括的処理用プロンプト生成（翻訳、向上、文法を一度に）
@@ -158,7 +227,6 @@ ${grammarTemplate.format}`;
     const userProfile = this.knowledge.user_profile;
     const grammarTemplate = this.knowledge.response_templates.grammar_feedback;
     const translationTemplate = this.knowledge.response_templates.translation.other_languages;
-    const encouragementPhrase = this.getRandomEncouragementPhrase();
     
     return `You are ${this.personality.name}, ${this.personality.description}. You're comprehensively processing ${userProfile.name}'s English diary entry with translation, enhancement, and grammar feedback.
 
@@ -166,8 +234,6 @@ ${grammarTemplate.format}`;
 
 **English Diary Entry:**
 "${originalText}"
-
-${encouragementPhrase}
 
 **Your Task:** Process this English diary entry and provide three outputs in JSON format:
 

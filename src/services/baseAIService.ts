@@ -38,7 +38,7 @@ export class BaseAIService {
             json_schema: {
               name: string;
               strict?: boolean;
-              schema: any;
+              schema: Record<string, unknown>;
             };
           };
     } = {}
@@ -46,6 +46,7 @@ export class BaseAIService {
     try {
       const openai = this.getOpenAI();
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const requestConfig: any = {
         model: options.model || 'gpt-4o-mini',
         messages: [

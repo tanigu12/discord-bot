@@ -1,4 +1,11 @@
-import { ThreadChannel, ChatInputCommandInteraction } from 'discord.js';
+import {
+  ThreadChannel,
+  ChatInputCommandInteraction,
+  Message,
+  Attachment,
+  User,
+  MessageReaction,
+} from 'discord.js';
 
 interface ThreadMessage {
   id: string;
@@ -75,10 +82,10 @@ export class ConversationReaderService {
             authorId: msg.author.id,
             content: msg.content,
             timestamp: msg.createdAt,
-            attachments: msg.attachments.map((att: any) => att.url),
-            mentions: msg.mentions.users.map((user: any) => user.username),
+            attachments: msg.attachments.map((att: Attachment) => att.url),
+            mentions: msg.mentions.users.map((user: User) => user.username),
             reactions: msg.reactions.cache.map(
-              (reaction: any) => reaction.emoji.name || reaction.emoji.toString()
+              (reaction: MessageReaction) => reaction.emoji.name || reaction.emoji.toString()
             ),
           });
         });
@@ -156,7 +163,7 @@ export class ConversationReaderService {
   }
 
   // Filter messages to only include reply-related messages to reduce noise
-  private filterReplyRelatedMessages(messages: any[]): any[] {
+  private filterReplyRelatedMessages(messages: Message[]): Message[] {
     const relatedMessages = new Set<string>();
 
     // First pass: identify all messages that are replies or being replied to
