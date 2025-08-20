@@ -13,7 +13,7 @@ export class DiaryService {
   parseDiaryEntry(content: string): ParsedDiaryEntry {
     const lines = content.trim().split('\n');
     const targetSentence = lines[0]?.trim() || '';
-    
+
     let tryTranslation: string | undefined;
     const questions: string[] = [];
 
@@ -40,12 +40,14 @@ export class DiaryService {
 
   // 処理シナリオを決定
   determineProcessingScenario(parsedEntry: ParsedDiaryEntry): ProcessingScenario {
-    const detectedLanguage = this.diaryAIService.detectLanguageByPattern(parsedEntry.targetSentence);
-    
-    if (detectedLanguage === 'japanese') {
+    const detectedLanguage = this.diaryAIService.detectLanguageByPattern(
+      parsedEntry.targetSentence
+    );
+
+    if (detectedLanguage === 'japanese' || detectedLanguage === 'mixing') {
       return parsedEntry.tryTranslation ? 'japanese-with-try' : 'japanese-only';
     } else {
-      // 'english' or 'mixing' - both treated as english scenario
+      // 'english'
       return 'english-only';
     }
   }
@@ -53,17 +55,23 @@ export class DiaryService {
   // 日記エントリを処理（統一された単一AI呼び出し）
   async processDiaryEntry(content: string): Promise<DiaryProcessingResult> {
     try {
-      console.log(`📔 Larry is analyzing diary entry with unified processing: "${content.substring(0, 50)}..."`);
+      console.log(
+        `📔 Larry is analyzing diary entry with unified processing: "${content.substring(0, 50)}..."`
+      );
 
       // 新しいフォーマットを解析
       const parsedEntry = this.parseDiaryEntry(content);
       const scenario = this.determineProcessingScenario(parsedEntry);
-      console.log(`📝 Parsed entry - Target: "${parsedEntry.targetSentence}", Scenario: ${scenario}, Questions: ${parsedEntry.questions?.length || 0}`);
+      console.log(
+        `📝 Parsed entry - Target: "${parsedEntry.targetSentence}", Scenario: ${scenario}, Questions: ${parsedEntry.questions?.length || 0}`
+      );
 
       // シナリオに基づいた処理を実行
       const result = await this.diaryAIService.processUnifiedDiary(parsedEntry, scenario);
 
-      console.log(`✅ Larry completed scenario-based analysis - scenario: ${scenario}, language: ${result.detectedLanguage}`);
+      console.log(
+        `✅ Larry completed scenario-based analysis - scenario: ${scenario}, language: ${result.detectedLanguage}`
+      );
       return {
         detectedLanguage: result.detectedLanguage,
         targetSentence: result.targetSentence,
