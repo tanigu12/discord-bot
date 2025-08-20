@@ -27,7 +27,7 @@ export class ReactionHandler {
   private readonly IDEA_EMOJIS = ['💡', '🧙‍♂️'];
 
   // Blog creation emojis (handled separately for messages with text attachments)
-  private readonly BLOG_EMOJIS = ['📝', '📄', '✍️', '📰'];
+  private readonly BLOG_EMOJIS = ['📝'];
 
   // Memory emojis (handled separately for Larry's diary feedback messages)
   private readonly MEMORY_EMOJIS = ['🧠'];
@@ -62,8 +62,8 @@ export class ReactionHandler {
       return;
     }
 
-    // Check if this is a blog creation reaction in an idea channel
-    if (this.blogHandler.isIdeaChannel(message) && this.BLOG_EMOJIS.includes(emoji)) {
+    // Check if this is a blog creation reaction
+    if (this.BLOG_EMOJIS.includes(emoji)) {
       console.log('📝 Handling blog creation reaction');
       await this.blogHandler.handleBlogReaction(reaction, user, emoji);
       return;
