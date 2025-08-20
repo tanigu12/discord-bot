@@ -117,7 +117,7 @@ ${messagesContent}`;
       const metadata = this.extractMetadata(formattedMarkdown, threadData.threadName);
 
       return {
-        markdown: formattedMarkdown,
+        markdown: this.addLineBreaks(formattedMarkdown),
         ...metadata,
       };
     } catch (error) {
@@ -147,6 +147,53 @@ ${messagesContent}`;
     };
   }
 
+  // Add line breaks to long text for better readability
+  private addLineBreaks(text: string, maxLineLength: number = 100): string {
+    if (text.length <= maxLineLength) {
+      return text;
+    }
+
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      // 現在の行に単語を追加した時の長さをチェック
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      
+      if (testLine.length <= maxLineLength) {
+        // 長さが制限内なら追加
+        currentLine = testLine;
+      } else {
+        // 制限を超える場合
+        if (currentLine) {
+          // 現在の行をプッシュして新しい行を開始
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          // 単語自体が制限を超える場合は強制的に分割
+          if (word.length > maxLineLength) {
+            let remainingWord = word;
+            while (remainingWord.length > maxLineLength) {
+              lines.push(remainingWord.substring(0, maxLineLength));
+              remainingWord = remainingWord.substring(maxLineLength);
+            }
+            currentLine = remainingWord;
+          } else {
+            currentLine = word;
+          }
+        }
+      }
+    }
+
+    // 最後の行を追加
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines.join('\n');
+  }
+
   // Create fallback format when AI processing fails
   private createFallbackFormat(threadData: ThreadData): BlogFormatResult {
     const title = threadData.threadName || 'Discussion Summary';
@@ -169,7 +216,7 @@ ${threadData.messages
 ${threadData.participants.map(p => `    ${p}`).join('\n')}`;
 
     return {
-      markdown,
+      markdown: this.addLineBreaks(markdown),
       title,
       sections: 2,
       wordCount: markdown.split(/\s+/).length,
