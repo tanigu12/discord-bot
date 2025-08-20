@@ -36,20 +36,6 @@ ${translationSection || '見つかりませんでした'}
     return { targetSentence, translationSection };
   }
 
-  /**
-   * Extract key words from Japanese sentence for vocabulary learning
-   */
-  private extractKeyWords(sentence: string): string[] {
-    // Simple key word extraction - split by common Japanese separators
-    const words = sentence
-      .replace(/[。、！？]/g, ' ') // Replace punctuation with spaces
-      .split(/[\s　]+/) // Split by spaces (both regular and full-width)
-      .filter(word => word.length > 0)
-      .filter(word => word.length > 1) // Filter out single characters
-      .slice(0, 5); // Take first 5 words
-
-    return words;
-  }
 
   /**
    * Read and parse message.txt file from file path
@@ -70,18 +56,11 @@ ${translationSection || '見つかりませんでした'}
   /**
    * Generate filename for vocabulary entry
    */
-  generateVocabularyFilename(targetSentence: string): string {
+  generateVocabularyFilename(): string {
     const now = new Date();
     const timestamp = now.toISOString().replace(/[:.]/g, '-').substring(0, 19); // YYYY-MM-DDTHH-mm-ss format
 
-    // Extract first few words for filename
-    const words = this.extractKeyWords(targetSentence).slice(0, 2);
-    const sanitizedWords = words
-      .join('-')
-      .replace(/[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF-]/g, '') // Keep Japanese chars and alphanumeric
-      .substring(0, 20); // Limit length
-
-    return `vocabulary-${timestamp}-${sanitizedWords}.md`;
+    return `vocabulary-${timestamp}.md`;
   }
 
   /**

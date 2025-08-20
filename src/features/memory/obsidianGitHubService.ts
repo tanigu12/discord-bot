@@ -102,12 +102,13 @@ export class ObsidianGitHubService {
         path: filePath,
       });
       return true;
-    } catch (error) {
-      // If 404, file doesn't exist
-      if (error instanceof Error && error.message.includes('404')) {
+    } catch (error: any) {
+      // If 404, file doesn't exist - this is expected for new files
+      if (error.status === 404 || (error.response && error.response.status === 404)) {
         return false;
       }
       // Other errors might indicate permission issues
+      console.error('Unexpected error in checkFileExists:', error);
       throw error;
     }
   }

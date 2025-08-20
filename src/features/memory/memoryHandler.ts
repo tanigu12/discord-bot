@@ -58,9 +58,8 @@ export class MemoryHandler {
       // Format content for Obsidian
       const formattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
       
-      // Extract target sentence for filename
-      const extracted = this.memoryFormatter.extractContent(messageContent);
-      const filename = this.memoryFormatter.generateVocabularyFilename(extracted.targetSentence);
+      // Generate filename
+      const filename = this.memoryFormatter.generateVocabularyFilename();
 
       // Save to Obsidian GitHub repository
       const fileUrl = await this.obsidianService.createVocabularyFile(filename, formattedContent);
@@ -68,7 +67,6 @@ export class MemoryHandler {
       // Confirm success to user
       await message.reply(`🧠✅ **Vocabulary saved to Obsidian!**
 
-📝 **Target:** ${extracted.targetSentence.substring(0, 50)}${extracted.targetSentence.length > 50 ? '...' : ''}
 📂 **File:** ${filename}
 🔗 **URL:** ${fileUrl}
 
