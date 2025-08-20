@@ -56,7 +56,7 @@ export class ReactionHandler {
     const message = reaction.message;
 
     // Check if this is an idea channel and handle idea-specific reactions
-    if (this.ideaHandler.isIdeaChannel(message) && this.IDEA_EMOJIS.includes(emoji)) {
+    if (this.IDEA_EMOJIS.includes(emoji)) {
       console.log('💡 Handling idea channel reaction');
       await this.ideaHandler.handleIdeaReaction(reaction, user, emoji);
       return;
