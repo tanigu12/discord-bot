@@ -5,9 +5,14 @@ export class MemoryFormatter {
   async formatForObsidian(messageContent: string): Promise<string> {
     const { targetSentence, translationSection } = this.extractContent(messageContent);
 
+    // Replace double line breaks with single line breaks in translation section for compactness
+    const compactTranslationSection = translationSection 
+      ? translationSection.replace(/\n\n/g, '\n')
+      : '見つかりませんでした';
+
     return `${targetSentence}
 ?
-${translationSection || '見つかりませんでした'}
+${compactTranslationSection}
 
 #flashcards/vocab/ja-to-en #vocabulary`;
   }
