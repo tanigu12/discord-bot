@@ -470,13 +470,17 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
     }
   }
 
-  // パターンベースの言語検出（ひらがな・カタカナを使用）
+  // パターンベースの言語検出（ひらがな・カタカナ・漢字を使用）
   detectLanguageByPattern(text: string): DetectedLanguage {
+    console.log(`🔍 Language Detection - Input text: "${text}"`);
+    
     // ひらがな全文字
-    const hiraganaRegex = /[あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっ]/;
+    const hiraganaRegex =
+      /[あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっ]/;
     // カタカナ全文字
-    const katakanaRegex = /[アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポャュョッー]/;
-    // 漢字の範囲: U+4E00-U+9FAF
+    const katakanaRegex =
+      /[アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポャュョッー]/;
+    // 漢字の範囲: U+4E00-U+9FAF (CJK統合漢字)
     const kanjiRegex = /[\u4E00-\u9FAF]/;
     // 英語の文字（アルファベット）
     const englishRegex = /[a-zA-Z]/;
@@ -486,22 +490,37 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
     const hasKanji = kanjiRegex.test(text);
     const hasEnglish = englishRegex.test(text);
 
+    console.log(`🔍 Character detection results:`);
+    console.log(`  - Hiragana: ${hasHiragana}`);
+    console.log(`  - Katakana: ${hasKatakana}`);
+    console.log(`  - Kanji: ${hasKanji}`);
+    console.log(`  - English: ${hasEnglish}`);
+
     // 日本語文字（ひらがな、カタカナ、漢字のいずれか）が含まれているかチェック
     const hasJapanese = hasHiragana || hasKatakana || hasKanji;
+    console.log(`  - Has Japanese: ${hasJapanese}`);
 
+    let result: DetectedLanguage;
     if (hasJapanese && hasEnglish) {
       // 日本語と英語の両方が含まれている場合は「混合」
-      return 'mixing';
+      result = 'mixing';
+      console.log(`🎯 Result: MIXING (Japanese + English detected)`);
     } else if (hasJapanese) {
       // 日本語のみ
-      return 'japanese';
+      result = 'japanese';
+      console.log(`🎯 Result: JAPANESE (Japanese characters only)`);
     } else if (hasEnglish) {
       // 英語のみ
-      return 'english';
+      result = 'english';
+      console.log(`🎯 Result: ENGLISH (English characters only)`);
     } else {
       // どちらでもない場合はデフォルトで英語として扱う
-      return 'english';
+      result = 'english';
+      console.log(`🎯 Result: ENGLISH (default - no specific characters detected)`);
     }
+
+    console.log(`✅ Language detection completed: "${text}" → ${result}`);
+    return result;
   }
 
   // 日記トピック生成

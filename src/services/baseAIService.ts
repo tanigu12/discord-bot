@@ -66,7 +66,7 @@ export class BaseAIService {
           },
         ],
         max_completion_tokens: options.maxCompletionTokens || 1000,
-        temperature: options.temperature || 0.3,
+        // GPT-5-mini only supports default temperature (1.0)
       };
 
       // Add response_format if specified

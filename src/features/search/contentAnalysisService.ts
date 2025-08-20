@@ -60,7 +60,6 @@ Write in English and make it comprehensive, educational, and engaging.`;
       return await this.callOpenAI(systemPrompt, userMessage, {
         model: OPENAI_MODELS.MAIN,
         maxCompletionTokens: 3000,
-        temperature: 0.4,
       });
     } catch (error) {
       console.error('Content analysis error:', error);
@@ -121,7 +120,6 @@ Please provide analysis that considers our ongoing conversation and how this top
       return await this.callOpenAI(systemPrompt, userMessage, {
         model: OPENAI_MODELS.MAIN,
         maxCompletionTokens: 3500,
-        temperature: 0.4,
       });
     } catch (error) {
       console.error('Context-aware content analysis error:', error);
@@ -209,7 +207,6 @@ ${messagesContent}`;
       const formattedMarkdown = await this.callOpenAI(systemPrompt, userMessage, {
         model: OPENAI_MODELS.MAIN,
         maxCompletionTokens: 4000,
-        temperature: 0.3,
       });
 
       // Extract metadata from the formatted content

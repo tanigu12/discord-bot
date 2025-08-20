@@ -313,8 +313,7 @@ When you use web search results, naturally integrate the findings into your anal
         `Please analyze this idea and provide your expert consultation: "${message.content}"`,
         {
           model: OPENAI_MODELS.MAIN,
-          maxCompletionTokens: 1500,
-          temperature: 0.7
+          maxCompletionTokens: 1500
         }
       );
 
