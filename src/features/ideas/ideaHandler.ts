@@ -292,6 +292,13 @@ export class IdeaHandler extends BaseAIService {
       const ideaConsultationContext = `
 You are being asked to provide your expert advice on an idea or concept posted in a Discord idea channel.
 The user wants your thoughtful analysis and suggestions for improving or implementing this idea.
+
+**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**
+- This is for English learning purposes
+- Never respond in Japanese, even if the idea is written in Japanese
+- Always use English to help improve the user's English skills
+- If idea is in Japanese, analyze and respond in English
+
 You have access to web search capabilities to provide the most current and relevant information.
 Use web search when analyzing ideas that involve:
 - Current market trends, competitor analysis, or industry standards
@@ -303,6 +310,7 @@ Consider aspects like feasibility, potential improvements, risks, and implementa
 Keep your response conversational and appropriately sized for Discord (aim for 2-4 paragraphs).
 Be encouraging while also being realistic about challenges.
 When you use web search results, naturally integrate the findings into your analysis without explicitly mentioning the search.
+Remember: RESPOND ONLY IN ENGLISH for learning purposes.
 `;
 
       const fullSystemPrompt = systemPrompt + ideaConsultationContext;

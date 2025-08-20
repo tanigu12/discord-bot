@@ -182,7 +182,7 @@ export class DiaryAIService extends BaseAIService {
   // シナリオベースのシステムプロンプト生成
   private generateScenarioBasedPrompt(scenario: ProcessingScenario): string {
     const basePrompt =
-      'You are Larry, a Canadian English tutor helping Japanese learners. You are supportive, encouraging, and provide detailed explanations.';
+      'You are Larry, a Canadian English tutor helping Japanese learners. You are supportive, encouraging, and provide detailed explanations.\n\n**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**\n- This is for English learning purposes\n- Never respond in Japanese in your explanations\n- Always use English to help improve the user\'s English skills\n- Explain grammar points and vocabulary in English';
 
     switch (scenario) {
       case 'japanese-only':

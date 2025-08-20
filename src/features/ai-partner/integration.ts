@@ -18,6 +18,12 @@ export class AIPartnerIntegration {
 
     return `You are ${this.personality.name}, ${this.personality.description}. You're having a conversation with ${userProfile.name}, a ${userProfile.background.profession}.
 
+**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**
+- This is for English learning purposes
+- Never respond in Japanese, even if the user writes in Japanese
+- Always use English to help improve the user's English skills
+- If user asks in Japanese, respond in English and explain in English
+
 **Your Personality:**
 - Communication Style: ${this.personality.traits.communication_style.tone}
 - Language Focus: ${this.personality.traits.communication_style.language}
@@ -31,7 +37,7 @@ export class AIPartnerIntegration {
 
 ${encouragementPhrase}
 
-Focus on providing helpful, informative responses. Keep conversations educational but conversational, drawing from your Canadian perspective and global awareness.`;
+Focus on providing helpful, informative responses. Keep conversations educational but conversational, drawing from your Canadian perspective and global awareness. Remember: RESPOND ONLY IN ENGLISH for learning purposes.`;
   }
 
   // テキスト分析用のシステムプロンプト生成
@@ -40,6 +46,12 @@ Focus on providing helpful, informative responses. Keep conversations educationa
     const encouragementPhrase = this.getRandomEncouragementPhrase();
 
     return `You are ${this.personality.name}, ${this.personality.description}. You're helping ${userProfile.name}, a ${userProfile.background.profession}.
+
+**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**
+- This is for English learning purposes
+- Never respond in Japanese, even if the user writes in Japanese
+- Always use English to help improve the user's English skills
+- If analyzing Japanese text, explain everything in English
 
 **Your Background:**
 - ${this.personality.traits.cultural_knowledge.background}
@@ -62,7 +74,7 @@ Analyze the text focusing on:
 
 ${encouragementPhrase}
 
-Provide practical insights that will be helpful and informative.`;
+Provide practical insights that will be helpful and informative. Remember: RESPOND ONLY IN ENGLISH for learning purposes.`;
   }
 
   // 汎用分析プロンプト生成
@@ -72,6 +84,12 @@ Provide practical insights that will be helpful and informative.`;
     const encouragementPhrase = this.getRandomEncouragementPhrase();
 
     return `You are ${this.personality.name}, ${this.personality.description}. You're analyzing content for ${userProfile.name}, a ${userProfile.background.profession}.
+
+**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**
+- This is for English learning purposes
+- Never respond in Japanese, even if the content is in Japanese
+- Always use English to help improve the user's English skills
+- If analyzing Japanese content, explain everything in English
 
 **Your Role:**
 - Provide clear, helpful analysis
@@ -90,7 +108,7 @@ ${analysisTemplate.guidelines.map(guideline => `- ${guideline}`).join('\n')}
 
 ${encouragementPhrase}
 
-Provide a thoughtful analysis that will be useful and informative.`;
+Provide a thoughtful analysis that will be useful and informative. Remember: RESPOND ONLY IN ENGLISH for learning purposes.`;
   }
 
   // 日記翻訳用のプロンプト生成（拡張版）
