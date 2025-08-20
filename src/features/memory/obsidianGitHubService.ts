@@ -37,13 +37,16 @@ export class ObsidianGitHubService {
       console.log(`📝 Creating vocabulary file: ${filename}`);
 
       // Construct full file path
-      const filePath = `${this.vocabularyPath}${filename}`;
+      let filePath = `${this.vocabularyPath}${filename}`;
 
       // Check if file already exists
       const exists = await this.checkFileExists(filePath);
       if (exists) {
         console.log(`⚠️ File ${filename} already exists, creating unique name...`);
         filename = this.generateUniqueFilename(filename);
+        // Update filePath with new filename
+        filePath = `${this.vocabularyPath}${filename}`;
+        console.log(`📝 Updated filename: ${filename}`);
       }
 
       // Encode content to base64
@@ -60,7 +63,7 @@ export class ObsidianGitHubService {
       const response = await this.octokit.rest.repos.createOrUpdateFileContents({
         owner: this.owner,
         repo: this.repo,
-        path: `${this.vocabularyPath}${filename}`,
+        path: filePath,
         message: commitMessage,
         content: encodedContent,
         branch: 'main', // Obsidian typically uses 'main' branch
@@ -71,7 +74,7 @@ export class ObsidianGitHubService {
       // Return the URL to the created file
       return (
         response.data.content?.html_url ||
-        `https://github.com/${this.owner}/${this.repo}/blob/main/${this.vocabularyPath}${filename}`
+        `https://github.com/${this.owner}/${this.repo}/blob/main/${filePath}`
       );
     } catch (error) {
       console.error('❌ Error creating vocabulary file:', error);
