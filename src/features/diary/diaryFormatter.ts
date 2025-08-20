@@ -83,6 +83,53 @@ export class DiaryFormatter {
     return text.substring(0, maxLength - 3) + '...';
   }
 
+  // 長いテキストを100文字ごとに改行
+  private addLineBreaks(text: string, maxLineLength: number = 100): string {
+    if (text.length <= maxLineLength) {
+      return text;
+    }
+
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      // 現在の行に単語を追加した時の長さをチェック
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      
+      if (testLine.length <= maxLineLength) {
+        // 長さが制限内なら追加
+        currentLine = testLine;
+      } else {
+        // 制限を超える場合
+        if (currentLine) {
+          // 現在の行をプッシュして新しい行を開始
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          // 単語自体が制限を超える場合は強制的に分割
+          if (word.length > maxLineLength) {
+            let remainingWord = word;
+            while (remainingWord.length > maxLineLength) {
+              lines.push(remainingWord.substring(0, maxLineLength));
+              remainingWord = remainingWord.substring(maxLineLength);
+            }
+            currentLine = remainingWord;
+          } else {
+            currentLine = word;
+          }
+        }
+      }
+    }
+
+    // 最後の行を追加
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines.join('\n');
+  }
+
   // 完全なメッセージ内容を生成（改行を適切に配置して読みやすく）
   private generateCompleteMessage(result: DiaryProcessingResult, author: User): string {
     const lines: string[] = [];
@@ -108,7 +155,7 @@ export class DiaryFormatter {
     const scenarioLines = this.getScenarioContentLines(result);
     lines.push(...scenarioLines);
 
-    // 質問回答を追加
+    // 質問回答を追加（長いテキストは100文字で分割）
     if (result.hasQuestions && result.questionAnswers && result.questionAnswers.length > 0) {
       lines.push(``);
       lines.push(`═══════════════════════════════════════════════════════`);
@@ -117,10 +164,16 @@ export class DiaryFormatter {
       lines.push(``);
       
       result.questionAnswers.forEach((qa, index) => {
-        lines.push(`Q${index + 1}: ${qa.question}`);
+        // 質問も100文字で分割
+        const questionText = `Q${index + 1}: ${qa.question}`;
+        lines.push(...this.addLineBreaks(questionText).split('\n'));
         lines.push(``);
-        lines.push(`A${index + 1}: ${qa.answer}`);
+        
+        // 回答も100文字で分割
+        const answerText = `A${index + 1}: ${qa.answer}`;
+        lines.push(...this.addLineBreaks(answerText).split('\n'));
         lines.push(``);
+        
         if (index < result.questionAnswers!.length - 1) {
           lines.push(`---`);
           lines.push(``);
@@ -138,7 +191,7 @@ export class DiaryFormatter {
     return lines.join('\n');
   }
 
-  // シナリオ別の内容を行配列で取得（改行を適切に配置）
+  // シナリオ別の内容を行配列で取得（改行を適切に配置、長いテキストは100文字で分割）
   private getScenarioContentLines(result: DiaryProcessingResult): string[] {
     const lines: string[] = [];
     
@@ -149,15 +202,15 @@ export class DiaryFormatter {
           lines.push(``);
           
           lines.push(`🟢 BEGINNER LEVEL:`);
-          lines.push(`${result.threeLevelTranslations.beginner}`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.beginner).split('\n'));
           lines.push(``);
           
           lines.push(`🟡 INTERMEDIATE LEVEL:`);
-          lines.push(`${result.threeLevelTranslations.intermediate}`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.intermediate).split('\n'));
           lines.push(``);
           
           lines.push(`🔴 UPPER LEVEL:`);
-          lines.push(`${result.threeLevelTranslations.upper}`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.upper).split('\n'));
           lines.push(``);
         }
         break;
@@ -168,15 +221,15 @@ export class DiaryFormatter {
           lines.push(``);
           
           lines.push(`🟢 BEGINNER LEVEL:`);
-          lines.push(`${result.threeLevelTranslations.beginner}`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.beginner).split('\n'));
           lines.push(``);
           
           lines.push(`🟡 INTERMEDIATE LEVEL:`);
-          lines.push(`${result.threeLevelTranslations.intermediate}`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.intermediate).split('\n'));
           lines.push(``);
           
           lines.push(`🔴 UPPER LEVEL:`);
-          lines.push(`${result.threeLevelTranslations.upper}`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.upper).split('\n'));
           lines.push(``);
         }
 
@@ -185,17 +238,18 @@ export class DiaryFormatter {
           lines.push(``);
           
           lines.push(`🎯 TRANSLATION EVALUATION:`);
-          lines.push(`${result.translationEvaluation.evaluation}`);
+          lines.push(...this.addLineBreaks(result.translationEvaluation.evaluation).split('\n'));
           lines.push(``);
           
           lines.push(`📝 STUDY POINTS:`);
           result.translationEvaluation.studyPoints.forEach((point, index) => {
-            lines.push(`${index + 1}. ${point}`);
+            const numberedPoint = `${index + 1}. ${point}`;
+            lines.push(...this.addLineBreaks(numberedPoint).split('\n'));
           });
           lines.push(``);
           
           lines.push(`💡 IMPROVEMENTS:`);
-          lines.push(`${result.translationEvaluation.improvements}`);
+          lines.push(...this.addLineBreaks(result.translationEvaluation.improvements).split('\n'));
           lines.push(``);
         }
         break;
@@ -203,15 +257,15 @@ export class DiaryFormatter {
       case 'english-only':
         if (result.japaneseTranslation && result.vocabularyExplanation && result.grammarExplanation) {
           lines.push(`🇯🇵 JAPANESE TRANSLATION:`);
-          lines.push(`${result.japaneseTranslation}`);
+          lines.push(...this.addLineBreaks(result.japaneseTranslation).split('\n'));
           lines.push(``);
           
           lines.push(`📖 VOCABULARY EXPLANATION:`);
-          lines.push(`${result.vocabularyExplanation}`);
+          lines.push(...this.addLineBreaks(result.vocabularyExplanation).split('\n'));
           lines.push(``);
           
           lines.push(`📝 GRAMMAR EXPLANATION:`);
-          lines.push(`${result.grammarExplanation}`);
+          lines.push(...this.addLineBreaks(result.grammarExplanation).split('\n'));
           lines.push(``);
         }
         break;

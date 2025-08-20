@@ -13,6 +13,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run deploy-commands` - Register slash commands with Discord API
 - `npm run clean` - Remove dist/ directory
 
+### Testing Commands
+
+- `npm test` - Run all vitest unit tests
+- `npm run test:watch` - Run tests in watch mode for development
+- `npm run test:ui` - Open vitest UI for visual test management
+- `npm run check:all` - Run full quality checks (type-check, lint, format-check, knip, test)
+
 ### Environment Setup
 
 1. Copy `.env.example` to `.env`
@@ -117,6 +124,65 @@ https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_CLIENT_ID&permission
 ```
 
 Replace `YOUR_BOT_CLIENT_ID` with your actual bot's client ID.
+
+## Testing Framework
+
+### Vitest Configuration
+
+The project uses **Vitest** as the testing framework with the following setup:
+
+- **Test files**: `src/**/*.{test,spec}.{js,ts}` and `tests/**/*.{test,spec}.{js,ts}`
+- **Environment**: Node.js
+- **Globals**: Enabled for describe, it, expect, beforeEach, etc.
+- **Configuration**: `vitest.config.ts` in project root
+
+### Testing Guidelines
+
+**IMPORTANT: Always write vitest unit tests instead of temporary JavaScript files when you need to test functionality.**
+
+#### When to Write Tests:
+- **New functions or methods** - Always create unit tests
+- **Bug fixes** - Write tests to reproduce and verify fixes
+- **Refactoring** - Ensure existing functionality is preserved
+- **Complex logic** - Test edge cases and various scenarios
+
+#### Test File Structure:
+- Place tests in `src/[feature]/__tests__/` directories
+- Use descriptive test names that explain what is being tested
+- Group related tests using `describe` blocks
+- Use `beforeEach` for setup code that runs before each test
+
+#### Example Test Pattern:
+```typescript
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+describe('FeatureName', () => {
+  let instance: FeatureClass;
+
+  beforeEach(() => {
+    instance = new FeatureClass();
+  });
+
+  it('should handle normal case correctly', () => {
+    const result = instance.method('input');
+    expect(result).toBe('expected');
+  });
+
+  it('should handle edge cases', () => {
+    // Test edge cases, error conditions, etc.
+  });
+});
+```
+
+#### Running Tests:
+- **Development**: Use `npm run test:watch` for continuous testing
+- **CI/CD**: Use `npm test` for one-time test runs
+- **Debugging**: Use `npm run test:ui` for visual test interface
+- **Quality Check**: `npm run check:all` includes tests in full validation
+
+#### Current Test Coverage:
+- ✅ **DiaryAIService**: Language detection patterns and functionality
+- ✅ **DiaryFormatter**: Line breaking and text formatting functionality
 
 ## Development Notes
 
