@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { OPENAI_MODELS } from '../constants/ai';
 import { AIPartnerIntegration } from '../features/ai-partner/integration';
 
 // OpenAI API の基本機能を提供する共有サービス
@@ -46,9 +47,14 @@ export class BaseAIService {
     try {
       const openai = this.getOpenAI();
 
+      // check prompt
+      console.info('systemPrompt', systemPrompt);
+      console.info('userPrompt', userMessage);
+      console.info('options', options);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const requestConfig: any = {
-        model: options.model || 'gpt-4o-mini',
+        model: options.model || OPENAI_MODELS.MAIN,
         messages: [
           {
             role: 'system',

@@ -1,5 +1,6 @@
 import { Message } from 'discord.js';
 import { BaseAIService } from '../../services/baseAIService';
+import { OPENAI_MODELS } from '../../constants/ai';
 
 export class LarryConsultHandler extends BaseAIService {
   private readonly CONSULT_LARRY_CHANNEL_NAME = 'consult-larry';
@@ -47,7 +48,7 @@ When you use web search results, naturally integrate the findings into your resp
         fullSystemPrompt,
         message.content,
         {
-          model: 'gpt-4o-mini',
+          model: OPENAI_MODELS.MAIN,
           maxTokens: 1500,
           temperature: 0.7
         }

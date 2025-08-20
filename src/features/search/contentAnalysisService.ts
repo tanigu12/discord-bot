@@ -1,4 +1,5 @@
 import { BaseAIService } from '../../services/baseAIService';
+import { OPENAI_MODELS } from '../../constants/ai';
 import { ChannelContext } from '../../services/contextCollectorService';
 import { ThreadData } from '../../services/conversationReaderService';
 
@@ -57,7 +58,7 @@ Write in English and make it comprehensive, educational, and engaging.`;
         : `Please analyze and explain this topic/content in detail:\n\n${content}`;
 
       return await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
+        model: OPENAI_MODELS.MAIN,
         maxTokens: 3000,
         temperature: 0.4,
       });
@@ -118,7 +119,7 @@ ${content}
 Please provide analysis that considers our ongoing conversation and how this topic connects to what we've been discussing.`;
 
       return await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
+        model: OPENAI_MODELS.MAIN,
         maxTokens: 3500,
         temperature: 0.4,
       });
@@ -206,7 +207,7 @@ Transform the Discord discussion into this clean, bilingual reference-style form
 ${messagesContent}`;
 
       const formattedMarkdown = await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
+        model: OPENAI_MODELS.MAIN,
         maxTokens: 4000,
         temperature: 0.3,
       });

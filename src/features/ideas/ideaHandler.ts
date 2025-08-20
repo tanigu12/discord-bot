@@ -8,6 +8,7 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import { BaseAIService } from '../../services/baseAIService';
+import { OPENAI_MODELS } from '../../constants/ai';
 
 export interface IdeaMetadata {
   status: 'new' | 'discussing' | 'approved' | 'implemented' | 'archived';
@@ -311,7 +312,7 @@ When you use web search results, naturally integrate the findings into your anal
         fullSystemPrompt,
         `Please analyze this idea and provide your expert consultation: "${message.content}"`,
         {
-          model: 'gpt-4o-mini',
+          model: OPENAI_MODELS.MAIN,
           maxTokens: 1500,
           temperature: 0.7
         }

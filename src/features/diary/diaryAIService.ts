@@ -1,5 +1,17 @@
 import { BaseAIService } from '../../services/baseAIService';
 import { NewsItem } from '../../services/newsService';
+import { MODEL_CONFIGS } from '../../constants/ai';
+import {
+  DetectedLanguage,
+  EnglishDiaryComprehensiveResult,
+  UnifiedDiaryProcessingResult,
+  JapaneseDiaryWithTryResult,
+  LanguageDetectionAndTranslationResult,
+  DiaryTopicsGenerationResult,
+  RandomTopicConfig,
+  ParsedDiaryEntry,
+  ProcessingScenario,
+} from './types';
 
 // Larry による日記専用AIサービス
 export class DiaryAIService extends BaseAIService {
@@ -51,11 +63,7 @@ export class DiaryAIService extends BaseAIService {
       );
       const userMessage = `Please translate this diary entry: "${text}". Include brief grammar explanations and related vocabulary.`;
 
-      return await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
-        maxTokens: 1000,
-        temperature: 0.3,
-      });
+      return await this.callOpenAI(systemPrompt, userMessage, MODEL_CONFIGS.TRANSLATION);
     } catch (error) {
       console.error('Diary translation error:', error);
       throw new Error('Failed to translate diary text');
@@ -68,11 +76,7 @@ export class DiaryAIService extends BaseAIService {
       const systemPrompt = this.aiPartnerIntegration.generateDiaryGrammarPrompt(text);
       const userMessage = `Please provide grammar feedback on this diary entry: "${text}"`;
 
-      return await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
-        maxTokens: 1500,
-        temperature: 0.4,
-      });
+      return await this.callOpenAI(systemPrompt, userMessage, MODEL_CONFIGS.GRAMMAR_CHECK);
     } catch (error) {
       console.error('Diary grammar check error:', error);
       throw new Error('Failed to check diary grammar');
@@ -80,19 +84,14 @@ export class DiaryAIService extends BaseAIService {
   }
 
   // 英語文章の包括的処理（翻訳、向上、文法フィードバックを一度に）
-  async processEnglishDiaryComprehensive(text: string): Promise<{
-    translation: string;
-    enhancedEnglish: string;
-    grammarFeedback: string;
-  }> {
+  async processEnglishDiaryComprehensive(text: string): Promise<EnglishDiaryComprehensiveResult> {
     try {
       const systemPrompt = this.aiPartnerIntegration.generateComprehensiveEnglishProcessingPrompt(text);
       const userMessage = `Please process this English diary entry comprehensively: "${text}"`;
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
+        ...MODEL_CONFIGS.DIARY_PROCESSING,
         maxTokens: 2000,
-        temperature: 0.4,
         response_format: {
           type: 'json_schema',
           json_schema: {
@@ -133,106 +132,37 @@ export class DiaryAIService extends BaseAIService {
     }
   }
 
-  // 統一された日記処理（単一AI呼び出しで全処理）
-  async processUnifiedDiary(text: string): Promise<{
-    detectedLanguage: 'japanese' | 'english' | 'other';
-    translation: string;
-    grammarFeedback?: string | null;
-    enhancedEnglish?: string | null;
-    hasTryTranslation?: boolean;
-    tryTranslationFeedback?: {
-      feedback: string;
-      threeVersions: {
-        casual: string;
-        formal: string;
-        advanced: string;
-      };
-    } | null;
-  }> {
+  // 統一された日記処理（シナリオベース）
+  async processUnifiedDiary(parsedEntry: ParsedDiaryEntry, scenario: ProcessingScenario): Promise<UnifiedDiaryProcessingResult> {
     try {
-      const systemPrompt = this.aiPartnerIntegration.generateUnifiedDiaryProcessingPrompt(text);
-      const userMessage = `Please analyze and process this diary entry: "${text}"`;
+      // パターンベースの言語検出を使用
+      const detectedLanguage = this.detectLanguageByPattern(parsedEntry.targetSentence);
+      const hasQuestions = !!(parsedEntry.questions && parsedEntry.questions.length > 0);
+
+      // シナリオベースのプロンプト生成
+      const systemPrompt = this.generateScenarioBasedPrompt(scenario);
+      const userMessage = this.buildScenarioBasedUserMessage(parsedEntry, scenario, detectedLanguage);
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
-        maxTokens: 3000,
-        temperature: 0.4,
+        ...MODEL_CONFIGS.DIARY_PROCESSING,
         response_format: {
           type: 'json_schema',
-          json_schema: {
-            name: 'unified_diary_processing',
-            strict: true,
-            schema: {
-              type: 'object',
-              properties: {
-                detectedLanguage: {
-                  type: 'string',
-                  enum: ['japanese', 'english', 'other'],
-                  description: 'Detected language of the diary entry'
-                },
-                translation: {
-                  type: 'string',
-                  description: 'Translation of the diary entry with grammar points and vocabulary'
-                },
-                grammarFeedback: {
-                  type: ['string', 'null'],
-                  description: 'Grammar feedback for English entries (null if not applicable)'
-                },
-                enhancedEnglish: {
-                  type: ['string', 'null'],
-                  description: 'Enhanced version of English entries (null if not applicable)'
-                },
-                hasTryTranslation: {
-                  type: 'boolean',
-                  description: 'Whether the entry contains [try] translation attempts'
-                },
-                tryTranslationFeedback: {
-                  type: ['object', 'null'],
-                  properties: {
-                    feedback: {
-                      type: 'string',
-                      description: 'Feedback on user translation attempt'
-                    },
-                    threeVersions: {
-                      type: 'object',
-                      properties: {
-                        casual: {
-                          type: 'string',
-                          description: 'Casual translation version'
-                        },
-                        formal: {
-                          type: 'string',
-                          description: 'Formal translation version'
-                        },
-                        advanced: {
-                          type: 'string',
-                          description: 'Advanced translation version'
-                        }
-                      },
-                      required: ['casual', 'formal', 'advanced'],
-                      additionalProperties: false
-                    }
-                  },
-                  required: ['feedback', 'threeVersions'],
-                  additionalProperties: false,
-                  description: 'Translation feedback for [try] entries (null if not applicable)'
-                }
-              },
-              required: ['detectedLanguage', 'translation', 'grammarFeedback', 'enhancedEnglish', 'hasTryTranslation', 'tryTranslationFeedback'],
-              additionalProperties: false
-            }
-          }
+          json_schema: this.getScenarioBasedSchema(scenario)
         }
       });
 
       const parsed = JSON.parse(responseText);
       return {
-        detectedLanguage: parsed.detectedLanguage,
-        translation: parsed.translation,
-        grammarFeedback: parsed.grammarFeedback || undefined,
-        enhancedEnglish: parsed.enhancedEnglish || undefined,
-        hasTryTranslation: parsed.hasTryTranslation,
-        tryTranslationFeedback: parsed.tryTranslationFeedback || undefined
+        detectedLanguage,
+        targetSentence: parsedEntry.targetSentence,
+        scenario,
+        threeLevelTranslations: parsed.threeLevelTranslations || undefined,
+        translationEvaluation: parsed.translationEvaluation || undefined,
+        japaneseTranslation: parsed.japaneseTranslation || undefined,
+        vocabularyExplanation: parsed.vocabularyExplanation || undefined,
+        grammarExplanation: parsed.grammarExplanation || undefined,
+        hasQuestions,
+        questionAnswers: parsed.questionAnswers || undefined
       };
     } catch (error) {
       console.error('Unified diary processing error:', error);
@@ -240,23 +170,173 @@ export class DiaryAIService extends BaseAIService {
     }
   }
 
-  // [try]付きの日本語日記の処理（英語翻訳のフィードバック付き）- DEPRECATED
-  async processJapaneseDiaryWithTry(text: string): Promise<{
-    translationFeedback: string;
-    threeVersions: {
-      casual: string;
-      formal: string;
-      advanced: string;
+  // シナリオベースのシステムプロンプト生成
+  private generateScenarioBasedPrompt(scenario: ProcessingScenario): string {
+    const basePrompt = "You are Larry, a Canadian English tutor helping Japanese learners. You are supportive, encouraging, and provide detailed explanations.";
+    
+    switch (scenario) {
+      case 'japanese-only':
+        return `${basePrompt}
+
+SCENARIO 1: Japanese-only input
+Your task: Translate the Japanese sentence into English with three difficulty levels.
+- beginner: Simple, basic English
+- intermediate: Natural, everyday English  
+- upper: Advanced, sophisticated English with complex vocabulary`;
+
+      case 'japanese-with-try':
+        return `${basePrompt}
+
+SCENARIO 2: Japanese with translation challenge
+Your task: 
+1. Translate the Japanese sentence into English with three difficulty levels (beginner/intermediate/upper)
+2. Evaluate the user's translation attempt and provide detailed feedback
+3. Explain study points to help them improve`;
+
+      case 'english-only':
+        return `${basePrompt}
+
+SCENARIO 3: English input (may contain some Japanese)
+Your task: Translate to Japanese and provide detailed explanations of vocabulary and grammar to help with English learning.`;
+
+      default:
+        return basePrompt;
+    }
+  }
+
+  // シナリオベースのユーザーメッセージ構築
+  private buildScenarioBasedUserMessage(parsedEntry: ParsedDiaryEntry, scenario: ProcessingScenario, detectedLanguage: DetectedLanguage): string {
+    let message = `SCENARIO: ${scenario.toUpperCase()}\n`;
+    message += `DETECTED LANGUAGE: ${detectedLanguage}\n\n`;
+    message += `TARGET SENTENCE: "${parsedEntry.targetSentence}"\n`;
+
+    if (scenario === 'japanese-with-try' && parsedEntry.tryTranslation) {
+      message += `USER'S TRANSLATION ATTEMPT: "${parsedEntry.tryTranslation}"\n`;
+    }
+
+    if (parsedEntry.questions && parsedEntry.questions.length > 0) {
+      message += `\nUSER QUESTIONS:\n`;
+      parsedEntry.questions.forEach((question, index) => {
+        message += `${index + 1}. ${question}\n`;
+      });
+    }
+
+    message += `\nProvide the appropriate response based on the scenario instructions.`;
+    return message;
+  }
+
+  // シナリオベースのJSONスキーマ取得
+  private getScenarioBasedSchema(scenario: ProcessingScenario) {
+    const commonQuestionAnswers = {
+      questionAnswers: {
+        type: ['array', 'null'],
+        items: {
+          type: 'object',
+          properties: {
+            question: { type: 'string', description: 'The original question from the user' },
+            answer: { type: 'string', description: 'The comprehensive answer to the question' }
+          },
+          required: ['question', 'answer'],
+          additionalProperties: false
+        },
+        description: 'Question-answer pairs for [q] entries (null if not applicable)'
+      }
     };
-  }> {
+
+    switch (scenario) {
+      case 'japanese-only':
+        return {
+          name: 'japanese_only_processing',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              threeLevelTranslations: {
+                type: 'object',
+                properties: {
+                  beginner: { type: 'string', description: 'Simple, basic English translation' },
+                  intermediate: { type: 'string', description: 'Natural, everyday English translation' },
+                  upper: { type: 'string', description: 'Advanced, sophisticated English translation' }
+                },
+                required: ['beginner', 'intermediate', 'upper'],
+                additionalProperties: false
+              },
+              ...commonQuestionAnswers
+            },
+            required: ['threeLevelTranslations', 'questionAnswers'],
+            additionalProperties: false
+          }
+        };
+
+      case 'japanese-with-try':
+        return {
+          name: 'japanese_with_try_processing',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              threeLevelTranslations: {
+                type: 'object',
+                properties: {
+                  beginner: { type: 'string', description: 'Simple, basic English translation' },
+                  intermediate: { type: 'string', description: 'Natural, everyday English translation' },
+                  upper: { type: 'string', description: 'Advanced, sophisticated English translation' }
+                },
+                required: ['beginner', 'intermediate', 'upper'],
+                additionalProperties: false
+              },
+              translationEvaluation: {
+                type: 'object',
+                properties: {
+                  evaluation: { type: 'string', description: 'Detailed evaluation of the user translation attempt' },
+                  studyPoints: { 
+                    type: 'array', 
+                    items: { type: 'string' },
+                    description: 'List of specific study points for improvement'
+                  },
+                  improvements: { type: 'string', description: 'Suggestions for how to improve the translation' }
+                },
+                required: ['evaluation', 'studyPoints', 'improvements'],
+                additionalProperties: false
+              },
+              ...commonQuestionAnswers
+            },
+            required: ['threeLevelTranslations', 'translationEvaluation', 'questionAnswers'],
+            additionalProperties: false
+          }
+        };
+
+      case 'english-only':
+        return {
+          name: 'english_only_processing',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              japaneseTranslation: { type: 'string', description: 'Japanese translation of the English text' },
+              vocabularyExplanation: { type: 'string', description: 'Detailed explanation of key vocabulary' },
+              grammarExplanation: { type: 'string', description: 'Detailed explanation of grammar structures' },
+              ...commonQuestionAnswers
+            },
+            required: ['japaneseTranslation', 'vocabularyExplanation', 'grammarExplanation', 'questionAnswers'],
+            additionalProperties: false
+          }
+        };
+
+      default:
+        throw new Error(`Unknown scenario: ${scenario}`);
+    }
+  }
+
+  // [try]付きの日本語日記の処理（英語翻訳のフィードバック付き）- DEPRECATED
+  async processJapaneseDiaryWithTry(text: string): Promise<JapaneseDiaryWithTryResult> {
     try {
       const systemPrompt = this.aiPartnerIntegration.generateJapaneseTryTranslationPrompt(text);
       const userMessage = `Please analyze this Japanese diary entry with English translation attempt: "${text}"`;
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
+        ...MODEL_CONFIGS.DIARY_PROCESSING,
         maxTokens: 2000,
-        temperature: 0.4,
         response_format: {
           type: 'json_schema',
           json_schema: {
@@ -312,27 +392,10 @@ export class DiaryAIService extends BaseAIService {
   }
 
   // 言語検出と翻訳（日記専用統合処理）
-  async detectLanguageAndTranslate(text: string): Promise<{
-    detectedLanguage: 'japanese' | 'english' | 'other';
-    translation: string;
-    hasTryTranslation?: boolean;
-  }> {
+  async detectLanguageAndTranslate(text: string): Promise<LanguageDetectionAndTranslationResult> {
     try {
-      // 言語検出
-      const languageDetectionResult = await this.callOpenAI(
-        "Detect the language of the given text and return just 'japanese', 'english', or 'other'.",
-        text,
-        { model: 'gpt-4o-mini', maxTokens: 50, temperature: 0.1 }
-      );
-
-      // 型安全な言語判定
-      const detectedLanguage: 'japanese' | 'english' | 'other' = languageDetectionResult
-        .toLowerCase()
-        .includes('japanese')
-        ? 'japanese'
-        : languageDetectionResult.toLowerCase().includes('english')
-          ? 'english'
-          : 'other';
+      // パターンベースの言語検出
+      const detectedLanguage = this.detectLanguageByPattern(text);
 
       // [try]マーカーをチェック
       const hasTryTranslation = text.includes('[try]');
@@ -340,15 +403,12 @@ export class DiaryAIService extends BaseAIService {
       // 言語に基づいて処理を分岐
       let translation = '';
 
-      if (detectedLanguage === 'japanese') {
-        // 日本語を英語に翻訳
+      if (detectedLanguage === 'japanese' || detectedLanguage === 'mixing') {
+        // 日本語または混合（基本的に日本語）を英語に翻訳
         translation = await this.translateDiaryText(text, 'English');
       } else if (detectedLanguage === 'english') {
         // 英語を日本語に翻訳
         translation = await this.translateDiaryText(text, 'Japanese');
-      } else {
-        // その他の言語はデフォルトで英語に翻訳
-        translation = await this.translateDiaryText(text, 'English');
       }
 
       return {
@@ -362,12 +422,42 @@ export class DiaryAIService extends BaseAIService {
     }
   }
 
+  // パターンベースの言語検出（ひらがな・カタカナを使用）
+  detectLanguageByPattern(text: string): DetectedLanguage {
+    // ひらがなの範囲: U+3040-U+309F
+    const hiraganaRegex = /[\u3040-\u309F]/;
+    // カタカナの範囲: U+30A0-U+30FF
+    const katakanaRegex = /[\u30A0-\u30FF]/;
+    // 漢字の範囲: U+4E00-U+9FAF
+    const kanjiRegex = /[\u4E00-\u9FAF]/;
+    // 英語の文字（アルファベット）
+    const englishRegex = /[a-zA-Z]/;
+
+    const hasHiragana = hiraganaRegex.test(text);
+    const hasKatakana = katakanaRegex.test(text);
+    const hasKanji = kanjiRegex.test(text);
+    const hasEnglish = englishRegex.test(text);
+
+    // 日本語文字（ひらがな、カタカナ、漢字のいずれか）が含まれているかチェック
+    const hasJapanese = hasHiragana || hasKatakana || hasKanji;
+
+    if (hasJapanese && hasEnglish) {
+      // 日本語と英語の両方が含まれている場合は「混合」
+      return 'mixing';
+    } else if (hasJapanese) {
+      // 日本語のみ
+      return 'japanese';
+    } else if (hasEnglish) {
+      // 英語のみ
+      return 'english';
+    } else {
+      // どちらでもない場合はデフォルトで英語として扱う
+      return 'english';
+    }
+  }
+
   // 日記トピック生成
-  async generateDiaryTopics(newsItems: NewsItem[]): Promise<{
-    newsTopics: string[];
-    personalPrompts: string[];
-    encouragement: string;
-  }> {
+  async generateDiaryTopics(newsItems: NewsItem[]): Promise<DiaryTopicsGenerationResult> {
     try {
       // ランダムトピック設定を生成
       const topicConfig = this.generateRandomTopicConfig();
@@ -397,9 +487,7 @@ export class DiaryAIService extends BaseAIService {
       );
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
-        model: 'gpt-4o-mini',
-        maxTokens: 1500,
-        temperature: 0.7,
+        ...MODEL_CONFIGS.TOPIC_GENERATION,
         response_format: {
           type: 'json_schema',
           json_schema: jsonSchema,
@@ -429,14 +517,7 @@ export class DiaryAIService extends BaseAIService {
   }
 
   // ランダムトピック設定生成（元のメソッドから移動）
-  private generateRandomTopicConfig(): {
-    categories: string[];
-    newsTopicsCount: number;
-    personalPromptsCount: number;
-    totalTopics: number;
-    tone: string;
-    style: string;
-  } {
+  private generateRandomTopicConfig(): RandomTopicConfig {
     const allCategories = [
       'current-events-reflection',
       'personal-growth',
@@ -543,11 +624,7 @@ VARIETY GUIDELINES:
   }
 
   // フォールバック日記トピック（元のメソッドから移動）
-  private getFallbackDiaryTopics(newsItems: NewsItem[]): {
-    newsTopics: string[];
-    personalPrompts: string[];
-    encouragement: string;
-  } {
+  private getFallbackDiaryTopics(newsItems: NewsItem[]): DiaryTopicsGenerationResult {
     // Create randomized fallback topics to maintain variety even when AI fails
     const fallbackNewsTopics = [
       "What's happening in your community that interests you?",

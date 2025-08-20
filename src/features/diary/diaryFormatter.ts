@@ -1,12 +1,15 @@
-import { EmbedBuilder, User, Message } from 'discord.js';
-import { DiaryProcessingResult } from './diaryService';
+import { EmbedBuilder, User, Message, AttachmentBuilder } from 'discord.js';
+import { writeFileSync, unlinkSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { DiaryProcessingResult } from './types';
 
 // Discord埋め込みメッセージのフォーマット機能
 export class DiaryFormatter {
   // Larry による日記フィードバックの埋め込みとフォローアップメッセージを作成
   async createFeedbackResponse(
     result: DiaryProcessingResult,
-    originalContent: string,
+    _originalContent: string,
     author: User,
     message: Message
   ): Promise<void> {
@@ -19,43 +22,31 @@ export class DiaryFormatter {
         iconURL: author.displayAvatarURL(),
       });
 
-    // 元のテキストを追加
+    // 元のターゲット文を追加
     embed.addFields({
-      name: `Original (${this.getLanguageDisplayName(result.detectedLanguage)})`,
-      value: this.truncateText(originalContent, 1000),
+      name: `Target Sentence (${this.getLanguageDisplayName(result.detectedLanguage)})`,
+      value: this.truncateText(result.targetSentence, 1000),
       inline: false,
     });
 
-    // メイン埋め込みを送信
-    const reply = await message.reply({ embeds: [embed] });
+    // 完全なメッセージ内容を生成
+    const completeMessage = this.generateCompleteMessage(result, author);
 
-    // [try]翻訳フィードバックがある場合の処理
-    if (result.hasTryTranslation && result.tryTranslationFeedback) {
-      // フィードバック内容を作成
-      let feedbackContent = `**🎯 Feedback on your English translation attempt:**\n${result.tryTranslationFeedback.feedback}`;
+    // メッセージファイルを作成
+    const filePath = await this.createMessageFile(completeMessage, author.username);
+    
+    try {
+      // ファイル添付を作成
+      const attachment = new AttachmentBuilder(filePath, { name: 'message.txt' });
       
-      feedbackContent += `\n\n**📚 Three Translation Patterns:**`;
-      feedbackContent += `\n\n**1. 💬 Casual (Conversational):**\n${result.tryTranslationFeedback.threeVersions.casual}`;
-      feedbackContent += `\n\n**2. ✍️ Formal (Polished):**\n${result.tryTranslationFeedback.threeVersions.formal}`;
-      feedbackContent += `\n\n**3. 🎓 Advanced (Sophisticated):**\n${result.tryTranslationFeedback.threeVersions.advanced}`;
-      
-      await this.sendLongContent("Translation Feedback & Examples", feedbackContent, reply);
-    } else {
-      // 通常の翻訳処理
-      const targetLang = result.detectedLanguage === 'japanese' ? 'English' : 'Japanese';
-      let allContent = `**Translation (${targetLang}):**\n${result.translation}`;
-
-      // 英語の場合は向上版を追加
-      if (result.enhancedEnglish) {
-        allContent += `\n\n**✨ Enhanced English:**\n${result.enhancedEnglish}`;
-      }
-
-      // Larry の文法フィードバックを追加（英語の場合）
-      if (result.grammarCheck) {
-        allContent += `\n\n**📝 Larry's Grammar Feedback:**\n${result.grammarCheck}`;
-      }
-
-      await this.sendLongContent("Translation & Feedback", allContent, reply);
+      // メイン埋め込みとファイルを一緒に送信
+      await message.reply({ 
+        embeds: [embed],
+        files: [attachment]
+      });
+    } finally {
+      // 一時ファイルを削除
+      this.cleanupFile(filePath);
     }
   }
 
@@ -77,6 +68,8 @@ export class DiaryFormatter {
         return '🇯🇵 Japanese';
       case 'english':
         return '🇺🇸 English';
+      case 'mixing':
+        return '🇯🇵🇺🇸 Mixed (JP + EN)';
       default:
         return '🌍 Other';
     }
@@ -90,61 +83,100 @@ export class DiaryFormatter {
     return text.substring(0, maxLength - 3) + '...';
   }
 
-  // 長いコンテンツを適切なサイズに分割して送信
-  private async sendLongContent(title: string, content: string, replyMessage: Message): Promise<void> {
-    if (content.length <= 2000) {
-      // 単一メッセージで送信
-      const embed = new EmbedBuilder()
-        .setTitle(title)
-        .setDescription(content)
-        .setColor(0x00ae86)
-        .setTimestamp();
+  // 完全なメッセージ内容を生成
+  private generateCompleteMessage(result: DiaryProcessingResult, author: User): string {
+    let content = `📝 Larry's Complete Diary Feedback for ${author.username}\n`;
+    content += `═══════════════════════════════════════════════════════\n\n`;
+    
+    content += `🎯 DETECTED LANGUAGE: ${this.getLanguageDisplayName(result.detectedLanguage)}\n`;
+    content += `📖 SCENARIO: ${result.scenario.toUpperCase().replace(/-/g, ' ')}\n\n`;
+    
+    content += `📝 TARGET SENTENCE:\n${result.targetSentence}\n\n`;
+    content += `═══════════════════════════════════════════════════════\n\n`;
+
+    // シナリオ別の内容を追加
+    content += this.getScenarioContent(result);
+
+    // 質問回答を追加
+    if (result.hasQuestions && result.questionAnswers && result.questionAnswers.length > 0) {
+      content += `\n═══════════════════════════════════════════════════════\n\n`;
+      content += `❓ QUESTIONS & ANSWERS:\n\n`;
       
-      await replyMessage.reply({ embeds: [embed] });
-    } else {
-      // 複数メッセージに分割して送信
-      const chunks = this.splitTextIntoChunks(content, 2000);
-      
-      for (let i = 0; i < chunks.length; i++) {
-        const embed = new EmbedBuilder()
-          .setTitle(`${title} (${i + 1}/${chunks.length})`)
-          .setDescription(chunks[i])
-          .setColor(0x00ae86)
-          .setTimestamp();
-        
-        await replyMessage.reply({ embeds: [embed] });
-      }
+      result.questionAnswers.forEach((qa, index) => {
+        content += `Q${index + 1}: ${qa.question}\n`;
+        content += `A${index + 1}: ${qa.answer}\n\n`;
+      });
     }
+
+    content += `═══════════════════════════════════════════════════════\n`;
+    content += `Generated by Larry • Canadian English Tutor\n`;
+    content += `Timestamp: ${new Date().toISOString()}\n`;
+
+    return content;
   }
 
-  // テキストを指定された長さのチャンクに分割
-  private splitTextIntoChunks(text: string, chunkSize: number): string[] {
-    const chunks: string[] = [];
-    let currentIndex = 0;
-
-    while (currentIndex < text.length) {
-      let endIndex = currentIndex + chunkSize;
-
-      // 文の途中で切れないように、最適な切断点を探す
-      if (endIndex < text.length) {
-        const lastSentenceEnd = text.lastIndexOf('.', endIndex);
-        const lastParagraphEnd = text.lastIndexOf('\n', endIndex);
-        const lastSpaceEnd = text.lastIndexOf(' ', endIndex);
-
-        // 最適な切断点を選択（文末 > 段落末 > 単語境界）
-        if (lastSentenceEnd > currentIndex + chunkSize * 0.7) {
-          endIndex = lastSentenceEnd + 1;
-        } else if (lastParagraphEnd > currentIndex + chunkSize * 0.7) {
-          endIndex = lastParagraphEnd;
-        } else if (lastSpaceEnd > currentIndex + chunkSize * 0.7) {
-          endIndex = lastSpaceEnd;
+  // シナリオ別の内容を取得
+  private getScenarioContent(result: DiaryProcessingResult): string {
+    let scenarioContent = '';
+    switch (result.scenario) {
+      case 'japanese-only':
+        if (result.threeLevelTranslations) {
+          scenarioContent += `📚 THREE LEVEL ENGLISH TRANSLATIONS:\n\n`;
+          scenarioContent += `🟢 BEGINNER LEVEL:\n${result.threeLevelTranslations.beginner}\n\n`;
+          scenarioContent += `🟡 INTERMEDIATE LEVEL:\n${result.threeLevelTranslations.intermediate}\n\n`;
+          scenarioContent += `🔴 UPPER LEVEL:\n${result.threeLevelTranslations.upper}\n\n`;
         }
-      }
+        break;
 
-      chunks.push(text.substring(currentIndex, endIndex).trim());
-      currentIndex = endIndex;
+      case 'japanese-with-try':
+        if (result.threeLevelTranslations) {
+          scenarioContent += `📚 THREE LEVEL ENGLISH TRANSLATIONS:\n\n`;
+          scenarioContent += `🟢 BEGINNER LEVEL:\n${result.threeLevelTranslations.beginner}\n\n`;
+          scenarioContent += `🟡 INTERMEDIATE LEVEL:\n${result.threeLevelTranslations.intermediate}\n\n`;
+          scenarioContent += `🔴 UPPER LEVEL:\n${result.threeLevelTranslations.upper}\n\n`;
+        }
+
+        if (result.translationEvaluation) {
+          scenarioContent += `═══════════════════════════════════════════════════════\n\n`;
+          scenarioContent += `🎯 TRANSLATION EVALUATION:\n${result.translationEvaluation.evaluation}\n\n`;
+          
+          scenarioContent += `📝 STUDY POINTS:\n`;
+          result.translationEvaluation.studyPoints.forEach((point, index) => {
+            scenarioContent += `${index + 1}. ${point}\n`;
+          });
+          
+          scenarioContent += `\n💡 IMPROVEMENTS:\n${result.translationEvaluation.improvements}\n\n`;
+        }
+        break;
+
+      case 'english-only':
+        if (result.japaneseTranslation && result.vocabularyExplanation && result.grammarExplanation) {
+          scenarioContent += `🇯🇵 JAPANESE TRANSLATION:\n${result.japaneseTranslation}\n\n`;
+          scenarioContent += `📖 VOCABULARY EXPLANATION:\n${result.vocabularyExplanation}\n\n`;
+          scenarioContent += `📝 GRAMMAR EXPLANATION:\n${result.grammarExplanation}\n\n`;
+        }
+        break;
     }
+    
+    return scenarioContent;
+  }
 
-    return chunks;
+  // メッセージファイルを作成
+  private async createMessageFile(content: string, username: string): Promise<string> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `larry-feedback-${username}-${timestamp}.txt`;
+    const filePath = join(tmpdir(), filename);
+    
+    writeFileSync(filePath, content, 'utf8');
+    return filePath;
+  }
+
+  // 一時ファイルを削除
+  private cleanupFile(filePath: string): void {
+    try {
+      unlinkSync(filePath);
+    } catch (error) {
+      console.warn('Failed to cleanup temporary file:', filePath, error);
+    }
   }
 }
