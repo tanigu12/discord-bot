@@ -7,22 +7,6 @@ English学習をサポートするAI搭載のDiscord Bot。翻訳、文法チェ
 ### スラッシュコマンド
 Bot は以下のスラッシュコマンドをサポートしています：
 
-#### `/translate` - 翻訳
-- **機能**: テキストを指定した言語に翻訳
-- **使用方法**: `/translate text:[翻訳したいテキスト] language:[翻訳先言語]`
-- **対応言語**: English, Japanese, Spanish, French, German, Chinese, Korean, Portuguese, Italian, Russian
-- **例**: `/translate text:こんにちは language:English`
-
-#### `/grammar` - 文法チェック
-- **機能**: 文法をチェックして修正案を提供
-- **使用方法**: `/grammar text:[チェックしたいテキスト]`
-- **例**: `/grammar text:I are happy today`
-
-#### `/explain` - 単語解説
-- **機能**: 英単語の詳細な解説を提供
-- **使用方法**: `/explain word:[解説したい単語]`
-- **例**: `/explain word:serendipity`
-
 #### `/search` - コンテンツ分析
 - **機能**: テキストやURLを分析して詳細な説明を提供
 - **使用方法**: `/search query:[分析したいテキストまたはURL]`
@@ -70,36 +54,16 @@ Bot は以下のスラッシュコマンドをサポートしています：
 
 メッセージに特定の絵文字でリアクションするだけで、AIが自動で応答します。スラッシュコマンドよりも手軽に利用できます。
 
-#### 翻訳系
-- 🌐 - 自動翻訳（英語）
-- 🇺🇸 - 英語に翻訳
-- 🇯🇵 - 日本語に翻訳
-- 🇪🇸 - スペイン語に翻訳
-- 🇫🇷 - フランス語に翻訳
-- 🇩🇪 - ドイツ語に翻訳
-- 🇨🇳 - 中国語に翻訳
-- 🇰🇷 - 韓国語に翻訳
 
-#### English学習支援
-- ✅ - 文法チェックと修正提案
-- 📚 - 単語の詳細解説（単語1つのメッセージに使用）
-- 💡 - テキストの分析と解説
-
-#### コンテンツ分析
-- 🔍 - URLやテキストの詳細分析（/searchコマンドと同じ機能）
-
-#### AIパートナー・相談機能
-- 🤝 - AI英語教師Alexとのチャット
-- 🧙‍♂️ - Larry相談（ideaチャンネルでのアイデア相談、Web検索対応）
+#### 相談機能
+- 🧙‍♂️ - Larry相談（専門的アドバイス、Web検索対応）
 
 #### アイデア管理（ideaチャンネル専用）
 - 💡 - アイデアスレッド作成
-- 📋 - アイデアのカテゴリ分け
-- 👍 - アイデア承認
-- 🔥 - 高優先度設定
 - 🧙‍♂️ - Larry相談（最新情報を含む専門的アドバイス）
-- ✨ - 実装済みマーク
-- 🗂️ - アイデアアーカイブ
+
+#### 単語・語彙学習機能
+- 🧠 - Larryの日記フィードバックから日本語文と翻訳をObsidian Git Syncリポジトリに保存
 
 **使用方法**: 任意のメッセージに上記の絵文字でリアクションするだけで、自動でAIが返答します。
 
@@ -107,10 +71,9 @@ Bot は以下のスラッシュコマンドをサポートしています：
 
 - **Discord.js**: v14
 - **TypeScript**: 5.x
-- **AI Service**: OpenAI GPT-4o-mini (+ gpt-4o-search-preview for web search)
+- **AI Service**: OpenAI GPT-5-mini
 - **Node.js**: 18.x以上推奨
-- **Web検索**: OpenAI Web Search API統合
-- **タスク管理**: Asana API v3統合
+- **タスク管理**: Asana API v1統合
 - **SNS連携**: Bluesky API対応
 
 ## 🔧 セットアップ
@@ -129,6 +92,10 @@ ASANA_PERSONAL_ACCESS_TOKEN=your_asana_pat
 ASANA_DEFAULT_WORKSPACE_GID=your_workspace_gid
 ASANA_DEFAULT_PROJECT_GID=your_project_gid
 ASANA_DEFAULT_USER_GID=your_user_gid
+GITHUB_PAT=your_github_personal_access_token
+OBSIDIAN_REPO_OWNER=your_github_username
+OBSIDIAN_REPO_NAME=your_obsidian_git_sync_repo
+OBSIDIAN_VOCAB_PATH=notes/10_Vocabulary/
 GUILD_ID=your_guild_id_for_development
 ```
 
@@ -187,16 +154,10 @@ https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_CLIENT_ID&permission
 
 ## 📖 使用例
 
-### 基本的な翻訳
+### Larry相談
 ```
-ユーザー: 今日は良い天気ですね
-Bot (🇺🇸リアクション): Translation → English: It's nice weather today.
-```
-
-### 文法チェック
-```
-/grammar text:I are going to store yesterday
-→ Grammar Check: "I am going to the store yesterday" should be "I went to the store yesterday" or "I am going to the store today"
+ユーザー: 機械学習の最新トレンドについて教えて
+Bot (🧙‍♂️リアクション): Larry's Consultation: 最新の機械学習では...（Web検索結果も含む専門的アドバイス）
 ```
 
 ### コンテンツ分析
@@ -219,22 +180,29 @@ ideaチャンネルでアイデアを投稿
 → 🧙‍♂️をクリックでLarryの専門的アドバイス（Web検索付き）
 ```
 
+### 語彙学習・記憶機能
+```
+Larryの日記フィードバックメッセージ（message.txt添付）
+→ 🧠リアクションで日本語文と翻訳をObsidianリポジトリに自動保存
+→ 後から語彙復習に活用可能
+```
+
 ### Asanaタスク管理
 ```
 /asana action:create name:新機能開発 notes:ユーザー認証システムの実装
 → Asanaプロジェクトにタスクを作成し、URLを返却
 ```
 
-## 🎓 English学習への活用
+## 🎓 Bot活用方法
 
-このBotは特に以下のような学習スタイルに最適です：
+このBotは以下のような用途に最適です：
 
-1. **日常会話の練習**: メッセージに絵文字リアクションで即座に翻訳・文法チェック
-2. **語彙力向上**: 知らない単語に📚リアクションで詳細解説
-3. **ライティング練習**: /randomで日記トピックを取得し、定期的な英語ライティング
-4. **情報収集とまとめ**: /searchでWebコンテンツを分析し、理解を深める
-5. **アイデア発展**: ideaチャンネルでのブレインストーミングとLarry相談による専門的フィードバック
-6. **プロジェクト管理**: Asana連携による学習タスクの体系的管理
+1. **専門的相談**: 🧙‍♂️リアクションでLarryに専門的アドバイスを求める
+2. **ライティング練習**: /randomで日記トピックを取得し、定期的な英語ライティング
+3. **情報収集とまとめ**: /searchでWebコンテンツを分析し、理解を深める
+4. **アイデア発展**: ideaチャンネルでのブレインストーミングとアイデア管理
+5. **プロジェクト管理**: Asana連携による学習タスクの体系的管理
+6. **コンテンツ作成**: ブログ記事の整形と出力
 
 ## 🔍 トラブルシューティング
 
@@ -260,6 +228,24 @@ ideaチャンネルでアイデアを投稿
 **Web検索機能が動作しない**
 - OpenAI APIキーが`gpt-4o-search-preview`モデルへのアクセス権を持っていることを確認
 - インターネット接続が正常であることを確認
+
+## 🧹 コードベースの整理
+
+### 未使用/レガシーコンポーネント
+
+以下のコンポーネントは現在使用されていないか、レガシーとなっています：
+
+**削除可能なファイル:**
+- `dist/` フォルダ全体（ビルド時に再生成されます）
+- レガシーコマンドファイル（/translate、/grammar、/explain は絵文字リアクション機能に統合済み）
+
+**検討が必要な機能:**
+- AI Partner統合ファイル（`src/features/ai-partner/`）- 使用するか削除するかの判断が必要
+- コンテンツ集約システム（`src/features/content-aggregation/`）- /randomコマンドでのみ使用
+- 技術的質問・英語フレーズ機能 - シンプル化を検討
+- 未使用のIdeaHandler機能（カテゴリ分け、承認、優先度設定、実装済みマーク、アーカイブ）
+
+**注意:** READMEで言及されている国旗絵文字による翻訳機能（🇺🇸🇯🇵等）は実装されていません。翻訳機能は日記チャンネルでの自動翻訳に置き換えられています。
 
 ## 🤝 Contributing
 

@@ -5,7 +5,6 @@ import {
   PartialUser,
   MessageReaction,
   PartialMessageReaction,
-  ThreadChannel,
 } from 'discord.js';
 import { BaseAIService } from '../../services/baseAIService';
 import { OPENAI_MODELS } from '../../constants/ai';
@@ -23,11 +22,6 @@ export class IdeaHandler extends BaseAIService {
 
   private readonly IDEA_EMOJIS = {
     '💡': 'create_thread',
-    '📋': 'categorize',
-    '✨': 'mark_implemented',
-    '🗂️': 'archive',
-    '👍': 'approve',
-    '🔥': 'high_priority',
     '🧙‍♂️': 'consult_larry',
   };
 
@@ -75,21 +69,6 @@ export class IdeaHandler extends BaseAIService {
         case 'create_thread':
           await this.createIdeaThread(message, user);
           break;
-        case 'categorize':
-          await this.categorizeIdea(message, user);
-          break;
-        case 'mark_implemented':
-          await this.markImplemented(message, user);
-          break;
-        case 'archive':
-          await this.archiveIdea(message, user);
-          break;
-        case 'approve':
-          await this.approveIdea(message, user);
-          break;
-        case 'high_priority':
-          await this.setPriority(message, user, 'high');
-          break;
         case 'consult_larry':
           await this.consultLarry(message, user);
           break;
@@ -134,7 +113,7 @@ export class IdeaHandler extends BaseAIService {
           { name: 'Created by', value: ideaMetadata.createdBy, inline: true },
           { name: 'Created at', value: ideaMetadata.createdAt.toLocaleString(), inline: true },
         ],
-        footer: { text: 'React with 📋 to categorize, ✨ to mark implemented, 🗂️ to archive' },
+        footer: { text: 'React with 🧙‍♂️ to consult Larry for expert advice' },
       };
 
       await thread.send({ embeds: [embed] });
@@ -156,121 +135,6 @@ export class IdeaHandler extends BaseAIService {
     }
   }
 
-  private async categorizeIdea(
-    message: Message | PartialMessage,
-    user: User | PartialUser
-  ): Promise<void> {
-    const categories = [
-      'Feature',
-      'Bug Fix',
-      'Enhancement',
-      'Documentation',
-      'Research',
-      'Discussion',
-    ];
-    const categoryList = categories.map((cat, index) => `${index + 1}. ${cat}`).join('\n');
-
-    await message.reply(
-      `📋 **Categorize this idea** (${user.tag}):\n${categoryList}\n\nReact with a number emoji (1️⃣-6️⃣) to categorize.`
-    );
-  }
-
-  private async markImplemented(
-    message: Message | PartialMessage,
-    user: User | PartialUser
-  ): Promise<void> {
-    const embed = {
-      color: 0x00ff00,
-      title: '✨ Idea Implemented!',
-      description: `This idea has been marked as implemented by ${user.tag}`,
-      timestamp: new Date().toISOString(),
-    };
-
-    await message.reply({ embeds: [embed] });
-
-    // If this is in a thread, update thread name
-    if (message.channel?.isThread()) {
-      const thread = message.channel as ThreadChannel;
-      const currentName = thread.name;
-      if (!currentName.startsWith('✅')) {
-        try {
-          await thread.setName(`✅ ${currentName.replace('💡 ', '')}`);
-          console.log(`✅ Updated thread name to show implemented status`);
-        } catch (error) {
-          console.error('Failed to update thread name:', error);
-        }
-      }
-    }
-  }
-
-  private async archiveIdea(
-    message: Message | PartialMessage,
-    user: User | PartialUser
-  ): Promise<void> {
-    const embed = {
-      color: 0x808080,
-      title: '🗂️ Idea Archived',
-      description: `This idea has been archived by ${user.tag}`,
-      timestamp: new Date().toISOString(),
-    };
-
-    await message.reply({ embeds: [embed] });
-
-    // If this is in a thread, archive it
-    if (message.channel?.isThread()) {
-      const thread = message.channel as ThreadChannel;
-      try {
-        await thread.setArchived(true, `Archived by ${user.tag}`);
-        console.log(`🗂️ Archived idea thread`);
-      } catch (error) {
-        console.error('Failed to archive thread:', error);
-      }
-    }
-  }
-
-  private async approveIdea(
-    message: Message | PartialMessage,
-    user: User | PartialUser
-  ): Promise<void> {
-    const embed = {
-      color: 0x0099ff,
-      title: '👍 Idea Approved!',
-      description: `This idea has been approved by ${user.tag}`,
-      timestamp: new Date().toISOString(),
-    };
-
-    await message.reply({ embeds: [embed] });
-
-    // Update thread name if in thread
-    if (message.channel?.isThread()) {
-      const thread = message.channel as ThreadChannel;
-      const currentName = thread.name;
-      if (!currentName.startsWith('👍')) {
-        try {
-          await thread.setName(`👍 ${currentName.replace('💡 ', '')}`);
-          console.log(`👍 Updated thread name to show approved status`);
-        } catch (error) {
-          console.error('Failed to update thread name:', error);
-        }
-      }
-    }
-  }
-
-  private async setPriority(
-    message: Message | PartialMessage,
-    user: User | PartialUser,
-    priority: 'high' | 'medium' | 'low'
-  ): Promise<void> {
-    const priorityEmoji = { high: '🔥', medium: '📅', low: '📋' };
-    const embed = {
-      color: priority === 'high' ? 0xff0000 : priority === 'medium' ? 0xffaa00 : 0x808080,
-      title: `${priorityEmoji[priority]} Priority Set: ${priority.toUpperCase()}`,
-      description: `Priority set by ${user.tag}`,
-      timestamp: new Date().toISOString(),
-    };
-
-    await message.reply({ embeds: [embed] });
-  }
 
   private async consultLarry(
     message: Message | PartialMessage,
@@ -378,16 +242,8 @@ Remember: RESPOND ONLY IN ENGLISH for learning purposes.
   getIdeaEmojiGuide(): string {
     return `**💡 Idea Management - Emoji Guide**
 
-**Thread Management:**
 💡 - Create idea thread for discussion
-👍 - Approve idea for implementation
-🔥 - Mark as high priority
 🧙‍♂️ - Consult Larry for expert advice
-
-**Organization:**
-📋 - Categorize idea
-✨ - Mark as implemented
-🗂️ - Archive completed/outdated idea
 
 **How to use:** React to messages in idea channels with these emojis to manage ideas in organized threads!`;
   }
