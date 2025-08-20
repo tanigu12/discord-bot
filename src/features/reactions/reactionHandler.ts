@@ -45,12 +45,6 @@ export class ReactionHandler {
   ): Promise<void> {
     console.log(`👤 User: ${user.tag} (bot: ${user.bot})`);
 
-    // Ignore bot reactions
-    if (user.bot) {
-      console.log('🤖 Ignoring bot reaction');
-      return;
-    }
-
     const emoji = reaction.emoji.name;
     console.log(`😀 Emoji: ${emoji}`);
 
@@ -119,7 +113,7 @@ export class ReactionHandler {
       if (action === 'consult_larry') {
         // Consult with Larry (Web search enabled)
         console.log('🧙‍♂️ Processing Larry consultation reaction...');
-        
+
         const aiResponse = await this.contentAnalysisService.analyzeContent(
           `As Larry, a knowledgeable consultant with web search capabilities, please provide expert advice on this topic: ${messageContent}`,
           false
@@ -179,7 +173,6 @@ export class ReactionHandler {
     return chunks;
   }
 
-
   getEmojiGuide(): string {
     return `**🤖 AI Assistant - Emoji Reactions Guide**
 
@@ -201,5 +194,4 @@ export class ReactionHandler {
 
 **How to use:** Simply react to any message with these emojis and I'll reply with the AI response!`;
   }
-
 }

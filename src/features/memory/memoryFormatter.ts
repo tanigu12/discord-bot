@@ -1,97 +1,39 @@
-import { readFileSync } from 'fs';
-
-export interface ExtractedTranslations {
-  targetSentence: string;
-  beginner: string;
-  intermediate: string;
-  upper: string;
-  keyWords: string[];
-}
-
 export class MemoryFormatter {
   /**
-   * Format diary content from Larry's message.txt for Obsidian vocabulary template
+   * Format diary content for Obsidian vocabulary template
    */
   async formatForObsidian(messageContent: string): Promise<string> {
-    const extracted = this.extractTranslationsFromMessage(messageContent);
-    
-    // Generate key concept from target sentence (first few meaningful words)
-    const keyConcept = this.extractKeyWords(extracted.targetSentence).slice(0, 3).join('・');
-    
-    // Format according to Obsidian vocabulary template
-    const formatted = `### ${keyConcept}
+    const { targetSentence, translationSection } = this.extractContent(messageContent);
 
-${extracted.targetSentence}
+    return `${targetSentence}
 ?
-1. **Formal/Academic:** ${extracted.upper}
-2. **Natural/Conversational:** ${extracted.intermediate}  
-3. **Alternative expression:** ${extracted.beginner}
+${translationSection || '見つかりませんでした'}
 
 #flashcards/vocab/ja-to-en #vocabulary`;
-
-    return formatted;
   }
 
   /**
-   * Extract translations from Larry's formatted message content
+   * Extract target sentence and translation section from content
    */
-  extractTranslationsFromMessage(content: string): ExtractedTranslations {
-    const lines = content.split('\n');
-    let targetSentence = '';
-    let beginner = '';
-    let intermediate = '';
-    let upper = '';
+  extractContent(content: string) {
+    // Find target sentence
+    const targetMatch = content.match(/TARGET SENTENCE:\s*\n(.+)/);
+    const targetSentence = targetMatch?.[1]?.trim() || content.trim();
 
-    // Find target sentence (after "TARGET SENTENCE:" header)
-    const targetIndex = lines.findIndex(line => line.includes('TARGET SENTENCE:'));
-    if (targetIndex !== -1 && targetIndex + 1 < lines.length) {
-      targetSentence = lines[targetIndex + 1].trim();
-    }
+    // Extract translation section between markers
+    const startMarker = '📚 THREE LEVEL ENGLISH TRANSLATIONS:';
+    const endMarker = '═══════════════════════════════════════════════════════';
 
-    // Find three-level translations
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      if (line.includes('🟢 BEGINNER LEVEL:')) {
-        // Get next non-empty line
-        for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j].trim() && !lines[j].includes('🟡') && !lines[j].includes('🔴')) {
-            beginner = lines[j].trim();
-            break;
-          }
-        }
-      }
-      
-      if (line.includes('🟡 INTERMEDIATE LEVEL:')) {
-        // Get next non-empty line
-        for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j].trim() && !lines[j].includes('🟢') && !lines[j].includes('🔴')) {
-            intermediate = lines[j].trim();
-            break;
-          }
-        }
-      }
-      
-      if (line.includes('🔴 UPPER LEVEL:')) {
-        // Get next non-empty line
-        for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j].trim() && !lines[j].includes('🟢') && !lines[j].includes('🟡')) {
-            upper = lines[j].trim();
-            break;
-          }
-        }
-      }
-    }
+    const startIndex = content.indexOf(startMarker);
+    const endIndex =
+      startIndex !== -1 ? content.indexOf(endMarker, startIndex + startMarker.length) : -1;
 
-    const keyWords = this.extractKeyWords(targetSentence);
+    const translationSection =
+      startIndex !== -1 && endIndex !== -1
+        ? content.substring(startIndex + startMarker.length, endIndex).trim()
+        : '';
 
-    return {
-      targetSentence,
-      beginner,
-      intermediate,
-      upper,
-      keyWords
-    };
+    return { targetSentence, translationSection };
   }
 
   /**
@@ -112,10 +54,13 @@ ${extracted.targetSentence}
   /**
    * Read and parse message.txt file from file path
    */
-  async parseMessageFile(filePath: string): Promise<ExtractedTranslations> {
+  async parseMessageFile(
+    filePath: string
+  ): Promise<{ targetSentence: string; translationSection: string }> {
     try {
+      const { readFileSync } = await import('fs');
       const content = readFileSync(filePath, 'utf-8');
-      return this.extractTranslationsFromMessage(content);
+      return this.extractContent(content);
     } catch (error) {
       console.error('Error reading message file:', error);
       throw new Error(`Failed to read message file: ${error}`);
@@ -127,9 +72,7 @@ ${extracted.targetSentence}
    */
   generateVocabularyFilename(targetSentence: string): string {
     const now = new Date();
-    const timestamp = now.toISOString()
-      .replace(/[:.]/g, '-')
-      .substring(0, 19); // YYYY-MM-DDTHH-mm-ss format
+    const timestamp = now.toISOString().replace(/[:.]/g, '-').substring(0, 19); // YYYY-MM-DDTHH-mm-ss format
 
     // Extract first few words for filename
     const words = this.extractKeyWords(targetSentence).slice(0, 2);
@@ -145,17 +88,12 @@ ${extracted.targetSentence}
    * Validate if content is suitable for vocabulary learning
    */
   validateMemoryContent(content: string): boolean {
-    // Check if content contains Japanese characters
-    const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(content);
-    
-    // Check if content has reasonable length for vocabulary learning
-    const hasReasonableLength = content.length >= 10 && content.length <= 200;
-    
-    // Check if content appears to have translation structure
-    const hasTranslationStructure = content.includes('BEGINNER LEVEL') || 
-                                   content.includes('INTERMEDIATE LEVEL') || 
-                                   content.includes('UPPER LEVEL');
+    // Check if content contains the new format markers
+    const hasTranslationSection = content.includes('📚 THREE LEVEL ENGLISH TRANSLATIONS:');
+    const hasSeparator = content.includes(
+      '═══════════════════════════════════════════════════════'
+    );
 
-    return hasJapanese && hasReasonableLength && hasTranslationStructure;
+    return hasTranslationSection && hasSeparator;
   }
 }

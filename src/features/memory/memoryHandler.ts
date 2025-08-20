@@ -59,7 +59,7 @@ export class MemoryHandler {
       const formattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
       
       // Extract target sentence for filename
-      const extracted = this.memoryFormatter.extractTranslationsFromMessage(messageContent);
+      const extracted = this.memoryFormatter.extractContent(messageContent);
       const filename = this.memoryFormatter.generateVocabularyFilename(extracted.targetSentence);
 
       // Save to Obsidian GitHub repository

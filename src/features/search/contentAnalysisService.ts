@@ -169,6 +169,7 @@ Style Guidelines:
 - Remove personal opinions and conversational elements
 - Focus on the technical substance
 - Provide accurate translations of technical terms
+- IGNORE administrative messages like "💡 Idea Management - Emoji Guide" as these are unrelated to blog content
 
 Example format:
 Title
