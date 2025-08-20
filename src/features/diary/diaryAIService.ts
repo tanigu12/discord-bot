@@ -86,7 +86,8 @@ export class DiaryAIService extends BaseAIService {
   // 英語文章の包括的処理（翻訳、向上、文法フィードバックを一度に）
   async processEnglishDiaryComprehensive(text: string): Promise<EnglishDiaryComprehensiveResult> {
     try {
-      const systemPrompt = this.aiPartnerIntegration.generateComprehensiveEnglishProcessingPrompt(text);
+      const systemPrompt =
+        this.aiPartnerIntegration.generateComprehensiveEnglishProcessingPrompt(text);
       const userMessage = `Please process this English diary entry comprehensively: "${text}"`;
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
@@ -102,29 +103,30 @@ export class DiaryAIService extends BaseAIService {
               properties: {
                 translation: {
                   type: 'string',
-                  description: 'Japanese translation of the English diary entry'
+                  description: 'Japanese translation of the English diary entry',
                 },
                 enhancedEnglish: {
                   type: 'string',
-                  description: 'Enhanced and more sophisticated version of the original English text'
+                  description:
+                    'Enhanced and more sophisticated version of the original English text',
                 },
                 grammarFeedback: {
                   type: 'string',
-                  description: 'Grammar feedback and suggestions for improvement'
-                }
+                  description: 'Grammar feedback and suggestions for improvement',
+                },
               },
               required: ['translation', 'enhancedEnglish', 'grammarFeedback'],
-              additionalProperties: false
-            }
-          }
-        }
+              additionalProperties: false,
+            },
+          },
+        },
       });
 
       const parsed = JSON.parse(responseText);
       return {
         translation: parsed.translation,
         enhancedEnglish: parsed.enhancedEnglish,
-        grammarFeedback: parsed.grammarFeedback
+        grammarFeedback: parsed.grammarFeedback,
       };
     } catch (error) {
       console.error('Comprehensive English processing error:', error);
@@ -133,7 +135,10 @@ export class DiaryAIService extends BaseAIService {
   }
 
   // 統一された日記処理（シナリオベース）
-  async processUnifiedDiary(parsedEntry: ParsedDiaryEntry, scenario: ProcessingScenario): Promise<UnifiedDiaryProcessingResult> {
+  async processUnifiedDiary(
+    parsedEntry: ParsedDiaryEntry,
+    scenario: ProcessingScenario
+  ): Promise<UnifiedDiaryProcessingResult> {
     try {
       // パターンベースの言語検出を使用
       const detectedLanguage = this.detectLanguageByPattern(parsedEntry.targetSentence);
@@ -141,14 +146,18 @@ export class DiaryAIService extends BaseAIService {
 
       // シナリオベースのプロンプト生成
       const systemPrompt = this.generateScenarioBasedPrompt(scenario);
-      const userMessage = this.buildScenarioBasedUserMessage(parsedEntry, scenario, detectedLanguage);
+      const userMessage = this.buildScenarioBasedUserMessage(
+        parsedEntry,
+        scenario,
+        detectedLanguage
+      );
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
         ...MODEL_CONFIGS.DIARY_PROCESSING,
         response_format: {
           type: 'json_schema',
-          json_schema: this.getScenarioBasedSchema(scenario)
-        }
+          json_schema: this.getScenarioBasedSchema(scenario),
+        },
       });
 
       const parsed = JSON.parse(responseText);
@@ -162,7 +171,7 @@ export class DiaryAIService extends BaseAIService {
         vocabularyExplanation: parsed.vocabularyExplanation || undefined,
         grammarExplanation: parsed.grammarExplanation || undefined,
         hasQuestions,
-        questionAnswers: parsed.questionAnswers || undefined
+        questionAnswers: parsed.questionAnswers || undefined,
       };
     } catch (error) {
       console.error('Unified diary processing error:', error);
@@ -172,8 +181,9 @@ export class DiaryAIService extends BaseAIService {
 
   // シナリオベースのシステムプロンプト生成
   private generateScenarioBasedPrompt(scenario: ProcessingScenario): string {
-    const basePrompt = "You are Larry, a Canadian English tutor helping Japanese learners. You are supportive, encouraging, and provide detailed explanations.";
-    
+    const basePrompt =
+      'You are Larry, a Canadian English tutor helping Japanese learners. You are supportive, encouraging, and provide detailed explanations.';
+
     switch (scenario) {
       case 'japanese-only':
         return `${basePrompt}
@@ -205,7 +215,11 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
   }
 
   // シナリオベースのユーザーメッセージ構築
-  private buildScenarioBasedUserMessage(parsedEntry: ParsedDiaryEntry, scenario: ProcessingScenario, detectedLanguage: DetectedLanguage): string {
+  private buildScenarioBasedUserMessage(
+    parsedEntry: ParsedDiaryEntry,
+    scenario: ProcessingScenario,
+    detectedLanguage: DetectedLanguage
+  ): string {
     let message = `SCENARIO: ${scenario.toUpperCase()}\n`;
     message += `DETECTED LANGUAGE: ${detectedLanguage}\n\n`;
     message += `TARGET SENTENCE: "${parsedEntry.targetSentence}"\n`;
@@ -234,13 +248,13 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
           type: 'object',
           properties: {
             question: { type: 'string', description: 'The original question from the user' },
-            answer: { type: 'string', description: 'The comprehensive answer to the question' }
+            answer: { type: 'string', description: 'The comprehensive answer to the question' },
           },
           required: ['question', 'answer'],
-          additionalProperties: false
+          additionalProperties: false,
         },
-        description: 'Question-answer pairs for [q] entries (null if not applicable)'
-      }
+        description: 'Question-answer pairs for [q] entries (null if not applicable)',
+      },
     };
 
     switch (scenario) {
@@ -255,17 +269,23 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
                 type: 'object',
                 properties: {
                   beginner: { type: 'string', description: 'Simple, basic English translation' },
-                  intermediate: { type: 'string', description: 'Natural, everyday English translation' },
-                  upper: { type: 'string', description: 'Advanced, sophisticated English translation' }
+                  intermediate: {
+                    type: 'string',
+                    description: 'Natural, everyday English translation',
+                  },
+                  upper: {
+                    type: 'string',
+                    description: 'Advanced, sophisticated English translation',
+                  },
                 },
                 required: ['beginner', 'intermediate', 'upper'],
-                additionalProperties: false
+                additionalProperties: false,
               },
-              ...commonQuestionAnswers
+              ...commonQuestionAnswers,
             },
             required: ['threeLevelTranslations', 'questionAnswers'],
-            additionalProperties: false
-          }
+            additionalProperties: false,
+          },
         };
 
       case 'japanese-with-try':
@@ -279,31 +299,43 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
                 type: 'object',
                 properties: {
                   beginner: { type: 'string', description: 'Simple, basic English translation' },
-                  intermediate: { type: 'string', description: 'Natural, everyday English translation' },
-                  upper: { type: 'string', description: 'Advanced, sophisticated English translation' }
+                  intermediate: {
+                    type: 'string',
+                    description: 'Natural, everyday English translation',
+                  },
+                  upper: {
+                    type: 'string',
+                    description: 'Advanced, sophisticated English translation',
+                  },
                 },
                 required: ['beginner', 'intermediate', 'upper'],
-                additionalProperties: false
+                additionalProperties: false,
               },
               translationEvaluation: {
                 type: 'object',
                 properties: {
-                  evaluation: { type: 'string', description: 'Detailed evaluation of the user translation attempt' },
-                  studyPoints: { 
-                    type: 'array', 
-                    items: { type: 'string' },
-                    description: 'List of specific study points for improvement'
+                  evaluation: {
+                    type: 'string',
+                    description: 'Detailed evaluation of the user translation attempt',
                   },
-                  improvements: { type: 'string', description: 'Suggestions for how to improve the translation' }
+                  studyPoints: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'List of specific study points for improvement',
+                  },
+                  improvements: {
+                    type: 'string',
+                    description: 'Suggestions for how to improve the translation',
+                  },
                 },
                 required: ['evaluation', 'studyPoints', 'improvements'],
-                additionalProperties: false
+                additionalProperties: false,
               },
-              ...commonQuestionAnswers
+              ...commonQuestionAnswers,
             },
             required: ['threeLevelTranslations', 'translationEvaluation', 'questionAnswers'],
-            additionalProperties: false
-          }
+            additionalProperties: false,
+          },
         };
 
       case 'english-only':
@@ -313,14 +345,28 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
           schema: {
             type: 'object',
             properties: {
-              japaneseTranslation: { type: 'string', description: 'Japanese translation of the English text' },
-              vocabularyExplanation: { type: 'string', description: 'Detailed explanation of key vocabulary' },
-              grammarExplanation: { type: 'string', description: 'Detailed explanation of grammar structures' },
-              ...commonQuestionAnswers
+              japaneseTranslation: {
+                type: 'string',
+                description: 'Japanese translation of the English text',
+              },
+              vocabularyExplanation: {
+                type: 'string',
+                description: 'Detailed explanation of key vocabulary',
+              },
+              grammarExplanation: {
+                type: 'string',
+                description: 'Detailed explanation of grammar structures',
+              },
+              ...commonQuestionAnswers,
             },
-            required: ['japaneseTranslation', 'vocabularyExplanation', 'grammarExplanation', 'questionAnswers'],
-            additionalProperties: false
-          }
+            required: [
+              'japaneseTranslation',
+              'vocabularyExplanation',
+              'grammarExplanation',
+              'questionAnswers',
+            ],
+            additionalProperties: false,
+          },
         };
 
       default:
@@ -347,33 +393,35 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
               properties: {
                 translationFeedback: {
                   type: 'string',
-                  description: 'Feedback on the user\'s English translation attempt with corrections and suggestions'
+                  description:
+                    "Feedback on the user's English translation attempt with corrections and suggestions",
                 },
                 threeVersions: {
                   type: 'object',
                   properties: {
                     casual: {
                       type: 'string',
-                      description: 'Casual, conversational English translation'
+                      description: 'Casual, conversational English translation',
                     },
                     formal: {
-                      type: 'string', 
-                      description: 'More formal, polished English translation'
+                      type: 'string',
+                      description: 'More formal, polished English translation',
                     },
                     advanced: {
                       type: 'string',
-                      description: 'Advanced, sophisticated English translation with complex vocabulary'
-                    }
+                      description:
+                        'Advanced, sophisticated English translation with complex vocabulary',
+                    },
                   },
                   required: ['casual', 'formal', 'advanced'],
-                  additionalProperties: false
-                }
+                  additionalProperties: false,
+                },
               },
               required: ['translationFeedback', 'threeVersions'],
-              additionalProperties: false
-            }
-          }
-        }
+              additionalProperties: false,
+            },
+          },
+        },
       });
 
       const parsed = JSON.parse(responseText);
@@ -382,8 +430,8 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
         threeVersions: {
           casual: parsed.threeVersions.casual,
           formal: parsed.threeVersions.formal,
-          advanced: parsed.threeVersions.advanced
-        }
+          advanced: parsed.threeVersions.advanced,
+        },
       };
     } catch (error) {
       console.error('Japanese try translation processing error:', error);
@@ -424,10 +472,10 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
 
   // パターンベースの言語検出（ひらがな・カタカナを使用）
   detectLanguageByPattern(text: string): DetectedLanguage {
-    // ひらがなの範囲: U+3040-U+309F
-    const hiraganaRegex = /[\u3040-\u309F]/;
-    // カタカナの範囲: U+30A0-U+30FF
-    const katakanaRegex = /[\u30A0-\u30FF]/;
+    // ひらがな全文字
+    const hiraganaRegex = /[あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっ]/;
+    // カタカナ全文字
+    const katakanaRegex = /[アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポャュョッー]/;
     // 漢字の範囲: U+4E00-U+9FAF
     const kanjiRegex = /[\u4E00-\u9FAF]/;
     // 英語の文字（アルファベット）

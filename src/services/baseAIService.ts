@@ -48,9 +48,9 @@ export class BaseAIService {
       const openai = this.getOpenAI();
 
       // check prompt
-      console.info('systemPrompt', systemPrompt);
-      console.info('userPrompt', userMessage);
-      console.info('options', options);
+      console.info('[log]systemPrompt', systemPrompt);
+      console.info('[log]userPrompt', userMessage);
+      console.info('[log]options', JSON.stringify(options));
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const requestConfig: any = {
