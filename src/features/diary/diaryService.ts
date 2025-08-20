@@ -12,24 +12,30 @@ export class DiaryService {
   // 新しい日記フォーマットを解析
   parseDiaryEntry(content: string): ParsedDiaryEntry {
     const lines = content.trim().split('\n');
-    const targetSentence = lines[0]?.trim() || '';
-
+    
     let tryTranslation: string | undefined;
     const questions: string[] = [];
+    const targetLines: string[] = [];
 
-    // 2行目以降を解析
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i]?.trim();
-      if (!line) continue;
+    // 全ての行を解析して、[try]と[q]を分離し、残りをtargetSentenceとする
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
 
-      if (line.startsWith('[try]')) {
+      if (trimmedLine.startsWith('[try]')) {
         // [try]翻訳チャレンジを抽出
-        tryTranslation = line.substring(5).trim();
-      } else if (line.startsWith('[q]')) {
+        tryTranslation = trimmedLine.substring(5).trim();
+      } else if (trimmedLine.startsWith('[q]')) {
         // [q]質問を抽出
-        questions.push(line.substring(3).trim());
+        questions.push(trimmedLine.substring(3).trim());
+      } else {
+        // [try]でも[q]でもない行はtargetSentenceの一部
+        targetLines.push(trimmedLine);
       }
     }
+
+    // targetSentenceは[try]と[q]を除いた残りのテキスト
+    const targetSentence = targetLines.join('\n').trim();
 
     return {
       targetSentence,
