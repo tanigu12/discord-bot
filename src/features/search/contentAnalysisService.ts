@@ -59,7 +59,7 @@ Write in English and make it comprehensive, educational, and engaging.`;
 
       return await this.callOpenAI(systemPrompt, userMessage, {
         model: OPENAI_MODELS.MAIN,
-        maxTokens: 3000,
+        maxCompletionTokens: 3000,
         temperature: 0.4,
       });
     } catch (error) {
@@ -120,7 +120,7 @@ Please provide analysis that considers our ongoing conversation and how this top
 
       return await this.callOpenAI(systemPrompt, userMessage, {
         model: OPENAI_MODELS.MAIN,
-        maxTokens: 3500,
+        maxCompletionTokens: 3500,
         temperature: 0.4,
       });
     } catch (error) {
@@ -208,7 +208,7 @@ ${messagesContent}`;
 
       const formattedMarkdown = await this.callOpenAI(systemPrompt, userMessage, {
         model: OPENAI_MODELS.MAIN,
-        maxTokens: 4000,
+        maxCompletionTokens: 4000,
         temperature: 0.3,
       });
 

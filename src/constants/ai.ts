@@ -13,7 +13,7 @@ export const OPENAI_MODELS = {
 export const DEFAULT_MODEL_CONFIG = {
   model: OPENAI_MODELS.MAIN,
   temperature: 0.4,
-  maxTokens: 3000,
+  maxCompletionTokens: 3000,
 } as const;
 
 // 機能別のモデル設定
@@ -22,35 +22,35 @@ export const MODEL_CONFIGS = {
   DIARY_PROCESSING: {
     model: OPENAI_MODELS.MAIN,
     temperature: 0.4,
-    maxTokens: 3000,
+    maxCompletionTokens: 3000,
   },
 
   // 翻訳用
   TRANSLATION: {
     model: OPENAI_MODELS.MAIN,
     temperature: 0.3,
-    maxTokens: 1500,
+    maxCompletionTokens: 1500,
   },
 
   // 文法チェック用
   GRAMMAR_CHECK: {
     model: OPENAI_MODELS.MAIN,
     temperature: 0.3,
-    maxTokens: 1500,
+    maxCompletionTokens: 1500,
   },
 
   // 言語検出用（軽量タスク）
   LANGUAGE_DETECTION: {
     model: OPENAI_MODELS.MAIN,
     temperature: 0.1,
-    maxTokens: 50,
+    maxCompletionTokens: 50,
   },
 
   // 日記トピック生成用
   TOPIC_GENERATION: {
     model: OPENAI_MODELS.MAIN,
     temperature: 0.7,
-    maxTokens: 1500,
+    maxCompletionTokens: 1500,
   },
 } as const;
 

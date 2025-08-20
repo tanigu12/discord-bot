@@ -30,7 +30,7 @@ export class BaseAIService {
     userMessage: string,
     options: {
       model?: string;
-      maxTokens?: number;
+      maxCompletionTokens?: number;
       temperature?: number;
       response_format?:
         | { type: 'text' | 'json_object' }
@@ -65,7 +65,7 @@ export class BaseAIService {
             content: userMessage,
           },
         ],
-        max_tokens: options.maxTokens || 1000,
+        max_completion_tokens: options.maxCompletionTokens || 1000,
         temperature: options.temperature || 0.3,
       };
 

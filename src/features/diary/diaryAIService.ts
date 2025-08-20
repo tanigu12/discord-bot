@@ -91,7 +91,7 @@ export class DiaryAIService extends BaseAIService {
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
         ...MODEL_CONFIGS.DIARY_PROCESSING,
-        maxTokens: 2000,
+        maxCompletionTokens: 2000,
         response_format: {
           type: 'json_schema',
           json_schema: {
@@ -336,7 +336,7 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
 
       const responseText = await this.callOpenAI(systemPrompt, userMessage, {
         ...MODEL_CONFIGS.DIARY_PROCESSING,
-        maxTokens: 2000,
+        maxCompletionTokens: 2000,
         response_format: {
           type: 'json_schema',
           json_schema: {

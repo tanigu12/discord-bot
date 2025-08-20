@@ -49,7 +49,7 @@ When you use web search results, naturally integrate the findings into your resp
         message.content,
         {
           model: OPENAI_MODELS.MAIN,
-          maxTokens: 1500,
+          maxCompletionTokens: 1500,
           temperature: 0.7
         }
       );
