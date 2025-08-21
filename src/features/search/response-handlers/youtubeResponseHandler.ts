@@ -96,7 +96,7 @@ ${analysisContext.context ? `\nChannel Context: This analysis is being done in a
 
     try {
       const response = await this.callOpenAI(systemPrompt, userPrompt, {
-        model: OPENAI_MODELS.GPT_4O_MINI,
+        model: OPENAI_MODELS.MAIN,
       });
 
       if (!response || response.trim().length === 0) {

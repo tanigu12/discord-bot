@@ -222,6 +222,44 @@ export class AnalysisService {
   }
 
   /**
+   * Send analysis result as file attachment reply (for Larry consult with file output)
+   */
+  async sendAsFileAttachmentReply(
+    message: Message,
+    result: AnalysisResult,
+    query: string
+  ): Promise<void> {
+    const contextStatus = result.context
+      ? `📖 Context-aware analysis using ${result.context.messageCount} recent messages`
+      : '🔍 Standard analysis';
+
+    // Generate aggregated text content with line folding
+    const aggregatedContent = TextAggregator.aggregateSearchResults(
+      query,
+      result.response,
+      result.contextInfo,
+      result.handlerInfo
+    );
+
+    // Create file attachment
+    const fileName = TextAggregator.generateFileName(query);
+    const attachment = new AttachmentBuilder(Buffer.from(aggregatedContent, 'utf8'), {
+      name: fileName,
+    });
+
+    // Send reply with file attachment
+    await message.reply({
+      content:
+        `🧙‍♂️ **Larry's Consultation Complete!** ${contextStatus}\n` +
+        `💬 Query: \`${this.truncateText(query, 50)}\`\n` +
+        `🤖 Handler: ${result.handlerInfo}\n` +
+        `📄 Results exported to attached file with line folding at 100 characters.\n\n` +
+        `📎 Download the .txt file above to view the complete analysis.`,
+      files: [attachment],
+    });
+  }
+
+  /**
    * Handle errors for both interaction and message contexts
    */
   async handleError(

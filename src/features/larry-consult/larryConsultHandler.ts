@@ -44,8 +44,8 @@ export class LarryConsultHandler extends BaseAIService {
         analysisContext
       );
 
-      // Send result directly using shared service
-      await this.analysisService.sendAsMessageReply(message, result);
+      // Send result as file attachment using shared service
+      await this.analysisService.sendAsFileAttachmentReply(message, result, message.content);
 
       console.log('✅ Larry consultation response sent');
     } catch (error) {
