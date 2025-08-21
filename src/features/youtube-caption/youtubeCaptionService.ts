@@ -14,14 +14,10 @@ interface CaptionResponse {
 }
 
 export class YoutubeCaptionService {
-  private readonly captionServerUrl: string;
+  private readonly captionServerUrl = 'http://youtube-caption-server.railway.internal:8080';
 
   constructor() {
-    // Try Railway internal network first, fallback to external URL
-    this.captionServerUrl =
-      process.env.NODE_ENV === 'production'
-        ? 'http://youtube-caption-server.railway.internal'
-        : 'https://youtube-caption-server-production.up.railway.app';
+    // Only use internal Railway network URL with port 8080
   }
 
   async fetchCaptions(youtubeUrl: string, languages: string[] = ['en']): Promise<CaptionResponse> {
@@ -40,7 +36,6 @@ export class YoutubeCaptionService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-        // Timeout for Railway network calls
         signal: AbortSignal.timeout(30000), // 30 seconds
       });
 
@@ -75,7 +70,7 @@ export class YoutubeCaptionService {
             status: 'error',
             error: 'Caption fetch timeout - the request took too long',
           };
-        } else if (error.message.includes('fetch')) {
+        } else if (error.message.includes('fetch') || error.message.includes('ECONNREFUSED')) {
           return {
             status: 'error',
             error: 'Cannot connect to caption server - network error',
