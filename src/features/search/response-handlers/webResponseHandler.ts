@@ -22,25 +22,30 @@ export class WebResponseHandler extends BaseAIService implements ResponseHandler
 
   async processContent(query: string): Promise<ContentResult> {
     console.log('🌐 Processing web URL with specialized handler...');
-    
+
     try {
       const fetchedContent = await this.contentFetcher.fetchContent(query);
       const sourceInfo = `\n\n**Source:** ${query}\n**Title:** ${fetchedContent.title || 'Unknown'}\n**Type:** Web Content Analysis`;
-      console.log(`✅ Web content fetched successfully: ${fetchedContent.content.substring(0, 100)}...`);
-      
+      console.log(
+        `✅ Web content fetched successfully: ${fetchedContent.content.substring(0, 100)}...`
+      );
+
       return { content: fetchedContent.content, sourceInfo };
     } catch (error) {
       console.error('❌ Failed to fetch web content:', error);
       return {
         content: query,
-        sourceInfo: `\n\n**Source:** ${query}\n**Type:** Web URL (content fetch failed, analyzing URL directly)`
+        sourceInfo: `\n\n**Source:** ${query}\n**Type:** Web URL (content fetch failed, analyzing URL directly)`,
       };
     }
   }
 
-  async generateResponse(contentResult: ContentResult, analysisContext: AnalysisContext): Promise<string> {
+  async generateResponse(
+    contentResult: ContentResult,
+    analysisContext: AnalysisContext
+  ): Promise<string> {
     console.log('🤖 Generating web content analysis with Japanese translation...');
-    
+
     const systemPrompt = `You are a specialized web content analyzer for Japanese language learners. Your task is to:
 
 1. Provide a comprehensive summary of the web content
@@ -76,11 +81,10 @@ ${contentResult.content}
 ${analysisContext.context ? `\nChannel Context: This analysis is being done in a Discord channel conversation.` : ''}`;
 
     try {
-      const response = await this.callOpenAI(
-        systemPrompt,
-        userPrompt,
-        { model: OPENAI_MODELS.MAIN }
-      );
+      const response = await this.callOpenAI(systemPrompt, userPrompt, {
+        model: OPENAI_MODELS.MAIN,
+        maxCompletionTokens: 10000, // Extra tokens for GPT-5-mini reasoning + detailed analysis output
+      });
 
       if (!response || response.trim().length === 0) {
         throw new Error('AI service returned empty response for web content');
@@ -89,7 +93,9 @@ ${analysisContext.context ? `\nChannel Context: This analysis is being done in a
       return response;
     } catch (error) {
       console.error('❌ Web content analysis failed:', error);
-      throw new Error(`Web content analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Web content analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }
