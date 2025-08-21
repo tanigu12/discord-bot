@@ -8,7 +8,7 @@ import {
   asanaCommand
 } from "./features/commands";
 import { ReactionHandler } from "./features/reactions";
-import { DiaryHandler } from "./features/diary";
+import { TranslationHandler } from "./features/translation";
 import { IdeaHandler } from "./features/ideas";
 import { LarryConsultHandler } from "./features/larry-consult";
 
@@ -35,9 +35,9 @@ client.commands.set(searchCommand.data.name, searchCommand);
 client.commands.set(bskyCommand.data.name, bskyCommand);
 client.commands.set(asanaCommand.data.name, asanaCommand);
 
-// Initialize reaction handler, diary handler, idea handler, and Larry consult handler
+// Initialize reaction handler, translation handler, idea handler, and Larry consult handler
 const reactionHandler = new ReactionHandler();
-const diaryHandler = new DiaryHandler();
+const translationHandler = new TranslationHandler();
 const ideaHandler = new IdeaHandler();
 const larryConsultHandler = new LarryConsultHandler();
 
@@ -97,16 +97,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// Handle new messages - check for diary channel, idea channel, Larry consult channel and emoji reactions
+// Handle new messages - check for translation channel, idea channel, Larry consult channel and emoji reactions
 client.on(Events.MessageCreate, async (message) => {
   try {
     if (!message.author.bot) {
       console.log(`📨 Message received from ${message.author.tag}: "${message.content?.substring(0, 30)}..."`);
       
-      // Check if this is a diary channel message
-      if (diaryHandler.isDiaryChannel(message)) {
-        console.log('📔 Diary channel detected, processing auto-translation...');
-        await diaryHandler.handleDiaryMessage(message);
+      // Check if this is a translation channel message
+      if (translationHandler.isTranslationChannel(message)) {
+        console.log('🌐 Translation channel detected, processing auto-translation...');
+        await translationHandler.handleTranslationMessage(message);
       }
       
       // Check if this is an idea channel message

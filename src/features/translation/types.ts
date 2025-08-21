@@ -31,7 +31,7 @@ export interface TranslationEvaluationFeedback {
 }
 
 // 日記エントリの解析結果
-export interface ParsedDiaryEntry {
+export interface ParsedTranslationEntry {
   targetSentence: string;
   tryTranslation?: string;
   questions?: string[];
@@ -50,7 +50,7 @@ export type ProcessingScenario =
   | 'english-only';           // 3. 英語のみ（日本語混在あり）
 
 // 日記処理結果の型定義
-export interface DiaryProcessingResult {
+export interface TranslationProcessingResult {
   detectedLanguage: DetectedLanguage;
   targetSentence: string;
   scenario: ProcessingScenario;
@@ -79,7 +79,7 @@ export interface EnglishDiaryComprehensiveResult {
 }
 
 // 統一された日記処理結果（processUnifiedDiary）
-export interface UnifiedDiaryProcessingResult {
+export interface UnifiedTranslationProcessingResult {
   detectedLanguage: DetectedLanguage;
   targetSentence: string;
   scenario: ProcessingScenario;

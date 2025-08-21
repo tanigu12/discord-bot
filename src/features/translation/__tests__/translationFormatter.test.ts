@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DiaryFormatter } from '../diaryFormatter';
-import { DiaryProcessingResult } from '../types';
+import { TranslationFormatter } from '../translationFormatter';
+import { TranslationProcessingResult } from '../types';
 import { User } from 'discord.js';
 
 // Mock Discord.js User for testing
@@ -9,8 +9,8 @@ const createMockUser = (username: string = 'TestUser'): User => ({
   displayAvatarURL: vi.fn().mockReturnValue('https://example.com/avatar.png'),
 } as unknown as User);
 
-// Mock DiaryProcessingResult for testing
-const createMockResult = (overrides: Partial<DiaryProcessingResult> = {}): DiaryProcessingResult => ({
+// Mock TranslationProcessingResult for testing
+const createMockResult = (overrides: Partial<TranslationProcessingResult> = {}): TranslationProcessingResult => ({
   detectedLanguage: 'japanese',
   targetSentence: '今日は学校に行きました。',
   scenario: 'japanese-only',
@@ -23,16 +23,16 @@ const createMockResult = (overrides: Partial<DiaryProcessingResult> = {}): Diary
   ...overrides,
 });
 
-describe('DiaryFormatter', () => {
-  let formatter: DiaryFormatter;
+describe('TranslationFormatter', () => {
+  let formatter: TranslationFormatter;
 
   beforeEach(() => {
-    formatter = new DiaryFormatter();
+    formatter = new TranslationFormatter();
   });
 
   describe('addLineBreaks', () => {
     // Access private method for testing using type assertion
-    const getAddLineBreaks = (formatter: DiaryFormatter) => 
+    const getAddLineBreaks = (formatter: TranslationFormatter) => 
       (formatter as any).addLineBreaks.bind(formatter);
 
     it('should not break text under 100 characters', () => {

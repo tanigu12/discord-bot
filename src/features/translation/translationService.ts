@@ -1,16 +1,16 @@
-import { DiaryAIService } from './diaryAIService';
-import { DiaryProcessingResult, ParsedDiaryEntry, ProcessingScenario } from './types';
+import { TranslationAIService } from './translationAIService';
+import { TranslationProcessingResult, ParsedTranslationEntry, ProcessingScenario } from './types';
 
-// 日記サービスクラス - Larry による日記処理のコア機能
-export class DiaryService {
-  private diaryAIService: DiaryAIService;
+// 翻訳サービスクラス - Larry による翻訳処理のコア機能
+export class TranslationService {
+  private translationAIService: TranslationAIService;
 
   constructor() {
-    this.diaryAIService = new DiaryAIService();
+    this.translationAIService = new TranslationAIService();
   }
 
-  // 新しい日記フォーマットを解析
-  parseDiaryEntry(content: string): ParsedDiaryEntry {
+  // 新しい翻訳フォーマットを解析
+  parseTranslationEntry(content: string): ParsedTranslationEntry {
     const lines = content.trim().split('\n');
     
     let tryTranslation: string | undefined;
@@ -45,8 +45,8 @@ export class DiaryService {
   }
 
   // 処理シナリオを決定
-  determineProcessingScenario(parsedEntry: ParsedDiaryEntry): ProcessingScenario {
-    const detectedLanguage = this.diaryAIService.detectLanguageByPattern(
+  determineProcessingScenario(parsedEntry: ParsedTranslationEntry): ProcessingScenario {
+    const detectedLanguage = this.translationAIService.detectLanguageByPattern(
       parsedEntry.targetSentence
     );
 
@@ -58,22 +58,22 @@ export class DiaryService {
     }
   }
 
-  // 日記エントリを処理（統一された単一AI呼び出し）
-  async processDiaryEntry(content: string): Promise<DiaryProcessingResult> {
+  // 翻訳エントリを処理（統一された単一AI呼び出し）
+  async processTranslationEntry(content: string): Promise<TranslationProcessingResult> {
     try {
       console.log(
-        `📔 Larry is analyzing diary entry with unified processing: "${content.substring(0, 50)}..."`
+        `📔 Larry is analyzing translation entry with unified processing: "${content.substring(0, 50)}..."`
       );
 
       // 新しいフォーマットを解析
-      const parsedEntry = this.parseDiaryEntry(content);
+      const parsedEntry = this.parseTranslationEntry(content);
       const scenario = this.determineProcessingScenario(parsedEntry);
       console.log(
         `📝 Parsed entry - Target: "${parsedEntry.targetSentence}", Scenario: ${scenario}, Questions: ${parsedEntry.questions?.length || 0}`
       );
 
       // シナリオに基づいた処理を実行
-      const result = await this.diaryAIService.processUnifiedDiary(parsedEntry, scenario);
+      const result = await this.translationAIService.processUnifiedDiary(parsedEntry, scenario);
 
       console.log(
         `✅ Larry completed scenario-based analysis - scenario: ${scenario}, language: ${result.detectedLanguage}`
@@ -91,15 +91,15 @@ export class DiaryService {
         questionAnswers: result.questionAnswers || undefined,
       };
     } catch (error) {
-      console.error('❌ Larry encountered error processing diary:', error);
-      throw new Error('Failed to process diary entry');
+      console.error('❌ Larry encountered error processing translation:', error);
+      throw new Error('Failed to process translation entry');
     }
   }
 
-  // チャンネルが日記チャンネルかどうかを判定
-  isValidDiaryChannel(channelName?: string): boolean {
+  // チャンネルが翻訳チャンネルかどうかを判定
+  isValidTranslationChannel(channelName?: string): boolean {
     if (!channelName) return false;
-    return channelName.toLowerCase().includes('diary');
+    return channelName.toLowerCase().includes('translation');
   }
 
   // 言語名を表示用に変換

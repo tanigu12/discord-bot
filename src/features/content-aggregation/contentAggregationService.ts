@@ -1,4 +1,4 @@
-import { DiaryAIService } from '../diary/diaryAIService';
+import { TranslationAIService } from '../translation/translationAIService';
 import { NewsService } from '../../services/newsService';
 import { AsanaService } from '../../services/asanaService';
 import { TechnicalQuestionService, TechnicalQuestion } from '../technical-questions';
@@ -30,13 +30,13 @@ export interface ContentAggregationOptions {
 }
 
 export class ContentAggregationService {
-  private diaryAIService: DiaryAIService;
+  private translationAIService: TranslationAIService;
   private newsService: NewsService;
   private technicalQuestionService: TechnicalQuestionService;
   private englishPhraseService: EnglishPhraseService;
 
   constructor() {
-    this.diaryAIService = new DiaryAIService();
+    this.translationAIService = new TranslationAIService();
     this.newsService = new NewsService();
     this.technicalQuestionService = new TechnicalQuestionService();
     this.englishPhraseService = new EnglishPhraseService();
@@ -82,7 +82,7 @@ export class ContentAggregationService {
         result.newsTopics = newsTopics;
 
         if (includeDiary) {
-          result.diaryPrompts = await this.diaryAIService.generateDiaryTopics(newsTopics);
+          result.diaryPrompts = await this.translationAIService.generateDiaryTopics(newsTopics);
         }
       } catch (error) {
         console.error('❌ Error fetching news/diary content:', error);

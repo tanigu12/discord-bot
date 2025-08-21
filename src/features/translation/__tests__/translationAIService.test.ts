@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DiaryAIService } from '../diaryAIService';
+import { TranslationAIService } from "../translationAIService";
 import type { DetectedLanguage } from '../types';
 
 // Mock console.log to avoid cluttering test output but still allow testing the logging
 const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-describe('DiaryAIService', () => {
-  let diaryAIService: DiaryAIService;
+describe('TranslationAIService', () => {
+  let diaryAIService: TranslationAIService;
 
   beforeEach(() => {
-    diaryAIService = new DiaryAIService();
+    diaryAIService = new TranslationAIService();
     consoleSpy.mockClear();
   });
 
@@ -198,11 +198,11 @@ describe('DiaryAIService', () => {
   });
 });
 
-describe('DiaryAIService Character Regex Validation', () => {
-  let diaryAIService: DiaryAIService;
+describe('TranslationAIService Character Regex Validation', () => {
+  let diaryAIService: TranslationAIService;
 
   beforeEach(() => {
-    diaryAIService = new DiaryAIService();
+    diaryAIService = new TranslationAIService();
     consoleSpy.mockClear();
   });
 

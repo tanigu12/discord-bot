@@ -4,17 +4,17 @@ import { MODEL_CONFIGS } from '../../constants/ai';
 import {
   DetectedLanguage,
   EnglishDiaryComprehensiveResult,
-  UnifiedDiaryProcessingResult,
+  UnifiedTranslationProcessingResult,
   JapaneseDiaryWithTryResult,
   LanguageDetectionAndTranslationResult,
   DiaryTopicsGenerationResult,
   RandomTopicConfig,
-  ParsedDiaryEntry,
+  ParsedTranslationEntry,
   ProcessingScenario,
 } from './types';
 
 // Larry による日記専用AIサービス
-export class DiaryAIService extends BaseAIService {
+export class TranslationAIService extends BaseAIService {
   constructor() {
     super();
   }
@@ -136,9 +136,9 @@ export class DiaryAIService extends BaseAIService {
 
   // 統一された日記処理（シナリオベース）
   async processUnifiedDiary(
-    parsedEntry: ParsedDiaryEntry,
+    parsedEntry: ParsedTranslationEntry,
     scenario: ProcessingScenario
-  ): Promise<UnifiedDiaryProcessingResult> {
+  ): Promise<UnifiedTranslationProcessingResult> {
     try {
       // パターンベースの言語検出を使用
       const detectedLanguage = this.detectLanguageByPattern(parsedEntry.targetSentence);
@@ -216,7 +216,7 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
 
   // シナリオベースのユーザーメッセージ構築
   private buildScenarioBasedUserMessage(
-    parsedEntry: ParsedDiaryEntry,
+    parsedEntry: ParsedTranslationEntry,
     scenario: ProcessingScenario,
     detectedLanguage: DetectedLanguage
   ): string {

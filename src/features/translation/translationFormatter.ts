@@ -2,13 +2,13 @@ import { EmbedBuilder, User, Message, AttachmentBuilder } from 'discord.js';
 import { writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { DiaryProcessingResult } from './types';
+import { TranslationProcessingResult } from './types';
 
 // Discord埋め込みメッセージのフォーマット機能
-export class DiaryFormatter {
+export class TranslationFormatter {
   // Larry による日記フィードバックの埋め込みとフォローアップメッセージを作成
   async createFeedbackResponse(
-    result: DiaryProcessingResult,
+    result: TranslationProcessingResult,
     _originalContent: string,
     author: User,
     message: Message
@@ -131,7 +131,7 @@ export class DiaryFormatter {
   }
 
   // 完全なメッセージ内容を生成（改行を適切に配置して読みやすく）
-  private generateCompleteMessage(result: DiaryProcessingResult, author: User): string {
+  private generateCompleteMessage(result: TranslationProcessingResult, author: User): string {
     const lines: string[] = [];
     
     // ヘッダー部分
@@ -192,7 +192,7 @@ export class DiaryFormatter {
   }
 
   // シナリオ別の内容を行配列で取得（改行を適切に配置、長いテキストは100文字で分割）
-  private getScenarioContentLines(result: DiaryProcessingResult): string[] {
+  private getScenarioContentLines(result: TranslationProcessingResult): string[] {
     const lines: string[] = [];
     
     switch (result.scenario) {

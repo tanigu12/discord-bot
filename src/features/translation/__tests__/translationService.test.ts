@@ -1,19 +1,19 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DiaryService } from '../diaryService';
-import { ParsedDiaryEntry } from '../types';
+import { TranslationService } from '../translationService';
+import { ParsedTranslationEntry } from '../types';
 
-describe('DiaryService', () => {
-  let diaryService: DiaryService;
+describe('TranslationService', () => {
+  let translationService: TranslationService;
 
   beforeEach(() => {
-    diaryService = new DiaryService();
+    translationService = new TranslationService();
   });
 
-  describe('parseDiaryEntry', () => {
+  describe('parseTranslationEntry', () => {
     it('should extract target sentence only when no [try] or [q] markers exist', () => {
       const content = 'Today I went to school and had a great time.';
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('Today I went to school and had a great time.');
       expect(result.tryTranslation).toBeUndefined();
@@ -25,7 +25,7 @@ describe('DiaryService', () => {
       
 [try] I went to school today.`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('今日は学校に行きました。');
       expect(result.tryTranslation).toBe('I went to school today.');
@@ -37,7 +37,7 @@ describe('DiaryService', () => {
       
 [q] What is the difference between present perfect and past tense?`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('Today I studied English grammar.');
       expect(result.tryTranslation).toBeUndefined();
@@ -52,7 +52,7 @@ describe('DiaryService', () => {
 [q] How can I improve my English speaking skills?
 [q] What are some good resources for learning grammar?`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('今日は英語の勉強をしました。とても面白かったです。');
       expect(result.tryTranslation).toBe('I studied English today. It was very interesting.');
@@ -70,7 +70,7 @@ describe('DiaryService', () => {
 [try] Today was a busy day from morning to night.
 [q] How do you say "busy day" in more natural English?`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       const expectedTarget = `今日は朝から晩まで忙しい一日でした。
 学校で新しい友達と出会い、とても楽しい時間を過ごしました。
@@ -90,7 +90,7 @@ describe('DiaryService', () => {
 
 [q] How long does it typically take to become fluent?`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('English is a challenging but rewarding language to learn.');
       expect(result.tryTranslation).toBe('英語は学ぶのが難しいですが、やりがいのある言語です。');
@@ -113,7 +113,7 @@ Today was a wonderful day.
 
 `;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('Today was a wonderful day.');
       expect(result.tryTranslation).toBe('今日は素晴らしい日でした。');
@@ -125,7 +125,7 @@ Today was a wonderful day.
 
 [try] I watched a movie today.`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('今日は映画を見ました。');
       expect(result.tryTranslation).toBe('I watched a movie today.');
@@ -138,7 +138,7 @@ Today was a wonderful day.
 [q] What are the best methods for language retention?
 [q] How important is pronunciation in language learning?`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('Learning languages requires consistent practice and patience.');
       expect(result.tryTranslation).toBeUndefined();
@@ -152,7 +152,7 @@ Today was a wonderful day.
       const content = `[try] This is just a translation attempt.
 [q] What if there is no target sentence?`;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('');
       expect(result.tryTranslation).toBe('This is just a translation attempt.');
@@ -166,7 +166,7 @@ Today was a wonderful day.
 
   [q]    How do you balance relaxation and productivity?    `;
       
-      const result = diaryService.parseDiaryEntry(content);
+      const result = translationService.parseTranslationEntry(content);
       
       expect(result.targetSentence).toBe('My weekend was relaxing and productive.');
       expect(result.tryTranslation).toBe('週末はリラックスできて生産的でした。');
@@ -176,86 +176,86 @@ Today was a wonderful day.
 
   describe('determineProcessingScenario', () => {
     it('should return "japanese-only" for Japanese target without [try]', () => {
-      const parsedEntry: ParsedDiaryEntry = {
+      const parsedEntry: ParsedTranslationEntry = {
         targetSentence: '今日は学校に行きました。',
         tryTranslation: undefined,
         questions: undefined,
       };
       
-      const scenario = diaryService.determineProcessingScenario(parsedEntry);
+      const scenario = translationService.determineProcessingScenario(parsedEntry);
       
       expect(scenario).toBe('japanese-only');
     });
 
     it('should return "japanese-with-try" for Japanese target with [try]', () => {
-      const parsedEntry: ParsedDiaryEntry = {
+      const parsedEntry: ParsedTranslationEntry = {
         targetSentence: '今日は学校に行きました。',
         tryTranslation: 'I went to school today.',
         questions: undefined,
       };
       
-      const scenario = diaryService.determineProcessingScenario(parsedEntry);
+      const scenario = translationService.determineProcessingScenario(parsedEntry);
       
       expect(scenario).toBe('japanese-with-try');
     });
 
     it('should return "english-only" for English target', () => {
-      const parsedEntry: ParsedDiaryEntry = {
+      const parsedEntry: ParsedTranslationEntry = {
         targetSentence: 'Today I went to school.',
         tryTranslation: undefined,
         questions: undefined,
       };
       
-      const scenario = diaryService.determineProcessingScenario(parsedEntry);
+      const scenario = translationService.determineProcessingScenario(parsedEntry);
       
       expect(scenario).toBe('english-only');
     });
 
     it('should return "japanese-with-try" for mixing language with [try]', () => {
-      const parsedEntry: ParsedDiaryEntry = {
+      const parsedEntry: ParsedTranslationEntry = {
         targetSentence: 'Today I went to 学校.',
         tryTranslation: 'I tried to translate this mixed sentence.',
         questions: undefined,
       };
       
-      const scenario = diaryService.determineProcessingScenario(parsedEntry);
+      const scenario = translationService.determineProcessingScenario(parsedEntry);
       
       expect(scenario).toBe('japanese-with-try');
     });
   });
 
-  describe('isValidDiaryChannel', () => {
-    it('should return true for channel names containing "diary"', () => {
-      expect(diaryService.isValidDiaryChannel('diary')).toBe(true);
-      expect(diaryService.isValidDiaryChannel('my-diary')).toBe(true);
-      expect(diaryService.isValidDiaryChannel('diary-channel')).toBe(true);
-      expect(diaryService.isValidDiaryChannel('DIARY')).toBe(true);
+  describe('isValidTranslationChannel', () => {
+    it('should return true for channel names containing "translation"', () => {
+      expect(translationService.isValidTranslationChannel('translation')).toBe(true);
+      expect(translationService.isValidTranslationChannel('my-translation')).toBe(true);
+      expect(translationService.isValidTranslationChannel('translation-channel')).toBe(true);
+      expect(translationService.isValidTranslationChannel('TRANSLATION')).toBe(true);
     });
 
-    it('should return false for channel names not containing "diary"', () => {
-      expect(diaryService.isValidDiaryChannel('general')).toBe(false);
-      expect(diaryService.isValidDiaryChannel('chat')).toBe(false);
-      expect(diaryService.isValidDiaryChannel('random')).toBe(false);
-      expect(diaryService.isValidDiaryChannel('')).toBe(false);
-      expect(diaryService.isValidDiaryChannel(undefined)).toBe(false);
+    it('should return false for channel names not containing "translation"', () => {
+      expect(translationService.isValidTranslationChannel('general')).toBe(false);
+      expect(translationService.isValidTranslationChannel('chat')).toBe(false);
+      expect(translationService.isValidTranslationChannel('random')).toBe(false);
+      expect(translationService.isValidTranslationChannel('')).toBe(false);
+      expect(translationService.isValidTranslationChannel(undefined)).toBe(false);
     });
   });
 
   describe('helper methods', () => {
     it('should display language names correctly', () => {
-      expect(diaryService.getLanguageDisplayName('japanese')).toBe('🇯🇵 Japanese');
-      expect(diaryService.getLanguageDisplayName('english')).toBe('🇺🇸 English');
-      expect(diaryService.getLanguageDisplayName('mixing')).toBe('🇯🇵🇺🇸 Mixed (JP + EN)');
-      expect(diaryService.getLanguageDisplayName('unknown')).toBe('🌍 Other');
+      expect(translationService.getLanguageDisplayName('japanese')).toBe('🇯🇵 Japanese');
+      expect(translationService.getLanguageDisplayName('english')).toBe('🇺🇸 English');
+      expect(translationService.getLanguageDisplayName('mixing')).toBe('🇯🇵🇺🇸 Mixed (JP + EN)');
+      expect(translationService.getLanguageDisplayName('unknown')).toBe('🌍 Other');
     });
 
     it('should truncate text correctly', () => {
       const shortText = 'Short text';
       const longText = 'This is a very long text that needs to be truncated for display purposes';
       
-      expect(diaryService.truncateText(shortText, 20)).toBe(shortText);
-      expect(diaryService.truncateText(longText, 20)).toBe('This is a very lo...');
-      expect(diaryService.truncateText(longText, 50)).toBe('This is a very long text that needs to be trunc...');
+      expect(translationService.truncateText(shortText, 20)).toBe(shortText);
+      expect(translationService.truncateText(longText, 20)).toBe('This is a very lo...');
+      expect(translationService.truncateText(longText, 50)).toBe('This is a very long text that needs to be trunc...');
     });
   });
 });
