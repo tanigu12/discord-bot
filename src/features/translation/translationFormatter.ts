@@ -30,7 +30,15 @@ export class TranslationFormatter {
     // 完全なメッセージ内容を生成
     const completeMessage = this.generateCompleteMessage(result, author);
 
-    // 条件付きリプライ戦略を使用
+    // 短いコンテンツの場合は、埋め込みにサマリーを事前に追加
+    if (!ReplyStrategyService.shouldUseAttachment(completeMessage)) {
+      const summaryField = this.createContentSummary(result);
+      if (summaryField) {
+        embed.addFields(summaryField);
+      }
+    }
+
+    // 条件付きリプライ戦略を使用（一度だけリプライ）
     const replyResult = await ReplyStrategyService.sendConditionalEmbedReply(
       message,
       embed,
@@ -40,26 +48,6 @@ export class TranslationFormatter {
 
     // ログに戦略を記録
     console.log(`🎯 Larry diary feedback: ${ReplyStrategyService.getStrategyStatusMessage(replyResult)}`);
-
-    // 短いコンテンツの場合は、埋め込みに追加情報を含める
-    if (replyResult.strategy === 'message') {
-      // 短いコンテンツなので、重要な情報を埋め込みに追加
-      const summaryField = this.createContentSummary(result);
-      if (summaryField) {
-        embed.addFields(summaryField);
-        // 埋め込みを更新して再送信
-        try {
-          if ('send' in message.channel) {
-            await message.channel.send({ 
-              content: `📝 **Complete feedback content** (${replyResult.characterCount} characters):`,
-              embeds: [embed] 
-            });
-          }
-        } catch (error) {
-          console.warn('⚠️ Failed to send updated embed with content:', error);
-        }
-      }
-    }
   }
 
   // エラー時の埋め込みメッセージを作成
