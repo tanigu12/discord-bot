@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface VideoAnalysisResponse {
   status: 'success' | 'error';
@@ -17,18 +17,21 @@ export class YoutubeCaptionService {
     }
   }
 
-  async analyzeVideo(youtubeUrl: string, prompt: string = "Please summarize the video in 3 sentences."): Promise<VideoAnalysisResponse> {
+  async analyzeVideo(
+    youtubeUrl: string,
+    prompt: string = 'Please summarize the video in 3 sentences.'
+  ): Promise<VideoAnalysisResponse> {
     if (!this.genAI) {
       return {
         status: 'error',
-        error: 'Google API key not configured. Please set GOOGLE_API_KEY in environment variables.'
+        error: 'Google API key not configured. Please set GOOGLE_API_KEY in environment variables.',
       };
     }
 
     if (!this.isYouTubeUrl(youtubeUrl)) {
       return {
         status: 'error',
-        error: 'Invalid YouTube URL provided.'
+        error: 'Invalid YouTube URL provided.',
       };
     }
 
@@ -36,14 +39,14 @@ export class YoutubeCaptionService {
     console.log(`🤖 Using Gemini AI with prompt: ${prompt}`);
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-      
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+
       const result = await model.generateContent([
         prompt,
         {
           fileData: {
             fileUri: youtubeUrl,
-            mimeType: "video/mp4",
+            mimeType: 'video/mp4',
           },
         },
       ]);
@@ -52,39 +55,34 @@ export class YoutubeCaptionService {
       const text = response.text();
 
       console.log(`✅ Successfully analyzed video`);
-      
+
       return {
         status: 'success',
         summary: text,
-        analysis: text
+        analysis: text,
       };
     } catch (error) {
       console.error(`❌ Error analyzing video:`, error);
-      
+
       if (error instanceof Error) {
         return {
           status: 'error',
-          error: `Gemini API error: ${error.message}`
+          error: `Gemini API error: ${error.message}`,
         };
       }
 
       return {
         status: 'error',
-        error: 'Unknown error occurred while analyzing video'
+        error: 'Unknown error occurred while analyzing video',
       };
     }
   }
 
   async summarizeVideo(youtubeUrl: string): Promise<VideoAnalysisResponse> {
-    return this.analyzeVideo(youtubeUrl, "Please provide a detailed summary of this video, including the main topics discussed and key takeaways.");
-  }
-
-  async getTimestampedSummary(youtubeUrl: string): Promise<VideoAnalysisResponse> {
-    return this.analyzeVideo(youtubeUrl, "Please provide a timestamped summary of this video, breaking down the content by time segments and highlighting the main points discussed in each section.");
-  }
-
-  async answerQuestion(youtubeUrl: string, question: string): Promise<VideoAnalysisResponse> {
-    return this.analyzeVideo(youtubeUrl, `Based on the content of this video, please answer the following question: ${question}`);
+    return this.analyzeVideo(
+      youtubeUrl,
+      'Please provide a detailed summary of this video, including the main topics discussed and key takeaways.'
+    );
   }
 
   isYouTubeUrl(url: string): boolean {
