@@ -1,9 +1,15 @@
 import { Message } from 'discord.js';
 import { BaseAIService } from '../../services/baseAIService';
-import { OPENAI_MODELS } from '../../constants/ai';
+import { AnalysisService } from '../analysisService';
 
 export class LarryConsultHandler extends BaseAIService {
   private readonly CONSULT_LARRY_CHANNEL_NAME = 'consult-larry';
+  private analysisService: AnalysisService;
+
+  constructor() {
+    super();
+    this.analysisService = new AnalysisService();
+  }
 
   // Check if this message is from the consult-larry channel
   isConsultLarryChannel(message: Message): boolean {
@@ -19,62 +25,33 @@ export class LarryConsultHandler extends BaseAIService {
         return;
       }
 
-      console.log(`🧙‍♂️ Processing Larry consultation request: "${message.content.substring(0, 50)}..."`);
-
-      // Get Larry's personality and knowledge
-      const aiIntegration = this.getAIPartnerIntegration();
-      const systemPrompt = aiIntegration.generateChatPrompt('consultation');
-      
-      // Add specific context for general consultation
-      const consultationContext = `
-You are responding to a consultation request in a Discord channel called "consult-larry". 
-The user is asking for your advice, opinion, or help on various topics.
-
-**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**
-- This is for English learning purposes
-- Never respond in Japanese, even if the user asks in Japanese
-- Always use English to help improve the user's English skills
-- If user asks in Japanese, respond in English and politely mention you're helping them practice English
-
-You have access to web search capabilities to provide the most current and accurate information.
-Use web search when the question involves:
-- Current events, recent news, or trending topics
-- Latest technical documentation, API changes, or software updates
-- Real-time data, statistics, or market information  
-- Recent research findings or academic papers
-- Current prices, availability, or product information
-Provide helpful, thoughtful responses while maintaining your friendly Canadian personality.
-Keep responses conversational and appropriately sized for Discord (aim for 1-3 paragraphs unless more detail is needed).
-When you use web search results, naturally integrate the findings into your response without explicitly mentioning the search.
-Remember: RESPOND ONLY IN ENGLISH for learning purposes.
-`;
-
-      const fullSystemPrompt = systemPrompt + consultationContext;
-
-      // Get Larry's response with web search if needed
-      const response = await this.callOpenAI(
-        fullSystemPrompt,
-        message.content,
-        {
-          model: OPENAI_MODELS.MAIN,
-          maxCompletionTokens: 1500
-        }
+      console.log(
+        `🧙‍♂️ Processing Larry consultation request: "${message.content.substring(0, 50)}..."`
       );
 
-      // Reply to the original message
-      await message.reply(response);
-      
+      // Collect context using shared service (will collect context for consult-larry channel)
+      const analysisContext = await this.analysisService.collectContextIfNeeded(message);
+
+      console.log('🔍 Using unified analysis service...');
+
+      // Process query using shared service
+      const result = await this.analysisService.processQuery(
+        {
+          query: message.content,
+          source: 'larry-consult',
+          outputFormat: 'message',
+        },
+        analysisContext
+      );
+
+      // Send result directly using shared service
+      await this.analysisService.sendAsMessageReply(message, result);
+
       console.log('✅ Larry consultation response sent');
     } catch (error) {
-      console.error('💥 Error handling Larry consultation:', error);
-      
-      try {
-        await message.reply(
-          "Sorry, I'm having some technical difficulties right now. Could you try asking again in a moment? 🤔"
-        );
-      } catch (replyError) {
-        console.error('💥 Error sending error message:', replyError);
-      }
+      await this.analysisService.handleError(message, error, message.content);
     }
   }
+
+
 }
