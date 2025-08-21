@@ -200,3 +200,65 @@ Option 2: Re-invite Bot with Proper Permissions
 
 https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_CLIENT_ID&permissions=139586988096&scope=bot%20
 applications.commands
+
+## Planning and Documentation Workflow
+
+### Planning Documents Requirement
+
+**IMPORTANT: Before updating any code, you MUST create a detailed planning document in the `doc/` folder.**
+
+#### Planning Document Requirements:
+1. **File naming**: Use descriptive names like `feature-name-implementation-plan.md`
+2. **Location**: All planning documents go in the `doc/` folder
+3. **Content structure**:
+   - **Overview**: Brief description of what needs to be implemented/changed
+   - **Analysis**: Current state analysis and requirements
+   - **Implementation Plan**: Step-by-step breakdown of changes needed
+   - **Files to modify**: List of files that will be affected
+   - **Testing approach**: How the changes will be tested
+   - **Potential risks**: Any concerns or edge cases to consider
+
+#### When to Create Planning Documents:
+- **New features**: Always create a plan before implementation
+- **Bug fixes**: Document the root cause analysis and fix approach
+- **Refactoring**: Outline the refactoring strategy and scope
+- **Complex changes**: Any change affecting multiple files or systems
+
+#### Example Planning Document Structure:
+```markdown
+# Feature Name Implementation Plan
+
+## Overview
+Brief description of the feature/change
+
+## Current State Analysis
+- What exists now
+- What's missing or broken
+- Requirements gathering
+
+## Implementation Plan
+1. Step 1: Specific action
+2. Step 2: Specific action
+3. Step N: Specific action
+
+## Files to Modify
+- `src/path/to/file1.ts` - What changes
+- `src/path/to/file2.ts` - What changes
+
+## Testing Approach
+- Unit tests to write/update
+- Integration tests needed
+- Manual testing steps
+
+## Potential Risks
+- Edge cases to consider
+- Backward compatibility concerns
+- Performance implications
+```
+
+### Workflow Process:
+1. **Plan first**: Create planning document in `doc/`
+2. **Review plan**: Ensure all aspects are covered
+3. **Implement**: Make code changes following the plan
+4. **Test**: Run `npm run check:all` after implementation
+5. **Update plan**: Mark completed or note any deviations
