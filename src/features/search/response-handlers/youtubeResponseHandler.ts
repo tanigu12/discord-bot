@@ -17,36 +17,39 @@ export class YoutubeResponseHandler extends BaseAIService implements ResponseHan
 
   async processContent(query: string): Promise<ContentResult> {
     console.log('🎬 Processing YouTube video with specialized handler...');
-    
+
     try {
       // Use Gemini AI to analyze the video content
-      const analysisResult = await this.youtubeCaptionService.summarizeVideo(query);
-      
+      const analysisResult = await this.youtubeCaptionService.getTranscriptFromVideo(query);
+
       if (analysisResult.status === 'success' && analysisResult.summary) {
         const sourceInfo = `\n\n**Source:** ${query}\n**Type:** YouTube Video Analysis\n**Method:** Gemini AI Analysis`;
         console.log('✅ YouTube video analyzed successfully with Gemini');
-        
+
         return { content: analysisResult.summary, sourceInfo };
       }
-      
+
       console.error('❌ Failed to analyze YouTube video:', analysisResult.error);
       return {
         content: query,
-        sourceInfo: `\n\n**Source:** ${query}\n**Type:** YouTube Video (analysis unavailable: ${analysisResult.error || 'Unknown error'})`
+        sourceInfo: `\n\n**Source:** ${query}\n**Type:** YouTube Video (analysis unavailable: ${analysisResult.error || 'Unknown error'})`,
       };
-      
     } catch (error) {
       console.error('❌ YouTube caption service error:', error);
       return {
         content: query,
-        sourceInfo: `\n\n**Source:** ${query}\n**Type:** YouTube Video (caption service error)`
+        sourceInfo: `\n\n**Source:** ${query}\n**Type:** YouTube Video (caption service error)`,
       };
     }
   }
 
-  async generateResponse(contentResult: ContentResult, analysisContext: AnalysisContext, query: string): Promise<string> {
+  async generateResponse(
+    contentResult: ContentResult,
+    analysisContext: AnalysisContext,
+    query: string
+  ): Promise<string> {
     console.log('🤖 Generating YouTube sectioned translation...');
-    
+
     const systemPrompt = `You are a specialized YouTube video analyzer for Japanese language learners. Your task is to:
 
 1. Understand the entire context of the video captions
@@ -92,11 +95,9 @@ ${contentResult.content}
 ${analysisContext.context ? `\nChannel Context: This analysis is being done in a Discord channel conversation.` : ''}`;
 
     try {
-      const response = await this.callOpenAI(
-        systemPrompt,
-        userPrompt,
-        { model: OPENAI_MODELS.GPT_4O_MINI }
-      );
+      const response = await this.callOpenAI(systemPrompt, userPrompt, {
+        model: OPENAI_MODELS.GPT_4O_MINI,
+      });
 
       if (!response || response.trim().length === 0) {
         throw new Error('AI service returned empty response for YouTube content');
@@ -105,7 +106,9 @@ ${analysisContext.context ? `\nChannel Context: This analysis is being done in a
       return response;
     } catch (error) {
       console.error('❌ YouTube content analysis failed:', error);
-      throw new Error(`YouTube content analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `YouTube content analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }
