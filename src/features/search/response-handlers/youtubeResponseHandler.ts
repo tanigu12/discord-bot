@@ -19,24 +19,20 @@ export class YoutubeResponseHandler extends BaseAIService implements ResponseHan
     console.log('🎬 Processing YouTube video with specialized handler...');
     
     try {
-      // Get only English captions for sectioned translation
-      const captionResult = await this.youtubeCaptionService.fetchCaptions(query, ['en']);
+      // Use Gemini AI to analyze the video content
+      const analysisResult = await this.youtubeCaptionService.summarizeVideo(query);
       
-      if (captionResult.status === 'success' && captionResult.captions && captionResult.captions.length > 0) {
-        const englishCaption = captionResult.captions.find(cap => cap.language === 'en');
+      if (analysisResult.status === 'success' && analysisResult.summary) {
+        const sourceInfo = `\n\n**Source:** ${query}\n**Type:** YouTube Video Analysis\n**Method:** Gemini AI Analysis`;
+        console.log('✅ YouTube video analyzed successfully with Gemini');
         
-        if (englishCaption) {
-          const sourceInfo = `\n\n**Source:** ${query}\n**Type:** YouTube Video Analysis\n**Language:** English Captions`;
-          console.log('✅ YouTube English captions fetched successfully');
-          
-          return { content: englishCaption.text, sourceInfo };
-        }
+        return { content: analysisResult.summary, sourceInfo };
       }
       
-      console.error('❌ Failed to fetch YouTube English captions:', captionResult.error);
+      console.error('❌ Failed to analyze YouTube video:', analysisResult.error);
       return {
         content: query,
-        sourceInfo: `\n\n**Source:** ${query}\n**Type:** YouTube Video (English captions unavailable: ${captionResult.error || 'Not found'})`
+        sourceInfo: `\n\n**Source:** ${query}\n**Type:** YouTube Video (analysis unavailable: ${analysisResult.error || 'Unknown error'})`
       };
       
     } catch (error) {

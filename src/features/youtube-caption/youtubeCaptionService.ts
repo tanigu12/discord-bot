@@ -1,113 +1,90 @@
-interface CaptionRequest {
-  url: string;
-  languages: string[];
-}
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-interface CaptionResponse {
+interface VideoAnalysisResponse {
   status: 'success' | 'error';
-  captions?: {
-    language: string;
-    text: string;
-  }[];
+  summary?: string;
+  analysis?: string;
   error?: string;
-  message?: string;
 }
 
 export class YoutubeCaptionService {
-  private readonly captionServerUrl = 'https://youtube-caption-server-production.up.railway.app';
+  private genAI: GoogleGenerativeAI | null = null;
 
   constructor() {
-    // Only use internal Railway network URL with port 8080
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (apiKey) {
+      this.genAI = new GoogleGenerativeAI(apiKey);
+    }
   }
 
-  async fetchCaptions(youtubeUrl: string, languages: string[] = ['en']): Promise<CaptionResponse> {
-    console.log(`🎬 Fetching captions for: ${youtubeUrl}`);
-    console.log(`🌐 Using caption server: ${this.captionServerUrl}`);
-
-    const requestBody: CaptionRequest = {
-      url: youtubeUrl,
-      languages,
-    };
-
-    return this.retry(
-      async () => {
-        const response = await fetch(`${this.captionServerUrl}/youtube/video-captions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(30000),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Caption server error (${response.status}): ${errorText}`);
-        }
-
-        const result = (await response.json()) as CaptionResponse;
-
-        if (result.status === 'success' && result.captions) {
-          return result;
-        } else {
-          throw new Error(result.error || result.message || 'Unknown caption fetch error');
-        }
-      },
-      {
-        maxAttempts: 3,
-        delay: 5000,
-        taskName: 'fetch captions'
-      }
-    );
-  }
-
-  private async retry<T>(
-    fn: () => Promise<T>, 
-    options: { maxAttempts: number; delay: number; taskName: string }
-  ): Promise<T | CaptionResponse> {
-    for (let attempt = 1; attempt <= options.maxAttempts; attempt++) {
-      try {
-        console.log(`🔄 Attempt ${attempt}/${options.maxAttempts} to ${options.taskName}`);
-        const result = await fn();
-        console.log(`✅ Successfully completed ${options.taskName} on attempt ${attempt}`);
-        return result;
-      } catch (error) {
-        console.error(`❌ Error on attempt ${attempt}:`, error instanceof Error ? error.message : error);
-
-        if (attempt === options.maxAttempts) {
-          if (error instanceof Error) {
-            if (error.name === 'AbortError') {
-              return {
-                status: 'error',
-                error: `${options.taskName} timeout after ${options.maxAttempts} attempts - server took too long to respond`,
-              } as CaptionResponse;
-            } else if (error.message.includes('fetch') || error.message.includes('ECONNREFUSED')) {
-              return {
-                status: 'error',
-                error: `Cannot connect to caption server after ${options.maxAttempts} attempts - network error`,
-              } as CaptionResponse;
-            }
-          }
-
-          return {
-            status: 'error',
-            error: `${options.taskName} failed after ${options.maxAttempts} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          } as CaptionResponse;
-        }
-        
-        console.log(`⏳ Waiting ${options.delay/1000}s before retry (server might be sleeping)...`);
-        await this.sleep(options.delay);
-      }
+  async analyzeVideo(youtubeUrl: string, prompt: string = "Please summarize the video in 3 sentences."): Promise<VideoAnalysisResponse> {
+    if (!this.genAI) {
+      return {
+        status: 'error',
+        error: 'Google API key not configured. Please set GOOGLE_API_KEY in environment variables.'
+      };
     }
 
-    return {
-      status: 'error',
-      error: 'All retry attempts failed',
-    } as CaptionResponse;
+    if (!this.isYouTubeUrl(youtubeUrl)) {
+      return {
+        status: 'error',
+        error: 'Invalid YouTube URL provided.'
+      };
+    }
+
+    console.log(`🎬 Analyzing YouTube video: ${youtubeUrl}`);
+    console.log(`🤖 Using Gemini AI with prompt: ${prompt}`);
+
+    try {
+      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      
+      const result = await model.generateContent([
+        prompt,
+        {
+          fileData: {
+            fileUri: youtubeUrl,
+            mimeType: "video/mp4",
+          },
+        },
+      ]);
+
+      const response = result.response;
+      const text = response.text();
+
+      console.log(`✅ Successfully analyzed video`);
+      
+      return {
+        status: 'success',
+        summary: text,
+        analysis: text
+      };
+    } catch (error) {
+      console.error(`❌ Error analyzing video:`, error);
+      
+      if (error instanceof Error) {
+        return {
+          status: 'error',
+          error: `Gemini API error: ${error.message}`
+        };
+      }
+
+      return {
+        status: 'error',
+        error: 'Unknown error occurred while analyzing video'
+      };
+    }
   }
 
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  async summarizeVideo(youtubeUrl: string): Promise<VideoAnalysisResponse> {
+    return this.analyzeVideo(youtubeUrl, "Please provide a detailed summary of this video, including the main topics discussed and key takeaways.");
+  }
+
+  async getTimestampedSummary(youtubeUrl: string): Promise<VideoAnalysisResponse> {
+    return this.analyzeVideo(youtubeUrl, "Please provide a timestamped summary of this video, breaking down the content by time segments and highlighting the main points discussed in each section.");
+  }
+
+  async answerQuestion(youtubeUrl: string, question: string): Promise<VideoAnalysisResponse> {
+    return this.analyzeVideo(youtubeUrl, `Based on the content of this video, please answer the following question: ${question}`);
   }
 
   isYouTubeUrl(url: string): boolean {

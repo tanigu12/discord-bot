@@ -27,6 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `DISCORD_TOKEN` - Bot token from Discord Developer Portal
    - `CLIENT_ID` - Discord application client ID
    - `OPENAI_API_KEY` - OpenAI API key for AI features
+   - `GOOGLE_API_KEY` - Google API key for Gemini AI video analysis features
    - `BLUESKY_USERNAME` - Bluesky handle (e.g., taka1415.bsky.social)
    - `BLUESKY_PASSWORD` - Bluesky app password (create in Bluesky settings)
    - `ASANA_PERSONAL_ACCESS_TOKEN` - Asana Personal Access Token for task management
