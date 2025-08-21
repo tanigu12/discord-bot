@@ -56,7 +56,7 @@ export class AnalysisService {
    */
   async collectContextIfNeeded(
     source: ChatInputCommandInteraction | Message,
-    messageLimit: number = 30
+    messageLimit: number
   ): Promise<AnalysisContext> {
     let needsContext = false;
     let channel = null;

@@ -25,14 +25,14 @@ export const searchCommand = {
       );
 
       // Collect context using shared service
-      const analysisContext = await analysisService.collectContextIfNeeded(interaction);
+      const analysisContext = await analysisService.collectContextIfNeeded(interaction, 5);
 
       // Process query using shared service
       const result = await analysisService.processQuery(
         {
           query,
           source: 'search-command',
-          outputFormat: 'file'
+          outputFormat: 'file',
         },
         analysisContext,
         interaction

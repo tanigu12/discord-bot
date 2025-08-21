@@ -30,7 +30,7 @@ export class LarryConsultHandler extends BaseAIService {
       );
 
       // Collect context using shared service (will collect context for consult-larry channel)
-      const analysisContext = await this.analysisService.collectContextIfNeeded(message);
+      const analysisContext = await this.analysisService.collectContextIfNeeded(message, 5);
 
       console.log('🔍 Using unified analysis service...');
 
@@ -52,6 +52,4 @@ export class LarryConsultHandler extends BaseAIService {
       await this.analysisService.handleError(message, error, message.content);
     }
   }
-
-
 }
