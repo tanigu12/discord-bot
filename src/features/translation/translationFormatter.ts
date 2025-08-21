@@ -1,7 +1,5 @@
-import { EmbedBuilder, User, Message, AttachmentBuilder } from 'discord.js';
-import { writeFileSync, unlinkSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
+import { EmbedBuilder, User, Message } from 'discord.js';
+import { ReplyStrategyService } from '../../services/replyStrategyService';
 import { TranslationProcessingResult } from './types';
 
 // Discord埋め込みメッセージのフォーマット機能
@@ -32,21 +30,35 @@ export class TranslationFormatter {
     // 完全なメッセージ内容を生成
     const completeMessage = this.generateCompleteMessage(result, author);
 
-    // メッセージファイルを作成
-    const filePath = await this.createMessageFile(completeMessage, author.username);
-    
-    try {
-      // ファイル添付を作成
-      const attachment = new AttachmentBuilder(filePath, { name: 'message.txt' });
-      
-      // メイン埋め込みとファイルを一緒に送信
-      await message.reply({ 
-        embeds: [embed],
-        files: [attachment]
-      });
-    } finally {
-      // 一時ファイルを削除
-      this.cleanupFile(filePath);
+    // 条件付きリプライ戦略を使用
+    const replyResult = await ReplyStrategyService.sendConditionalEmbedReply(
+      message,
+      embed,
+      completeMessage,
+      `larry-feedback-${author.username}.txt`
+    );
+
+    // ログに戦略を記録
+    console.log(`🎯 Larry diary feedback: ${ReplyStrategyService.getStrategyStatusMessage(replyResult)}`);
+
+    // 短いコンテンツの場合は、埋め込みに追加情報を含める
+    if (replyResult.strategy === 'message') {
+      // 短いコンテンツなので、重要な情報を埋め込みに追加
+      const summaryField = this.createContentSummary(result);
+      if (summaryField) {
+        embed.addFields(summaryField);
+        // 埋め込みを更新して再送信
+        try {
+          if ('send' in message.channel) {
+            await message.channel.send({ 
+              content: `📝 **Complete feedback content** (${replyResult.characterCount} characters):`,
+              embeds: [embed] 
+            });
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to send updated embed with content:', error);
+        }
+      }
     }
   }
 
@@ -59,6 +71,46 @@ export class TranslationFormatter {
       )
       .setColor(0xff0000)
       .setTimestamp();
+  }
+
+  // 短いコンテンツ用のサマリーフィールドを作成
+  private createContentSummary(result: TranslationProcessingResult) {
+    let summaryContent = '';
+    
+    // シナリオ別にサマリーを作成
+    switch (result.scenario) {
+      case 'japanese-only':
+        if (result.threeLevelTranslations) {
+          summaryContent = `🟢 **Beginner:** ${this.truncateText(result.threeLevelTranslations.beginner, 200)}\n` +
+                          `🟡 **Intermediate:** ${this.truncateText(result.threeLevelTranslations.intermediate, 200)}\n` +
+                          `🔴 **Upper:** ${this.truncateText(result.threeLevelTranslations.upper, 200)}`;
+        }
+        break;
+      
+      case 'japanese-with-try':
+        if (result.threeLevelTranslations && result.translationEvaluation) {
+          summaryContent = `🎯 **Evaluation:** ${this.truncateText(result.translationEvaluation.evaluation, 300)}\n` +
+                          `💡 **Key Point:** ${result.translationEvaluation.studyPoints[0] || 'N/A'}`;
+        }
+        break;
+      
+      case 'english-only':
+        if (result.japaneseTranslation && result.vocabularyExplanation) {
+          summaryContent = `🇯🇵 **Translation:** ${this.truncateText(result.japaneseTranslation, 200)}\n` +
+                          `📖 **Key Vocabulary:** ${this.truncateText(result.vocabularyExplanation, 200)}`;
+        }
+        break;
+    }
+
+    if (summaryContent) {
+      return {
+        name: '📋 Key Feedback Points',
+        value: summaryContent,
+        inline: false
+      };
+    }
+    
+    return null;
   }
 
   // 言語名を表示用に変換
@@ -274,22 +326,4 @@ export class TranslationFormatter {
     return lines;
   }
 
-  // メッセージファイルを作成
-  private async createMessageFile(content: string, username: string): Promise<string> {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `larry-feedback-${username}-${timestamp}.txt`;
-    const filePath = join(tmpdir(), filename);
-    
-    writeFileSync(filePath, content, 'utf8');
-    return filePath;
-  }
-
-  // 一時ファイルを削除
-  private cleanupFile(filePath: string): void {
-    try {
-      unlinkSync(filePath);
-    } catch (error) {
-      console.warn('Failed to cleanup temporary file:', filePath, error);
-    }
-  }
 }

@@ -1,5 +1,7 @@
-import { ChatInputCommandInteraction, Message, AttachmentBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, Message } from 'discord.js';
 import { ContextCollectorService } from '../services/contextCollectorService';
+import { AttachmentService } from '../services/attachmentService';
+import { ReplyStrategyService } from '../services/replyStrategyService';
 import { ResponseHandlerManager } from './search/response-handlers';
 import { TextAggregator } from '../utils/textAggregator';
 import {
@@ -195,10 +197,7 @@ export class AnalysisService {
     );
 
     // Create file attachment
-    const fileName = TextAggregator.generateFileName(query);
-    const attachment = new AttachmentBuilder(Buffer.from(aggregatedContent, 'utf8'), {
-      name: fileName,
-    });
+    const attachment = AttachmentService.createSearchResultAttachment(query, aggregatedContent);
 
     // Send response with file attachment
     await interaction.editReply({
@@ -222,9 +221,9 @@ export class AnalysisService {
   }
 
   /**
-   * Send analysis result as file attachment reply (for Larry consult with file output)
+   * Send analysis result using conditional strategy (message or file based on length)
    */
-  async sendAsFileAttachmentReply(
+  async sendAsConditionalReply(
     message: Message,
     result: AnalysisResult,
     query: string
@@ -241,11 +240,56 @@ export class AnalysisService {
       result.handlerInfo
     );
 
-    // Create file attachment
-    const fileName = TextAggregator.generateFileName(query);
-    const attachment = new AttachmentBuilder(Buffer.from(aggregatedContent, 'utf8'), {
-      name: fileName,
+    // Use conditional reply strategy
+    const replyResult = await ReplyStrategyService.sendConditionalReply(message, {
+      content: aggregatedContent,
+      filename: TextAggregator.generateFileName(query),
     });
+
+    // Log the strategy used
+    console.log(
+      `🎯 Larry consult reply: ${ReplyStrategyService.getStrategyStatusMessage(replyResult)}`
+    );
+
+    // If sent as direct message, add context info as follow-up
+    if (replyResult.strategy === 'message' && contextStatus) {
+      try {
+        if ('send' in message.channel) {
+          await message.channel.send(`ℹ️ ${contextStatus} | 🤖 Handler: ${result.handlerInfo}`);
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to send context follow-up:', error);
+      }
+    }
+  }
+
+  /**
+   * Send analysis result as file attachment reply (for Larry consult with file output)
+   * @deprecated Use sendAsConditionalReply instead for better UX
+   */
+  async sendAsFileAttachmentReply(
+    message: Message,
+    result: AnalysisResult,
+    query: string
+  ): Promise<void> {
+    console.log(
+      '⚠️ Using deprecated sendAsFileAttachmentReply, consider using sendAsConditionalReply'
+    );
+
+    const contextStatus = result.context
+      ? `📖 Context-aware analysis using ${result.context.messageCount} recent messages`
+      : '🔍 Standard analysis';
+
+    // Generate aggregated text content with line folding
+    const aggregatedContent = TextAggregator.aggregateSearchResults(
+      query,
+      result.response,
+      result.contextInfo,
+      result.handlerInfo
+    );
+
+    // Create file attachment
+    const attachment = AttachmentService.createSearchResultAttachment(query, aggregatedContent);
 
     // Send reply with file attachment
     await message.reply({

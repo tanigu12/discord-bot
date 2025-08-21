@@ -1,5 +1,6 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { ConversationReaderService } from '../../services/conversationReaderService';
+import { AttachmentService } from '../../services/attachmentService';
 import { BlogFormatterService } from '../format/blogFormatterService';
 
 const conversationReaderService = new ConversationReaderService();
@@ -58,10 +59,11 @@ export const formatCommand = {
 
       // Create file attachment with better naming
       const baseFileName = customTitle || threadData.threadName;
-      const fileName = `${baseFileName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.md`;
-      const attachment = new AttachmentBuilder(Buffer.from(formattedContent.markdown, 'utf8'), {
-        name: fileName
-      });
+      const attachment = AttachmentService.createFormattedAttachment(
+        formattedContent.markdown, 
+        baseFileName, 
+        'md'
+      );
 
       // Enhanced response with more details
       const channelInfo = interaction.channel.parent ? ` (from #${interaction.channel.parent.name})` : '';
