@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
 import { ContextCollectorService } from '../../services/contextCollectorService';
 import { ResponseHandlerManager } from '../search/response-handlers';
+import { TextAggregator } from '../../utils/textAggregator';
 
 const contextCollector = new ContextCollectorService();
 const responseHandlerManager = new ResponseHandlerManager();
@@ -36,8 +37,8 @@ export const searchCommand = {
         analysisContext: { context, contextInfo }
       });
       
-      // Send response
-      await searchCommand.sendSpecializedResponse(interaction, fullResponse, context, query);
+      // Create aggregated text file instead of sending direct response
+      await searchCommand.sendAggregatedResponse(interaction, fullResponse, context, query, handlerInfo);
 
       console.log('✅ Search analysis completed successfully');
 
@@ -64,17 +65,39 @@ export const searchCommand = {
   },
 
 
-  async sendSpecializedResponse(
+  async sendAggregatedResponse(
     interaction: ChatInputCommandInteraction, 
     responseContent: string, 
     context: any, 
-    query: string
+    query: string,
+    handlerInfo: string
   ): Promise<void> {
     const contextStatus = context ? `📖 Context-aware analysis using ${context.messageCount} recent messages` : '🔍 Standard analysis';
-    const directReplyHeader = `✅ **Analysis complete!** ${contextStatus}\n💬 Direct response for: \`${this.truncateText(query, 50)}\`\n\n`;
-    const fullDirectReply = directReplyHeader + responseContent;
+    const contextInfo = context ? `\n\n**Context:** Analyzed with ${context.messageCount} recent messages from ${context.participants.length} participants over ${context.timespan}` : '';
     
-    await this.sendLongMessageDirect(interaction, fullDirectReply);
+    // Generate aggregated text content with line folding
+    const aggregatedContent = TextAggregator.aggregateSearchResults(
+      query,
+      responseContent,
+      contextInfo,
+      handlerInfo
+    );
+    
+    // Create file attachment
+    const fileName = TextAggregator.generateFileName(query);
+    const attachment = new AttachmentBuilder(Buffer.from(aggregatedContent, 'utf8'), {
+      name: fileName
+    });
+    
+    // Send response with file attachment
+    await interaction.editReply({
+      content: `✅ **Analysis complete!** ${contextStatus}\n` +
+              `💬 Query: \`${this.truncateText(query, 50)}\`\n` +
+              `🤖 Handler: ${handlerInfo}\n` +
+              `📄 Results exported to attached file with line folding at 100 characters.\n\n` +
+              `📎 Download the .txt file above to view the complete analysis.`,
+      files: [attachment]
+    });
   },
 
   async handleError(interaction: ChatInputCommandInteraction, error: unknown, query: string): Promise<void> {
@@ -125,54 +148,6 @@ export const searchCommand = {
   },
 
 
-  async sendLongMessageDirect(interaction: ChatInputCommandInteraction, message: string): Promise<void> {
-    const maxLength = 2000;
-    
-    if (message.length <= maxLength) {
-      await interaction.editReply({ content: message });
-      return;
-    }
-
-    const chunks = this.splitMessageIntoChunks(message, maxLength);
-
-    if (chunks.length > 0) {
-      await interaction.editReply({ content: chunks[0] });
-      
-      for (let i = 1; i < chunks.length; i++) {
-        await interaction.followUp({ content: chunks[i] });
-        if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-    }
-  },
-
-  splitMessageIntoChunks(message: string, maxLength: number): string[] {
-    const chunks = [];
-    let currentChunk = '';
-    const lines = message.split('\n');
-
-    for (const line of lines) {
-      if (currentChunk.length + line.length + 1 > maxLength) {
-        if (currentChunk) {
-          chunks.push(currentChunk);
-          currentChunk = line;
-        } else {
-          // Line itself is too long, force split
-          chunks.push(line.substring(0, maxLength));
-          currentChunk = line.substring(maxLength);
-        }
-      } else {
-        currentChunk += (currentChunk ? '\n' : '') + line;
-      }
-    }
-
-    if (currentChunk) {
-      chunks.push(currentChunk);
-    }
-
-    return chunks;
-  },
 
   truncateText(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
