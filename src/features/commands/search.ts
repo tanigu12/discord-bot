@@ -11,70 +11,93 @@ export const searchCommand = {
     .setName('search')
     .setDescription('Analyze and explain specified content or URL with AI in a dedicated thread')
     .addStringOption(option =>
-      option.setName('query')
+      option
+        .setName('query')
         .setDescription('Text content, topic, or URL to analyze and explain')
         .setRequired(true)
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
     const query = interaction.options.getString('query', true);
-    
+
     await interaction.deferReply();
 
     try {
-      console.log(`🔍 Processing search request from ${interaction.user.tag}: "${query.substring(0, 50)}..."`);
+      console.log(
+        `🔍 Processing search request from ${interaction.user.tag}: "${query.substring(0, 50)}..."`
+      );
 
-      // Collect channel context
-      const { context, contextInfo } = await searchCommand.collectContext(interaction);
+      // Collect channel context only for replies or threads
+      const { context, contextInfo } = await searchCommand.collectContextIfNeeded(interaction);
 
       // Process content and generate specialized response using handler manager
       const handlerInfo = responseHandlerManager.getHandlerInfo(query);
       console.log(`🎯 Using specialized handler: ${handlerInfo}`);
-      
+
       const fullResponse = await responseHandlerManager.processAndRespond({
         interaction,
         query,
-        analysisContext: { context, contextInfo }
+        analysisContext: { context, contextInfo },
       });
-      
+
       // Create aggregated text file instead of sending direct response
-      await searchCommand.sendAggregatedResponse(interaction, fullResponse, context, query, handlerInfo);
+      await searchCommand.sendAggregatedResponse(
+        interaction,
+        fullResponse,
+        context,
+        query,
+        handlerInfo
+      );
 
       console.log('✅ Search analysis completed successfully');
-
     } catch (error) {
       await searchCommand.handleError(interaction, error, query);
     }
   },
 
+  async collectContextIfNeeded(
+    interaction: ChatInputCommandInteraction
+  ): Promise<{ context: any; contextInfo: string }> {
+    // Check if context collection is needed (only for threads)
+    // For slash commands, we primarily care about threads since replies aren't directly detectable
+    const needsContext = interaction.channel?.isThread();
 
-  async collectContext(interaction: ChatInputCommandInteraction): Promise<{context: any, contextInfo: string}> {
-    console.log('📖 Collecting conversation context...');
+    if (!needsContext) {
+      console.log('📝 Skipping context collection - not in thread');
+      return { context: null, contextInfo: '' };
+    }
+
+    console.log('📖 Collecting conversation context for thread...');
     let context;
     let contextInfo = '';
-    
+
     try {
-      context = await contextCollector.collectChannelContext(interaction, 30);
+      context = await contextCollector.collectChannelContext(interaction, 5);
       contextInfo = `\n\n**Context:** Analyzed with ${context.messageCount} recent messages from ${context.participants.length} participants over ${context.timespan}`;
-      console.log(`✅ Context collected: ${context.messageCount} messages from ${context.participants.join(', ')}`);
+      console.log(
+        `✅ Context collected: ${context.messageCount} messages from ${context.participants.join(', ')}`
+      );
     } catch (error) {
       console.warn('⚠️ Failed to collect context, falling back to regular analysis:', error);
     }
-    
+
     return { context, contextInfo };
   },
 
-
   async sendAggregatedResponse(
-    interaction: ChatInputCommandInteraction, 
-    responseContent: string, 
-    context: any, 
+    interaction: ChatInputCommandInteraction,
+    responseContent: string,
+    context: any,
     query: string,
     handlerInfo: string
   ): Promise<void> {
-    const contextStatus = context ? `📖 Context-aware analysis using ${context.messageCount} recent messages` : '🔍 Standard analysis';
-    const contextInfo = context ? `\n\n**Context:** Analyzed with ${context.messageCount} recent messages from ${context.participants.length} participants over ${context.timespan}` : '';
-    
+    const contextStatus = context
+      ? `📖 Context-aware analysis using ${context.messageCount} recent messages`
+      : '🔍 Standard analysis';
+    const contextInfo = context
+      ? `\n\n**Context:** Analyzed with ${context.messageCount} recent messages from ${context.participants.length} participants over ${context.timespan}`
+      : '';
+
     // Generate aggregated text content with line folding
     const aggregatedContent = TextAggregator.aggregateSearchResults(
       query,
@@ -82,75 +105,79 @@ export const searchCommand = {
       contextInfo,
       handlerInfo
     );
-    
+
     // Create file attachment
     const fileName = TextAggregator.generateFileName(query);
     const attachment = new AttachmentBuilder(Buffer.from(aggregatedContent, 'utf8'), {
-      name: fileName
+      name: fileName,
     });
-    
+
     // Send response with file attachment
     await interaction.editReply({
-      content: `✅ **Analysis complete!** ${contextStatus}\n` +
-              `💬 Query: \`${this.truncateText(query, 50)}\`\n` +
-              `🤖 Handler: ${handlerInfo}\n` +
-              `📄 Results exported to attached file with line folding at 100 characters.\n\n` +
-              `📎 Download the .txt file above to view the complete analysis.`,
-      files: [attachment]
+      content:
+        `✅ **Analysis complete!** ${contextStatus}\n` +
+        `💬 Query: \`${this.truncateText(query, 50)}\`\n` +
+        `🤖 Handler: ${handlerInfo}\n` +
+        `📄 Results exported to attached file with line folding at 100 characters.\n\n` +
+        `📎 Download the .txt file above to view the complete analysis.`,
+      files: [attachment],
     });
   },
 
-  async handleError(interaction: ChatInputCommandInteraction, error: unknown, query: string): Promise<void> {
+  async handleError(
+    interaction: ChatInputCommandInteraction,
+    error: unknown,
+    query: string
+  ): Promise<void> {
     console.error('❌ Error in search command:', error);
-    
+
     const errorMessage = '❌ **Search Error**\n\n';
-    const errorDetails = error instanceof Error 
-      ? this.categorizeError(error)
-      : '• Unknown error occurred\n• Please try again with different content';
-    
+    const errorDetails =
+      error instanceof Error
+        ? this.categorizeError(error)
+        : '• Unknown error occurred\n• Please try again with different content';
+
     if (error instanceof Error) {
       console.error('Detailed error info:', {
         message: error.message,
         stack: error.stack,
-        query: query.substring(0, 100)
+        query: query.substring(0, 100),
       });
     }
-    
+
     await interaction.editReply({
-      content: errorMessage + errorDetails
+      content: errorMessage + errorDetails,
     });
   },
 
   categorizeError(error: Error): string {
     const message = error.message;
-    
+
     if (message.includes('timeout') || message.includes('ECONNABORTED')) {
       return '• **Timeout Error**: The website took too long to respond\n• Try again later or use a different URL';
     }
-    
+
     if (message.includes('403') || message.includes('Access denied')) {
       return '• **Access Denied**: The website blocks automated requests\n• This website cannot be analyzed automatically';
     }
-    
+
     if (message.includes('404') || message.includes('not found')) {
       return '• **Page Not Found**: The URL may be incorrect\n• Please check the URL and try again';
     }
-    
+
     if (message.includes('OPENAI_API_KEY')) {
       return '• **Configuration Error**: AI service is not properly configured\n• Please contact the bot administrator';
     }
-    
+
     if (message.includes('thread')) {
       return '• **Discord Error**: Cannot create thread in this channel\n• Make sure the bot has proper permissions';
     }
-    
+
     return `• **Error Details**: ${message}\n• Please try again or contact support if the issue persists`;
   },
-
-
 
   truncateText(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength - 3) + '...';
-  }
+  },
 };

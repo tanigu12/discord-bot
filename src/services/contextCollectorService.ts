@@ -28,7 +28,7 @@ export interface ChannelContext {
 export class ContextCollectorService {
   async collectChannelContext(
     interaction: ChatInputCommandInteraction,
-    maxMessages: number = 50
+    maxMessages: number
   ): Promise<ChannelContext> {
     try {
       const channel = interaction.channel;
