@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@atproto/api": "^0.16.2",
+    "@google-cloud/translate": "^9.2.0",
     "@google/generative-ai": "^0.24.1",
     "@octokit/rest": "^22.0.0",
     "asana": "^1.0.4",

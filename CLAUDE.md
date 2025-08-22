@@ -263,3 +263,343 @@ Brief description of the feature/change
 3. **Implement**: Make code changes following the plan
 4. **Test**: Run `npm run check:all` after implementation
 5. **Update plan**: Mark completed or note any deviations
+
+## Code Organization Rules
+
+### Package by Feature Architecture
+
+**IMPORTANT: Follow "package by feature" pattern for code organization.**
+
+#### Principles:
+1. **Group by business feature, not technical layer**
+   - ✅ `src/features/translation/` - All translation-related code
+   - ✅ `src/features/memory/` - All memory/storage functionality  
+   - ❌ `src/services/` - Generic technical services only
+
+2. **Keep feature code self-contained**
+   - Service classes belong within their feature package
+   - Feature-specific utilities stay in the feature folder
+   - Tests are co-located with the code they test
+
+3. **Simple, focused feature modules**
+   - Each feature should have a clear single responsibility
+   - Avoid cross-feature dependencies where possible
+   - Use dependency injection for shared services
+
+#### Example Structure:
+```
+src/features/translation/
+├── translationHandler.ts      # Main feature coordinator
+├── translationService.ts      # Business logic
+├── googleTranslationService.ts # External API integration  
+├── translationFormatter.ts    # UI formatting
+├── types.ts                   # Feature-specific types
+└── __tests__/                 # Feature tests
+    ├── translationService.test.ts
+    └── googleTranslation.test.ts
+```
+
+#### When to use `src/services/`:
+- ✅ **Shared infrastructure**: Database connections, HTTP clients
+- ✅ **Cross-cutting concerns**: Logging, authentication, caching  
+- ✅ **Framework utilities**: Discord.js helpers, base classes
+- ❌ **Feature-specific logic**: Translation, memory, blog functionality
+
+### Code Style Rules
+
+#### Avoid Nested Conditions
+**IMPORTANT: Prefer early returns and guard clauses over nested if statements.**
+
+❌ **Bad - Nested conditions:**
+```typescript
+if (condition1) {
+  if (condition2) {
+    if (condition3) {
+      // do work
+    }
+  }
+}
+```
+
+✅ **Good - Early returns:**
+```typescript
+if (!condition1) return;
+if (!condition2) return;  
+if (!condition3) return;
+
+// do work
+```
+
+✅ **Good - Extract methods:**
+```typescript
+private async handleTranslation(scenario: string, text: string) {
+  if (scenario === 'japanese-only') {
+    return this.translateToEnglish(text);
+  }
+  if (scenario === 'english-only') {
+    return this.translateToJapanese(text);
+  }
+  return null;
+}
+```
+
+## Programming Framework
+
+### Core Programming Principles
+
+**IMPORTANT: Follow these fundamental programming principles for maintainable, readable code.**
+
+#### 1. Single Responsibility Principle (SRP)
+
+**Each function should have ONE clear purpose and do ONE thing well.**
+
+❌ **Bad - Multiple responsibilities:**
+```typescript
+async function processUserMessage(message: string, userId: string) {
+  // Validates input
+  if (!message || !userId) throw new Error('Invalid input');
+  
+  // Translates text
+  const translation = await translateText(message);
+  
+  // Saves to database
+  await saveToDatabase(userId, translation);
+  
+  // Sends notification
+  await sendNotification(userId, 'Translation complete');
+  
+  // Updates analytics
+  await updateAnalytics('translation', userId);
+  
+  return translation;
+}
+```
+
+✅ **Good - Single responsibility functions:**
+```typescript
+// Input validation
+function validateMessageInput(message: string, userId: string): void {
+  if (!message || !userId) throw new Error('Invalid input');
+}
+
+// Translation logic
+async function translateUserMessage(message: string): Promise<string> {
+  return await translateText(message);
+}
+
+// Data persistence
+async function saveTranslation(userId: string, translation: string): Promise<void> {
+  await saveToDatabase(userId, translation);
+}
+
+// Notification handling
+async function notifyTranslationComplete(userId: string): Promise<void> {
+  await sendNotification(userId, 'Translation complete');
+}
+
+// Analytics tracking
+async function trackTranslationEvent(userId: string): Promise<void> {
+  await updateAnalytics('translation', userId);
+}
+
+// Orchestration function
+async function processUserMessage(message: string, userId: string): Promise<string> {
+  validateMessageInput(message, userId);
+  
+  const translation = await translateUserMessage(message);
+  await saveTranslation(userId, translation);
+  await notifyTranslationComplete(userId);
+  await trackTranslationEvent(userId);
+  
+  return translation;
+}
+```
+
+#### 2. Function Design Guidelines
+
+##### Function Size and Complexity
+- **Max 20 lines per function** (excluding blank lines and comments)
+- **Max 3 parameters** - Use objects for more complex data
+- **One level of abstraction** per function
+
+❌ **Bad - Too complex:**
+```typescript
+function processTranslationRequest(text: string, sourceLanguage: string, 
+                                 targetLanguage: string, userId: string, 
+                                 isUrgent: boolean, callback?: Function) {
+  if (!text) return null;
+  if (!sourceLanguage || !targetLanguage) return null;
+  if (!userId) return null;
+  
+  let result;
+  if (sourceLanguage === 'ja' && targetLanguage === 'en') {
+    result = translateJapaneseToEnglish(text);
+    if (isUrgent) {
+      logUrgentTranslation(userId, text, result);
+      if (callback) callback('urgent-complete');
+    }
+  } else if (sourceLanguage === 'en' && targetLanguage === 'ja') {
+    result = translateEnglishToJapanese(text);
+    if (isUrgent) {
+      logUrgentTranslation(userId, text, result);
+      if (callback) callback('urgent-complete');
+    }
+  }
+  
+  updateUserStats(userId);
+  return result;
+}
+```
+
+✅ **Good - Simple, focused functions:**
+```typescript
+interface TranslationRequest {
+  text: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  userId: string;
+  isUrgent?: boolean;
+  onComplete?: (status: string) => void;
+}
+
+function validateTranslationRequest(request: TranslationRequest): void {
+  if (!request.text) throw new Error('Text is required');
+  if (!request.sourceLanguage) throw new Error('Source language is required');
+  if (!request.targetLanguage) throw new Error('Target language is required');
+  if (!request.userId) throw new Error('User ID is required');
+}
+
+function getTranslationFunction(source: string, target: string) {
+  if (source === 'ja' && target === 'en') return translateJapaneseToEnglish;
+  if (source === 'en' && target === 'ja') return translateEnglishToJapanese;
+  throw new Error(`Unsupported language pair: ${source} -> ${target}`);
+}
+
+async function executeTranslation(request: TranslationRequest): Promise<string> {
+  const translateFn = getTranslationFunction(request.sourceLanguage, request.targetLanguage);
+  return await translateFn(request.text);
+}
+
+function handleUrgentTranslation(request: TranslationRequest, result: string): void {
+  if (!request.isUrgent) return;
+  
+  logUrgentTranslation(request.userId, request.text, result);
+  request.onComplete?.('urgent-complete');
+}
+
+async function processTranslationRequest(request: TranslationRequest): Promise<string> {
+  validateTranslationRequest(request);
+  
+  const result = await executeTranslation(request);
+  handleUrgentTranslation(request, result);
+  updateUserStats(request.userId);
+  
+  return result;
+}
+```
+
+#### 3. Naming Conventions
+
+##### Function Names Should Be Verbs
+- ✅ `translateText()`, `validateInput()`, `sendNotification()`
+- ❌ `translation()`, `validation()`, `notification()`
+
+##### Boolean Functions Should Ask Questions
+- ✅ `isValidEmail()`, `hasPermission()`, `shouldRetry()`
+- ❌ `validEmail()`, `permission()`, `retry()`
+
+##### Use Descriptive Names
+- ✅ `calculateMonthlySubscriptionTotal()`
+- ❌ `calc()`, `process()`, `handle()`
+
+#### 4. Error Handling Standards
+
+##### Fail Fast Principle
+```typescript
+function processPayment(amount: number, currency: string, userId: string): Promise<PaymentResult> {
+  // Validate early - fail fast
+  if (amount <= 0) throw new Error('Amount must be positive');
+  if (!currency) throw new Error('Currency is required');
+  if (!userId) throw new Error('User ID is required');
+  
+  // Process only after validation
+  return executePayment({ amount, currency, userId });
+}
+```
+
+##### Use Specific Error Types
+```typescript
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+class TranslationError extends Error {
+  constructor(message: string, public readonly sourceLanguage: string) {
+    super(message);
+    this.name = 'TranslationError';
+  }
+}
+```
+
+#### 5. Code Organization Within Functions
+
+##### Use Guard Clauses
+```typescript
+function processUser(user: User): ProcessedUser {
+  // Guard clauses at the top
+  if (!user) return null;
+  if (!user.email) return null;
+  if (!user.isActive) return null;
+  
+  // Main logic after guards
+  const processedUser = transformUser(user);
+  return enhanceUserData(processedUser);
+}
+```
+
+##### Separate Setup, Processing, and Cleanup
+```typescript
+async function processTranslationBatch(requests: TranslationRequest[]): Promise<TranslationResult[]> {
+  // Setup
+  const validRequests = requests.filter(isValidRequest);
+  const batchId = generateBatchId();
+  
+  // Processing
+  const results = await Promise.all(
+    validRequests.map(request => processTranslationRequest(request))
+  );
+  
+  // Cleanup
+  await logBatchCompletion(batchId, results.length);
+  return results;
+}
+```
+
+#### 6. Pure Functions When Possible
+
+**Prefer pure functions that don't modify external state and always return the same output for the same input.**
+
+✅ **Good - Pure function:**
+```typescript
+function calculateTranslationCost(wordCount: number, sourceLanguage: string): number {
+  const baseRate = getLanguageRate(sourceLanguage);
+  const wordCost = wordCount * baseRate;
+  return Math.round(wordCost * 100) / 100; // Round to 2 decimal places
+}
+```
+
+❌ **Bad - Impure function with side effects:**
+```typescript
+let totalProcessed = 0; // Global state
+
+function calculateTranslationCost(wordCount: number, sourceLanguage: string): number {
+  totalProcessed += wordCount; // Side effect - modifying global state
+  console.log(`Processed ${totalProcessed} words so far`); // Side effect - logging
+  
+  const baseRate = getLanguageRate(sourceLanguage);
+  return wordCount * baseRate;
+}
+```

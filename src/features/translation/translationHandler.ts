@@ -1,6 +1,7 @@
 import { Message } from 'discord.js';
 import { TranslationService } from './translationService';
 import { TranslationFormatter } from './translationFormatter';
+import { googleTranslationService } from './googleTranslationService';
 
 // メインの翻訳ハンドラークラス - Discord メッセージの処理を担当
 export class TranslationHandler {
@@ -21,6 +22,9 @@ export class TranslationHandler {
       }
 
       console.log(`🌐 Processing translation message from ${message.author.tag}`);
+
+      // Google Translation を試行
+      await this.handleGoogleTranslation(message);
 
       // Larry による翻訳処理を実行
       const result = await this.translationService.processTranslationEntry(message.content);
@@ -46,6 +50,48 @@ export class TranslationHandler {
         console.error('Failed to send error message:', replyError);
       }
     }
+  }
+
+  // Google Translation の処理
+  private async handleGoogleTranslation(message: Message): Promise<void> {
+    const parsedEntry = this.translationService.parseTranslationEntry(message.content);
+    
+    if (!parsedEntry.targetSentence) {
+      return;
+    }
+
+    console.log(`🔍 Determining language scenario for: "${parsedEntry.targetSentence}"`);
+    
+    const scenario = this.translationService.determineProcessingScenario(parsedEntry);
+    console.log(`📝 Processing scenario: ${scenario}`);
+    
+    try {
+      const translation = await this.getGoogleTranslation(scenario, parsedEntry.targetSentence);
+      if (translation) {
+        await message.reply(translation);
+      }
+    } catch (translationError) {
+      console.error('❌ Google Translation failed:', translationError);
+    }
+  }
+
+  // 言語シナリオに基づく翻訳処理
+  private async getGoogleTranslation(scenario: string, text: string): Promise<string | null> {
+    if (scenario === 'japanese-only' || scenario === 'japanese-with-try') {
+      console.log(`🇯🇵 Translating Japanese to English...`);
+      const translation = await googleTranslationService.translateToEnglish(text);
+      console.log(`✨ Google Translation (JA→EN): "${translation}"`);
+      return `🌐 **Google Translation (JP→EN):**\n> ${translation}`;
+    }
+    
+    if (scenario === 'english-only') {
+      console.log(`🇺🇸 Translating English to Japanese...`);
+      const translation = await googleTranslationService.translateToJapanese(text);
+      console.log(`✨ Google Translation (EN→JA): "${translation}"`);
+      return `🌐 **Google Translation (EN→JP):**\n> ${translation}`;
+    }
+    
+    return null;
   }
 
   // チャンネルが翻訳チャンネルかどうかを判定
