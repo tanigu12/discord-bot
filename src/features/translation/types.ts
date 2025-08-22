@@ -4,27 +4,22 @@
 export type DetectedLanguage = 'japanese' | 'english' | 'mixing';
 
 // 翻訳バージョンの三パターン（レベル別）
-export interface ThreeTranslationVersions {
+interface ThreeTranslationVersions {
   casual: string;
   formal: string;
   advanced: string;
 }
 
 // 三段階レベル翻訳（日本語→英語用）
-export interface ThreeLevelTranslations {
+interface ThreeLevelTranslations {
   beginner: string;
   intermediate: string;
   upper: string;
 }
 
-// [try]翻訳フィードバック
-export interface TryTranslationFeedback {
-  feedback: string;
-  threeVersions: ThreeTranslationVersions;
-}
 
 // 三段階翻訳評価とフィードバック
-export interface TranslationEvaluationFeedback {
+interface TranslationEvaluationFeedback {
   evaluation: string;
   studyPoints: string[];
   improvements: string;
@@ -38,7 +33,7 @@ export interface ParsedTranslationEntry {
 }
 
 // 質問回答結果
-export interface QuestionAnswer {
+interface QuestionAnswer {
   question: string;
   answer: string;
 }

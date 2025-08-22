@@ -79,7 +79,7 @@ const TECHNICAL_QUESTIONS = {
   ],
 };
 
-export type QuestionCategory = keyof typeof TECHNICAL_QUESTIONS;
+type QuestionCategory = keyof typeof TECHNICAL_QUESTIONS;
 
 export interface TechnicalQuestion {
   question: string;

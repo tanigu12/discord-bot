@@ -9,12 +9,6 @@ export const OPENAI_MODELS = {
   GPT_4O_MINI: 'gpt-4o-mini',
 } as const;
 
-// モデル設定のデフォルト値
-export const DEFAULT_MODEL_CONFIG = {
-  model: OPENAI_MODELS.MAIN,
-  maxCompletionTokens: 3000,
-} as const;
-
 // 機能別のモデル設定
 export const MODEL_CONFIGS = {
   // 日記処理用
@@ -47,10 +41,3 @@ export const MODEL_CONFIGS = {
     maxCompletionTokens: 1500,
   },
 } as const;
-
-// 型定義
-export type OpenAIModel = (typeof OPENAI_MODELS)[keyof typeof OPENAI_MODELS];
-export type ModelConfigKey = keyof typeof MODEL_CONFIGS;
-
-// ヘルパー関数
-export const getModelConfig = (configKey: ModelConfigKey) => MODEL_CONFIGS[configKey];

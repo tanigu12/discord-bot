@@ -1,10 +1,5 @@
 import { Octokit } from '@octokit/rest';
 
-export interface VocabularyMetadata {
-  filename: string;
-  content: string;
-  targetSentence: string;
-}
 
 export class ObsidianGitHubService {
   private octokit: Octokit;

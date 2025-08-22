@@ -1,44 +1,16 @@
 import { personalityConfig, type PersonalityConfig } from './personality';
-import { knowledgeBase, type KnowledgeBase } from './knowledge';
+import { knowledgeBase } from './knowledge';
 
 // AIパートナー統合クラス
 export class AIPartnerIntegration {
   private personality: PersonalityConfig;
-  private knowledge: KnowledgeBase;
+  private knowledge: typeof knowledgeBase;
 
   constructor() {
     this.personality = personalityConfig;
     this.knowledge = knowledgeBase;
   }
 
-  // 一般的なチャット用のシステムプロンプト生成
-  generateChatPrompt(topic: string = 'general'): string {
-    const userProfile = this.knowledge.user_profile;
-    const encouragementPhrase = this.getRandomEncouragementPhrase();
-
-    return `You are ${this.personality.name}, ${this.personality.description}. You're having a conversation with ${userProfile.name}, a ${userProfile.background.profession}.
-
-**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**
-- This is for English learning purposes
-- Never respond in Japanese, even if the user writes in Japanese
-- Always use English to help improve the user's English skills
-- If user asks in Japanese, respond in English and explain in English
-
-**Your Personality:**
-- Communication Style: ${this.personality.traits.communication_style.tone}
-- Language Focus: ${this.personality.traits.communication_style.language}
-- Expertise: ${this.personality.traits.expertise_areas.slice(0, 3).join(', ')}
-
-**User Context:**
-- Profession: ${userProfile.background.profession}
-- Interests: ${userProfile.background.interests.join(', ')}
-
-**Current Topic:** ${topic}
-
-${encouragementPhrase}
-
-Focus on providing helpful, informative responses. Keep conversations educational but conversational, drawing from your Canadian perspective and global awareness. Remember: RESPOND ONLY IN ENGLISH for learning purposes.`;
-  }
 
   // テキスト分析用のシステムプロンプト生成
   generateTextAnalysisPrompt(): string {
@@ -302,7 +274,7 @@ Respond with valid JSON containing: translation, enhancedEnglish, grammarFeedbac
   }
 
   // 知識ベースを取得
-  getKnowledge(): KnowledgeBase {
+  getKnowledge(): typeof knowledgeBase {
     return this.knowledge;
   }
 }

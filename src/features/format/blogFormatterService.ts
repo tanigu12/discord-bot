@@ -2,7 +2,7 @@ import { BaseAIService } from '../../services/baseAIService';
 import { OPENAI_MODELS } from '../../constants/ai';
 import { ThreadData } from '../../services/conversationReaderService';
 
-export interface BlogFormatResult {
+interface BlogFormatResult {
   markdown: string;
   title: string;
   sections: number;

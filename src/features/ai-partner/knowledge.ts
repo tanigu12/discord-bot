@@ -1,5 +1,5 @@
 // AI Partner Knowledge Base - User Profile and Context
-export interface UserProfile {
+interface UserProfile {
   name: string;
   background: {
     nationality: string;
@@ -12,7 +12,7 @@ export interface UserProfile {
   };
 }
 
-export interface ResponseTemplates {
+interface ResponseTemplates {
   general_response: {
     format: string;
     focus: string;
@@ -38,7 +38,7 @@ export interface ResponseTemplates {
   };
 }
 
-export interface KnowledgeBase {
+interface KnowledgeBase {
   user_profile: UserProfile;
   response_templates: ResponseTemplates;
   encouragement_patterns: string[];

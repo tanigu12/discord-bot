@@ -16,7 +16,7 @@ export interface RandomContentResult {
   asanaTasks: any[];
 }
 
-export interface ContentAggregationOptions {
+interface ContentAggregationOptions {
   technicalQuestionCount?: number;
   englishPhraseCount?: number;
   maxAsanaTasks?: number;

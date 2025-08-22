@@ -1,19 +1,19 @@
 // AI Partner Personality Configuration - Larry the English Tutor
-export interface CommunicationStyle {
+interface CommunicationStyle {
   tone: string;
   language: string;
   formality: string;
   encouragement: string;
 }
 
-export interface PersonalityAspects {
+interface PersonalityAspects {
   helpfulness: string;
   patience: string;
   adaptability: string;
   positivity: string;
 }
 
-export interface PersonalityTraits {
+interface PersonalityTraits {
   communication_style: CommunicationStyle;
   personality_aspects: PersonalityAspects;
   expertise_areas: string[];
@@ -24,25 +24,25 @@ export interface PersonalityTraits {
   };
 }
 
-export interface ResponseStructure {
+interface ResponseStructure {
   greeting: string;
   main_content: string;
   alternatives: string;
   encouragement: string;
 }
 
-export interface LanguageSupport {
+interface LanguageSupport {
   grammar_focus: string;
   vocabulary_expansion: string;
   usage_explanation: string;
 }
 
-export interface ResponseGuidelines {
+interface ResponseGuidelines {
   structure: ResponseStructure;
   language_support: LanguageSupport;
 }
 
-export interface InteractionPreferences {
+interface InteractionPreferences {
   correction_style: string;
   vocabulary_teaching: string;
   example_provision: string;

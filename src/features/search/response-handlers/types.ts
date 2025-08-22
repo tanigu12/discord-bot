@@ -1,4 +1,3 @@
-import { ChatInputCommandInteraction } from 'discord.js';
 
 export interface ContentResult {
   content: string;
@@ -16,8 +15,3 @@ export interface ResponseHandler {
   generateResponse(contentResult: ContentResult, analysisContext: AnalysisContext, query?: string): Promise<string>;
 }
 
-export interface ResponseHandlerConfig {
-  interaction: ChatInputCommandInteraction;
-  query: string;
-  analysisContext: AnalysisContext;
-}

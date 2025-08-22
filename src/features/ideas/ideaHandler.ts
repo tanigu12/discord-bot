@@ -8,7 +8,7 @@ import {
 } from 'discord.js';
 import { BaseAIService } from '../../services/baseAIService';
 
-export interface IdeaMetadata {
+interface IdeaMetadata {
   status: 'new' | 'discussing' | 'approved' | 'implemented' | 'archived';
   category?: string;
   priority?: 'low' | 'medium' | 'high';

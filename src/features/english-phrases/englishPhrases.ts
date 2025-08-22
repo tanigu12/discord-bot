@@ -79,7 +79,7 @@ const ENGLISH_PHRASES = {
   ],
 };
 
-export type PhraseCategory = keyof typeof ENGLISH_PHRASES;
+type PhraseCategory = keyof typeof ENGLISH_PHRASES;
 
 export interface EnglishPhrase {
   phrase: string;
