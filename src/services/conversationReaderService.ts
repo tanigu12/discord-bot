@@ -1,11 +1,4 @@
-import {
-  ThreadChannel,
-  ChatInputCommandInteraction,
-  Message,
-  Attachment,
-  User,
-  MessageReaction,
-} from 'discord.js';
+import { ThreadChannel, Message, Attachment, User, MessageReaction } from 'discord.js';
 
 interface ThreadMessage {
   id: string;
@@ -111,56 +104,10 @@ export class ConversationReaderService {
   }
 
   // Helper method to check if channel is idea-related (kept for potential future use)
-  isIdeaChannel(interaction: ChatInputCommandInteraction): boolean {
-    // Check if we're in a thread
-    if (!interaction.channel?.isThread()) {
-      return false;
-    }
-
-    // Check if the parent channel is an "idea" channel
-    const parentChannel = interaction.channel.parent;
-    if (!parentChannel) {
-      return false;
-    }
-
-    const channelName = parentChannel.name.toLowerCase();
-    return channelName.includes('idea');
-  }
 
   // Helper method to get thread context information
-  getThreadContext(interaction: ChatInputCommandInteraction): {
-    isThread: boolean;
-    threadName: string;
-    parentChannelName: string;
-    isIdeaThread: boolean;
-  } {
-    if (!interaction.channel?.isThread()) {
-      return {
-        isThread: false,
-        threadName: '',
-        parentChannelName: '',
-        isIdeaThread: false,
-      };
-    }
-
-    return {
-      isThread: true,
-      threadName: interaction.channel.name || 'Unnamed Thread',
-      parentChannelName: interaction.channel.parent?.name || 'Unknown Channel',
-      isIdeaThread: this.isIdeaChannel(interaction),
-    };
-  }
 
   // Helper method to clean and format message content
-  cleanMessageContent(content: string): string {
-    // Remove Discord formatting that doesn't translate well to markdown
-    return content
-      .replace(/<@!?(\d+)>/g, '@user') // Replace user mentions
-      .replace(/<#(\d+)>/g, '#channel') // Replace channel mentions
-      .replace(/<@&(\d+)>/g, '@role') // Replace role mentions
-      .replace(/https?:\/\/[^\s]+/g, '[link]') // Simplify URLs for readability
-      .trim();
-  }
 
   // Filter messages to only include reply-related messages to reduce noise
   private filterReplyRelatedMessages(messages: Message[]): Message[] {

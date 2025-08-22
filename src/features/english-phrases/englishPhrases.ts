@@ -110,72 +110,11 @@ export class EnglishPhraseService {
   }
 
   /**
-   * Get random phrases from specific categories
-   */
-  getRandomPhrasesFromCategories(categories: PhraseCategory[], count: number = 3): EnglishPhrase[] {
-    const categoryPhrases = categories.flatMap(category =>
-      ENGLISH_PHRASES[category].map(phraseString => this.parsePhrase(phraseString, category))
-    );
-
-    const shuffled = [...categoryPhrases].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  }
-
-  /**
-   * Get random phrases from a specific category
-   */
-  getRandomPhrasesFromCategory(category: PhraseCategory, count: number = 3): EnglishPhrase[] {
-    const phrases = ENGLISH_PHRASES[category].map(phraseString =>
-      this.parsePhrase(phraseString, category)
-    );
-
-    const shuffled = [...phrases].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  }
-
-  /**
    * Get all phrases with their categories
    */
   getAllPhrases(): EnglishPhrase[] {
     return Object.entries(ENGLISH_PHRASES).flatMap(([category, phrases]) =>
       phrases.map(phraseString => this.parsePhrase(phraseString, category as PhraseCategory))
     );
-  }
-
-  /**
-   * Get available categories
-   */
-  getCategories(): PhraseCategory[] {
-    return Object.keys(ENGLISH_PHRASES) as PhraseCategory[];
-  }
-
-  /**
-   * Get category display name
-   */
-  getCategoryDisplayName(category: PhraseCategory): string {
-    const displayNames: Record<PhraseCategory, string> = {
-      business: '💼 Business/Professional',
-      daily: '🗣️ Daily Conversation',
-      emotions: '❤️ Expressing Feelings',
-      learning: '📚 Academic/Learning',
-      technology: '💻 Technology & Modern Life',
-      motivation: '🌟 Encouragement & Motivation',
-    };
-
-    return displayNames[category];
-  }
-
-  /**
-   * Format phrase for display
-   */
-  formatPhrase(phrase: EnglishPhrase): string {
-    return `${phrase.phrase} - ${phrase.meaning}`;
-  }
-
-  /**
-   * Format multiple phrases for display
-   */
-  formatPhrases(phrases: EnglishPhrase[]): string[] {
-    return phrases.map(phrase => this.formatPhrase(phrase));
   }
 }

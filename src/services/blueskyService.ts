@@ -168,10 +168,6 @@ export class BlueskyService {
     }
   }
 
-  isLoggedIn(): boolean {
-    return this.isAuthenticated;
-  }
-
   // Helper method to format Discord message content for Bluesky
   formatForBluesky(discordMessage: string): string {
     let formatted = discordMessage;
@@ -196,19 +192,4 @@ export class BlueskyService {
   }
 
   // Helper method to extract text from rich Discord content
-  static extractTextContent(content: string): string {
-    // Remove embeds, mentions, and other Discord-specific content
-    let text = content;
-
-    // Remove user mentions
-    text = text.replace(/<@!?\d+>/g, '');
-    // Remove channel mentions
-    text = text.replace(/<#\d+>/g, '');
-    // Remove role mentions
-    text = text.replace(/<@&\d+>/g, '');
-    // Remove custom emojis
-    text = text.replace(/<a?:\w+:\d+>/g, '');
-
-    return text.trim();
-  }
 }

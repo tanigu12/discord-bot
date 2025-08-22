@@ -11,10 +11,7 @@ import { GitHubService, BlogPostMetadata } from '../../services/githubService';
 
 export class BlogHandler {
   private githubService: GitHubService | null = null;
-  
-  // Blog creation emojis
-  private readonly BLOG_EMOJIS = ['📝', '📄', '✍️', '📰'];
-  
+
   constructor() {
     // Initialize GitHub service only if PAT is available
     if (GitHubService.isConfigured()) {
@@ -30,18 +27,6 @@ export class BlogHandler {
   }
 
   /**
-   * Check if this is an idea channel (where blog creation is enabled)
-   */
-  isIdeaChannel(message: Message | PartialMessage): boolean {
-    if (!message.channel || !('name' in message.channel)) {
-      return false;
-    }
-
-    const channelName = message.channel.name?.toLowerCase() || '';
-    return channelName.includes('idea');
-  }
-
-  /**
    * Check if the message has text file attachments
    */
   private hasTextAttachment(message: Message | PartialMessage): boolean {
@@ -49,10 +34,11 @@ export class BlogHandler {
       return false;
     }
 
-    return message.attachments.some(attachment => 
-      attachment.name?.endsWith('.txt') || 
-      attachment.name?.endsWith('.md') ||
-      attachment.contentType?.startsWith('text/')
+    return message.attachments.some(
+      attachment =>
+        attachment.name?.endsWith('.txt') ||
+        attachment.name?.endsWith('.md') ||
+        attachment.contentType?.startsWith('text/')
     );
   }
 
@@ -86,7 +72,7 @@ export class BlogHandler {
     try {
       // Process all text attachments
       const results: string[] = [];
-      
+
       for (const attachment of message.attachments.values()) {
         if (this.isTextFile(attachment)) {
           const blogUrl = await this.processTextAttachment(attachment, user);
@@ -100,16 +86,17 @@ export class BlogHandler {
           title: '📝 Blog Post Created!',
           description: `Your text file has been converted to a blog post draft:\n\n${results.join('\n')}`,
           fields: [
-            { 
-              name: '📍 Location', 
-              value: 'Repository: `tanigu12/tanigu12.github.io`\nDirectory: `_drafts/`', 
-              inline: false 
+            {
+              name: '📍 Location',
+              value: 'Repository: `tanigu12/tanigu12.github.io`\nDirectory: `_drafts/`',
+              inline: false,
             },
-            { 
-              name: '📝 Next Steps', 
-              value: '1. Review the generated blog post\n2. Edit title and content as needed\n3. Move from `_drafts/` to `_posts/` when ready to publish', 
-              inline: false 
-            }
+            {
+              name: '📝 Next Steps',
+              value:
+                '1. Review the generated blog post\n2. Edit title and content as needed\n3. Move from `_drafts/` to `_posts/` when ready to publish',
+              inline: false,
+            },
           ],
           footer: { text: `Created by ${user.tag}` },
           timestamp: new Date().toISOString(),
@@ -134,7 +121,7 @@ export class BlogHandler {
   private isTextFile(attachment: Attachment): boolean {
     const fileName = attachment.name?.toLowerCase() || '';
     const contentType = attachment.contentType?.toLowerCase() || '';
-    
+
     return (
       fileName.endsWith('.txt') ||
       fileName.endsWith('.md') ||
@@ -151,24 +138,25 @@ export class BlogHandler {
     _user: User | PartialUser
   ): Promise<string> {
     console.log(`📄 Processing text attachment: ${attachment.name}`);
-    
+
     // Download the text content
     const response = await fetch(attachment.url);
     if (!response.ok) {
       throw new Error(`Failed to download attachment: ${response.statusText}`);
     }
-    
+
     const content = await response.text();
     console.log(`📄 Downloaded content (${content.length} characters)`);
-    
+
     // Extract title from content or use filename
-    const title = this.githubService!.extractTitleFromContent(content) || 
-                  attachment.name?.replace(/\.(txt|md|markdown)$/i, '') || 
-                  'New Blog Post';
-    
+    const title =
+      this.githubService!.extractTitleFromContent(content) ||
+      attachment.name?.replace(/\.(txt|md|markdown)$/i, '') ||
+      'New Blog Post';
+
     // Generate file path
     const { fileName, filePath } = this.githubService!.generateBlogPostPath(title);
-    
+
     // Create blog post metadata
     const metadata: BlogPostMetadata = {
       title,
@@ -176,48 +164,11 @@ export class BlogHandler {
       fileName,
       filePath,
     };
-    
+
     // Create the blog post in GitHub
     const blogUrl = await this.githubService!.createBlogPost(metadata);
-    
+
     console.log(`✅ Blog post created: ${fileName}`);
     return blogUrl;
-  }
-
-  /**
-   * Check if emoji is a blog creation emoji
-   */
-  isBlogEmoji(emoji: string): boolean {
-    return this.BLOG_EMOJIS.includes(emoji);
-  }
-
-  /**
-   * Get blog emoji guide
-   */
-  getBlogEmojiGuide(): string {
-    return `**📝 Blog Creation - Emoji Guide**
-
-**Blog Post Creation:**
-📝 - Create blog post from text attachment
-📄 - Convert document to blog draft
-✍️ - Turn text into blog post
-📰 - Generate blog article
-
-**How to use:** 
-1. Attach a .txt or .md file to your message in an idea channel
-2. React with one of the blog emojis above
-3. A new draft will be created in your blog repository
-
-**Requirements:**
-- Message must have a text file attachment (.txt, .md, etc.)
-- Must be used in an idea channel
-- GitHub PAT must be configured`;
-  }
-
-  /**
-   * Check if GitHub service is available
-   */
-  isAvailable(): boolean {
-    return this.githubService !== null;
   }
 }

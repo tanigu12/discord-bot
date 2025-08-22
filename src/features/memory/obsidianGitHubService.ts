@@ -1,6 +1,5 @@
 import { Octokit } from '@octokit/rest';
 
-
 export class ObsidianGitHubService {
   private octokit: Octokit;
   private readonly owner: string;
@@ -73,13 +72,17 @@ export class ObsidianGitHubService {
       );
     } catch (error) {
       console.error('❌ Error creating vocabulary file:', error);
-      
+
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.message.includes('404')) {
-          throw new Error(`Repository ${this.owner}/${this.repo} not found or no access. Check GitHub PAT permissions.`);
+          throw new Error(
+            `Repository ${this.owner}/${this.repo} not found or no access. Check GitHub PAT permissions.`
+          );
         } else if (error.message.includes('403')) {
-          throw new Error(`Permission denied to ${this.owner}/${this.repo}. Check GitHub PAT permissions.`);
+          throw new Error(
+            `Permission denied to ${this.owner}/${this.repo}. Check GitHub PAT permissions.`
+          );
         } else {
           throw new Error(`Failed to create vocabulary file: ${error.message}`);
         }
@@ -125,55 +128,22 @@ export class ObsidianGitHubService {
    */
   private extractTitleFromContent(content: string): string {
     const lines = content.split('\n');
-    
+
     // Look for the Japanese sentence (after ###)
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed.startsWith('###') && !trimmed.startsWith('#') && 
-          trimmed.length > 0 && trimmed !== '?' && 
-          /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(trimmed)) {
+      if (
+        !trimmed.startsWith('###') &&
+        !trimmed.startsWith('#') &&
+        trimmed.length > 0 &&
+        trimmed !== '?' &&
+        /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(trimmed)
+      ) {
         // Truncate for commit message
         return trimmed.length > 50 ? trimmed.substring(0, 47) + '...' : trimmed;
       }
     }
-    
+
     return 'New vocabulary entry';
-  }
-
-  /**
-   * Test connection to Obsidian repository
-   */
-  async testConnection(): Promise<boolean> {
-    try {
-      const response = await this.octokit.rest.repos.get({
-        owner: this.owner,
-        repo: this.repo,
-      });
-      
-      console.log(`✅ Successfully connected to ${this.owner}/${this.repo}`);
-      console.log(`📊 Repository: ${response.data.full_name} (${response.data.private ? 'private' : 'public'})`);
-      return true;
-    } catch (error) {
-      console.error(`❌ Failed to connect to ${this.owner}/${this.repo}:`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Get repository information
-   */
-  getRepositoryInfo(): { owner: string; repo: string; vocabularyPath: string } {
-    return {
-      owner: this.owner,
-      repo: this.repo,
-      vocabularyPath: this.vocabularyPath,
-    };
-  }
-
-  /**
-   * Check if Obsidian GitHub service is configured
-   */
-  static isConfigured(): boolean {
-    return !!process.env.GITHUB_PAT;
   }
 }

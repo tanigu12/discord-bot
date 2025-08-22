@@ -101,15 +101,4 @@ export class NewsService {
       },
     ];
   }
-
-  // Helper method to clean and format news titles for diary prompts
-  formatForDiary(newsItem: NewsItem): string {
-    const title = newsItem.title;
-    const description = newsItem.description;
-
-    if (description) {
-      return `${title}: ${description}`;
-    }
-    return title;
-  }
 }

@@ -97,40 +97,6 @@ export class TechnicalQuestionService {
   }
 
   /**
-   * Get random questions from specific categories
-   */
-  getRandomQuestionsFromCategories(
-    categories: QuestionCategory[],
-    count: number = 3
-  ): TechnicalQuestion[] {
-    const categoryQuestions = categories.flatMap(category =>
-      TECHNICAL_QUESTIONS[category].map(question => ({
-        question,
-        category,
-      }))
-    );
-
-    const shuffled = [...categoryQuestions].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  }
-
-  /**
-   * Get random questions from a specific category
-   */
-  getRandomQuestionsFromCategory(
-    category: QuestionCategory,
-    count: number = 3
-  ): TechnicalQuestion[] {
-    const questions = TECHNICAL_QUESTIONS[category].map(question => ({
-      question,
-      category,
-    }));
-
-    const shuffled = [...questions].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  }
-
-  /**
    * Get all questions with their categories
    */
   getAllQuestions(): TechnicalQuestion[] {
@@ -140,28 +106,5 @@ export class TechnicalQuestionService {
         category: category as QuestionCategory,
       }))
     );
-  }
-
-  /**
-   * Get available categories
-   */
-  getCategories(): QuestionCategory[] {
-    return Object.keys(TECHNICAL_QUESTIONS) as QuestionCategory[];
-  }
-
-  /**
-   * Get category display name
-   */
-  getCategoryDisplayName(category: QuestionCategory): string {
-    const displayNames: Record<QuestionCategory, string> = {
-      algorithms: '🔢 Algorithms & Data Structures',
-      programming: '💻 Programming Concepts',
-      systemDesign: '🏗️ System Design & Architecture',
-      webDevelopment: '🌐 Web Development',
-      frontend: '⚛️ React/Frontend',
-      backend: '🖥️ Node.js/Backend',
-    };
-
-    return displayNames[category];
   }
 }

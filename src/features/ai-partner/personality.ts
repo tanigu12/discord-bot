@@ -49,7 +49,9 @@ interface InteractionPreferences {
   feedback_approach: string;
 }
 
-export interface PersonalityConfig {
+
+
+interface PersonalityConfig {
   name: string;
   nationality: string;
   description: string;
@@ -57,7 +59,6 @@ export interface PersonalityConfig {
   response_guidelines: ResponseGuidelines;
   interaction_preferences: InteractionPreferences;
 }
-
 export const personalityConfig: PersonalityConfig = {
   name: "Larry",
   nationality: "Canadian",

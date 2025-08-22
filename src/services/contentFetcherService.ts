@@ -148,32 +148,4 @@ export class ContentFetcherService {
   }
 
   // Helper method to check if URL is likely to contain useful content
-  isAnalyzableUrl(url: string): boolean {
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname.toLowerCase();
-
-      // Common content sites
-      const contentSites = [
-        'wikipedia.org',
-        'github.com',
-        'stackoverflow.com',
-        'medium.com',
-        'dev.to',
-        'news.ycombinator.com',
-        'reddit.com',
-        'quora.com',
-        'arxiv.org',
-      ];
-
-      return (
-        contentSites.some(site => hostname.includes(site)) ||
-        urlObj.pathname.includes('.html') ||
-        urlObj.pathname.includes('/blog') ||
-        urlObj.pathname.includes('/article')
-      );
-    } catch {
-      return false;
-    }
-  }
 }

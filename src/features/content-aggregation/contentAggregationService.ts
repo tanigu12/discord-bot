@@ -114,20 +114,4 @@ export class ContentAggregationService {
     };
   }
 
-  /**
-   * Get content statistics
-   */
-  getContentStats(): {
-    totalTechnicalQuestions: number;
-    totalEnglishPhrases: number;
-    technicalCategories: string[];
-    phraseCategories: string[];
-  } {
-    return {
-      totalTechnicalQuestions: this.technicalQuestionService.getAllQuestions().length,
-      totalEnglishPhrases: this.englishPhraseService.getAllPhrases().length,
-      technicalCategories: this.technicalQuestionService.getCategories(),
-      phraseCategories: this.englishPhraseService.getCategories(),
-    };
-  }
 }

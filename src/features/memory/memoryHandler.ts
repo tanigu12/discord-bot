@@ -150,12 +150,4 @@ Please try again or check the logs.`);
       return null;
     }
   }
-
-  /**
-   * Get emoji used for memory reactions
-   */
-  getMemoryEmoji(): string {
-    return this.MEMORY_EMOJI;
-  }
-
 }

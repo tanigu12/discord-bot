@@ -314,19 +314,6 @@ export class AsanaService {
     }
   }
 
-  public async updateTask(taskGid: string, updates: Partial<TaskData>): Promise<AsanaTask> {
-    this.ensureInitialized();
-
-    try {
-      const result = await this.tasksApi.updateTask(taskGid, updates, {
-        opt_fields: 'gid,name,notes,completed',
-      });
-      return result;
-    } catch (error) {
-      throw new Error(`Failed to update task: ${error}`);
-    }
-  }
-
   public async completeTask(taskGid: string): Promise<AsanaTask> {
     this.ensureInitialized();
 
@@ -341,16 +328,6 @@ export class AsanaService {
       return result;
     } catch (error) {
       throw new Error(`Failed to complete task: ${error}`);
-    }
-  }
-
-  public async deleteTask(taskGid: string): Promise<void> {
-    this.ensureInitialized();
-
-    try {
-      await this.tasksApi.deleteTask(taskGid);
-    } catch (error) {
-      throw new Error(`Failed to delete task: ${error}`);
     }
   }
 }

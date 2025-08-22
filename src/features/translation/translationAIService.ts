@@ -3,10 +3,7 @@ import { NewsItem } from '../../services/newsService';
 import { MODEL_CONFIGS } from '../../constants/ai';
 import {
   DetectedLanguage,
-  EnglishDiaryComprehensiveResult,
   UnifiedTranslationProcessingResult,
-  JapaneseDiaryWithTryResult,
-  LanguageDetectionAndTranslationResult,
   DiaryTopicsGenerationResult,
   RandomTopicConfig,
   ParsedTranslationEntry,
@@ -55,84 +52,7 @@ export class TranslationAIService extends BaseAIService {
   }
 
   // 日記専用翻訳
-  async translateDiaryText(text: string, targetLanguage: string): Promise<string> {
-    try {
-      const systemPrompt = this.aiPartnerIntegration.generateDiaryTranslationPrompt(
-        targetLanguage,
-        text
-      );
-      const userMessage = `Please translate this diary entry: "${text}". Include brief grammar explanations and related vocabulary.`;
-
-      return await this.callOpenAI(systemPrompt, userMessage, MODEL_CONFIGS.TRANSLATION);
-    } catch (error) {
-      console.error('Diary translation error:', error);
-      throw new Error('Failed to translate diary text');
-    }
-  }
-
-  // 日記専用文法チェック
-  async checkDiaryGrammar(text: string): Promise<string> {
-    try {
-      const systemPrompt = this.aiPartnerIntegration.generateDiaryGrammarPrompt(text);
-      const userMessage = `Please provide grammar feedback on this diary entry: "${text}"`;
-
-      return await this.callOpenAI(systemPrompt, userMessage, MODEL_CONFIGS.GRAMMAR_CHECK);
-    } catch (error) {
-      console.error('Diary grammar check error:', error);
-      throw new Error('Failed to check diary grammar');
-    }
-  }
-
-  // 英語文章の包括的処理（翻訳、向上、文法フィードバックを一度に）
-  async processEnglishDiaryComprehensive(text: string): Promise<EnglishDiaryComprehensiveResult> {
-    try {
-      const systemPrompt =
-        this.aiPartnerIntegration.generateComprehensiveEnglishProcessingPrompt(text);
-      const userMessage = `Please process this English diary entry comprehensively: "${text}"`;
-
-      const responseText = await this.callOpenAI(systemPrompt, userMessage, {
-        ...MODEL_CONFIGS.DIARY_PROCESSING,
-        maxCompletionTokens: 2000,
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'comprehensive_english_processing',
-            strict: true,
-            schema: {
-              type: 'object',
-              properties: {
-                translation: {
-                  type: 'string',
-                  description: 'Japanese translation of the English diary entry',
-                },
-                enhancedEnglish: {
-                  type: 'string',
-                  description:
-                    'Enhanced and more sophisticated version of the original English text',
-                },
-                grammarFeedback: {
-                  type: 'string',
-                  description: 'Grammar feedback and suggestions for improvement',
-                },
-              },
-              required: ['translation', 'enhancedEnglish', 'grammarFeedback'],
-              additionalProperties: false,
-            },
-          },
-        },
-      });
-
-      const parsed = JSON.parse(responseText);
-      return {
-        translation: parsed.translation,
-        enhancedEnglish: parsed.enhancedEnglish,
-        grammarFeedback: parsed.grammarFeedback,
-      };
-    } catch (error) {
-      console.error('Comprehensive English processing error:', error);
-      throw new Error('Failed to process English diary comprehensively');
-    }
-  }
+  
 
   // 統一された日記処理（シナリオベース）
   async processUnifiedDiary(
@@ -182,7 +102,7 @@ export class TranslationAIService extends BaseAIService {
   // シナリオベースのシステムプロンプト生成
   private generateScenarioBasedPrompt(scenario: ProcessingScenario): string {
     const basePrompt =
-      'You are Larry, a Canadian English tutor helping Japanese learners. You are supportive, encouraging, and provide detailed explanations.\n\n**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**\n- This is for English learning purposes\n- Never respond in Japanese in your explanations\n- Always use English to help improve the user\'s English skills\n- Explain grammar points and vocabulary in English';
+      "You are Larry, a Canadian English tutor helping Japanese learners. You are supportive, encouraging, and provide detailed explanations.\n\n**CRITICAL LANGUAGE REQUIREMENT: ALWAYS RESPOND IN ENGLISH ONLY**\n- This is for English learning purposes\n- Never respond in Japanese in your explanations\n- Always use English to help improve the user's English skills\n- Explain grammar points and vocabulary in English";
 
     switch (scenario) {
       case 'japanese-only':
@@ -374,106 +294,10 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
     }
   }
 
-  // [try]付きの日本語日記の処理（英語翻訳のフィードバック付き）- DEPRECATED
-  async processJapaneseDiaryWithTry(text: string): Promise<JapaneseDiaryWithTryResult> {
-    try {
-      const systemPrompt = this.aiPartnerIntegration.generateJapaneseTryTranslationPrompt(text);
-      const userMessage = `Please analyze this Japanese diary entry with English translation attempt: "${text}"`;
-
-      const responseText = await this.callOpenAI(systemPrompt, userMessage, {
-        ...MODEL_CONFIGS.DIARY_PROCESSING,
-        maxCompletionTokens: 2000,
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'japanese_try_translation_feedback',
-            strict: true,
-            schema: {
-              type: 'object',
-              properties: {
-                translationFeedback: {
-                  type: 'string',
-                  description:
-                    "Feedback on the user's English translation attempt with corrections and suggestions",
-                },
-                threeVersions: {
-                  type: 'object',
-                  properties: {
-                    casual: {
-                      type: 'string',
-                      description: 'Casual, conversational English translation',
-                    },
-                    formal: {
-                      type: 'string',
-                      description: 'More formal, polished English translation',
-                    },
-                    advanced: {
-                      type: 'string',
-                      description:
-                        'Advanced, sophisticated English translation with complex vocabulary',
-                    },
-                  },
-                  required: ['casual', 'formal', 'advanced'],
-                  additionalProperties: false,
-                },
-              },
-              required: ['translationFeedback', 'threeVersions'],
-              additionalProperties: false,
-            },
-          },
-        },
-      });
-
-      const parsed = JSON.parse(responseText);
-      return {
-        translationFeedback: parsed.translationFeedback,
-        threeVersions: {
-          casual: parsed.threeVersions.casual,
-          formal: parsed.threeVersions.formal,
-          advanced: parsed.threeVersions.advanced,
-        },
-      };
-    } catch (error) {
-      console.error('Japanese try translation processing error:', error);
-      throw new Error('Failed to process Japanese diary with try translation');
-    }
-  }
-
-  // 言語検出と翻訳（日記専用統合処理）
-  async detectLanguageAndTranslate(text: string): Promise<LanguageDetectionAndTranslationResult> {
-    try {
-      // パターンベースの言語検出
-      const detectedLanguage = this.detectLanguageByPattern(text);
-
-      // [try]マーカーをチェック
-      const hasTryTranslation = text.includes('[try]');
-
-      // 言語に基づいて処理を分岐
-      let translation = '';
-
-      if (detectedLanguage === 'japanese' || detectedLanguage === 'mixing') {
-        // 日本語または混合（基本的に日本語）を英語に翻訳
-        translation = await this.translateDiaryText(text, 'English');
-      } else if (detectedLanguage === 'english') {
-        // 英語を日本語に翻訳
-        translation = await this.translateDiaryText(text, 'Japanese');
-      }
-
-      return {
-        detectedLanguage,
-        translation,
-        hasTryTranslation,
-      };
-    } catch (error) {
-      console.error('Language detection and translation error:', error);
-      throw new Error('Failed to detect language and translate');
-    }
-  }
-
   // パターンベースの言語検出（ひらがな・カタカナ・漢字を使用）
   detectLanguageByPattern(text: string): DetectedLanguage {
     console.log(`🔍 Language Detection - Input text: "${text}"`);
-    
+
     // ひらがな全文字
     const hiraganaRegex =
       /[あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっ]/;

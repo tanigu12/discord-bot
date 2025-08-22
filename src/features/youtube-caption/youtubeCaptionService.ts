@@ -127,23 +127,5 @@ Guidelines:
     }
   }
 
-  extractVideoId(url: string): string | null {
-    try {
-      const urlObj = new URL(url);
-
-      // Standard YouTube URL: https://www.youtube.com/watch?v=VIDEO_ID
-      if (urlObj.pathname === '/watch') {
-        return urlObj.searchParams.get('v');
-      }
-
-      // Short YouTube URL: https://youtu.be/VIDEO_ID
-      if (urlObj.hostname === 'youtu.be') {
-        return urlObj.pathname.slice(1);
-      }
-
-      return null;
-    } catch {
-      return null;
-    }
-  }
+  
 }

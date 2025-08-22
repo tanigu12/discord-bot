@@ -119,7 +119,4 @@ export class BaseAIService {
   }
 
   // Larry の人格統合へのアクセス
-  protected getAIPartnerIntegration(): AIPartnerIntegration {
-    return this.aiPartnerIntegration;
-  }
 }

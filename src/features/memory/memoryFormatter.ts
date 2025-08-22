@@ -41,23 +41,6 @@ ${compactTranslationSection}
     return { targetSentence, translationSection };
   }
 
-
-  /**
-   * Read and parse message.txt file from file path
-   */
-  async parseMessageFile(
-    filePath: string
-  ): Promise<{ targetSentence: string; translationSection: string }> {
-    try {
-      const { readFileSync } = await import('fs');
-      const content = readFileSync(filePath, 'utf-8');
-      return this.extractContent(content);
-    } catch (error) {
-      console.error('Error reading message file:', error);
-      throw new Error(`Failed to read message file: ${error}`);
-    }
-  }
-
   /**
    * Generate filename for vocabulary entry
    */

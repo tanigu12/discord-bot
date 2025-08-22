@@ -7,7 +7,7 @@ export interface ReplyOptions {
   contextInfo?: string;
 }
 
-export interface ReplyResult {
+interface ReplyResult {
   strategy: 'message' | 'attachment';
   characterCount: number;
   sent: boolean;

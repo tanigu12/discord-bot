@@ -99,15 +99,6 @@ export class ContextCollectorService {
    * Legacy method - delegates to thread context for backward compatibility
    * @deprecated Use collectThreadContext or collectReplyContext instead
    */
-  async collectChannelContext(
-    interaction: ChatInputCommandInteraction,
-    maxMessages: number
-  ): Promise<ChannelContext> {
-    console.log(
-      '⚠️ Using deprecated collectChannelContext, consider using specific context methods'
-    );
-    return this.collectThreadContext(interaction, maxMessages);
-  }
 
   /**
    * Internal method to process messages into context format
@@ -236,48 +227,6 @@ export class ContextCollectorService {
   }
 
   // Format context for AI consumption
-  formatContextForAI(context: ChannelContext, includeMetadata: boolean = true): string {
-    let formatted = '';
-
-    if (includeMetadata) {
-      formatted += `**Context Information:**\n`;
-      formatted += `- Channel: ${context.channelName} (${context.channelType})\n`;
-      if (context.parentChannelName) {
-        formatted += `- Parent: ${context.parentChannelName}\n`;
-      }
-      formatted += `- Messages: ${context.messageCount}\n`;
-      formatted += `- Participants: ${context.participants.join(', ')}\n`;
-      formatted += `- Timespan: ${context.timespan}\n\n`;
-    }
-
-    formatted += `**Recent Conversation:**\n`;
-
-    for (const msg of context.messages) {
-      const timestamp = msg.timestamp.toISOString().split('T')[0];
-      const author = msg.isBot ? `🤖 ${msg.author}` : msg.author;
-      formatted += `${author} (${timestamp}): ${msg.content}\n\n`;
-    }
-
-    return formatted;
-  }
 
   // Create summary of context for token efficiency
-  summarizeContext(context: ChannelContext): string {
-    const recentMessages = context.messages.slice(-10); // Last 10 messages
-    let summary = `Recent discussion in ${context.channelName}`;
-
-    if (context.channelType === 'thread' && context.parentChannelName) {
-      summary += ` (thread in ${context.parentChannelName})`;
-    }
-
-    summary += ` with ${context.participants.length} participants over ${context.timespan}:\n\n`;
-
-    for (const msg of recentMessages) {
-      if (msg.content.trim()) {
-        summary += `${msg.author}: ${msg.content.substring(0, 100)}${msg.content.length > 100 ? '...' : ''}\n`;
-      }
-    }
-
-    return summary;
-  }
 }

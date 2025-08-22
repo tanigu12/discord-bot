@@ -4,11 +4,7 @@
 export type DetectedLanguage = 'japanese' | 'english' | 'mixing';
 
 // 翻訳バージョンの三パターン（レベル別）
-interface ThreeTranslationVersions {
-  casual: string;
-  formal: string;
-  advanced: string;
-}
+
 
 // 三段階レベル翻訳（日本語→英語用）
 interface ThreeLevelTranslations {
@@ -66,12 +62,6 @@ export interface TranslationProcessingResult {
   questionAnswers?: QuestionAnswer[];
 }
 
-// 英語日記の包括的処理結果
-export interface EnglishDiaryComprehensiveResult {
-  translation: string;
-  enhancedEnglish: string;
-  grammarFeedback: string;
-}
 
 // 統一された日記処理結果（processUnifiedDiary）
 export interface UnifiedTranslationProcessingResult {
@@ -95,18 +85,7 @@ export interface UnifiedTranslationProcessingResult {
   questionAnswers?: QuestionAnswer[] | null;
 }
 
-// [try]付き日本語日記処理結果
-export interface JapaneseDiaryWithTryResult {
-  translationFeedback: string;
-  threeVersions: ThreeTranslationVersions;
-}
 
-// 言語検出と翻訳結果
-export interface LanguageDetectionAndTranslationResult {
-  detectedLanguage: DetectedLanguage;
-  translation: string;
-  hasTryTranslation?: boolean;
-}
 
 // 日記トピック生成結果
 export interface DiaryTopicsGenerationResult {
