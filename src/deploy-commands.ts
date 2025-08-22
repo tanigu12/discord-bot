@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import {
   randomCommand,
   formatCommand,
-  searchCommand,
   bskyCommand,
   asanaCommand
 } from './features/commands';
@@ -19,7 +18,6 @@ const commands = [
     .setDescription('Show emoji reaction guide for AI assistant'),
   randomCommand.data,
   formatCommand.data,
-  searchCommand.data,
   bskyCommand.data,
   asanaCommand.data,
 ].map(command => command.toJSON());

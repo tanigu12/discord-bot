@@ -1,0 +1,1 @@
+export { ResearchHandler } from './researchHandler';
