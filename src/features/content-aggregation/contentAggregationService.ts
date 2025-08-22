@@ -14,10 +14,6 @@ export interface RandomContentResult {
   technicalQuestions: TechnicalQuestion[];
   englishPhrases: EnglishPhrase[];
   asanaTasks: any[];
-  resources: {
-    listening: string;
-    reading: string;
-  };
 }
 
 export interface ContentAggregationOptions {
@@ -69,10 +65,6 @@ export class ContentAggregationService {
       technicalQuestions,
       englishPhrases,
       asanaTasks: [],
-      resources: {
-        listening: 'https://www.youtube.com/feed/subscriptions',
-        reading: 'https://news.google.com/home?hl=en-US&gl=US&ceid=US:en',
-      },
     };
 
     // Get news and diary content in parallel if requested
@@ -115,14 +107,10 @@ export class ContentAggregationService {
   getFallbackContent(
     technicalQuestionCount: number = 3,
     englishPhraseCount: number = 3
-  ): Pick<RandomContentResult, 'technicalQuestions' | 'englishPhrases' | 'resources'> {
+  ): Pick<RandomContentResult, 'technicalQuestions' | 'englishPhrases'> {
     return {
       technicalQuestions: this.technicalQuestionService.getRandomQuestions(technicalQuestionCount),
       englishPhrases: this.englishPhraseService.getRandomPhrases(englishPhraseCount),
-      resources: {
-        listening: 'https://www.youtube.com/feed/subscriptions',
-        reading: 'https://news.google.com/home?hl=en-US&gl=US&ceid=US:en',
-      },
     };
   }
 

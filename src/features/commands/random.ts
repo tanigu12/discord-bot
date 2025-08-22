@@ -7,7 +7,9 @@ const embedFormatter = new RandomContentEmbedFormatter();
 export const randomCommand = {
   data: new SlashCommandBuilder()
     .setName('random')
-    .setDescription('Get diary topics, technical questions, English phrases, and your current tasks'),
+    .setDescription(
+      'Get diary topics, technical questions, English phrases, and your current tasks'
+    ),
 
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
@@ -28,21 +30,19 @@ export const randomCommand = {
       // Create comprehensive response with main embed and follow-up messages
       await embedFormatter.createRandomContentResponse(content, interaction.user, interaction);
       console.log('✅ Random content generated successfully');
-
     } catch (error) {
       console.error('❌ Error generating random content:', error);
-      
+
       // Get fallback content and create fallback embed
       const fallbackContent = contentAggregationService.getFallbackContent(3, 3);
       const fallbackEmbed = embedFormatter.createFallbackEmbed(
         fallbackContent.technicalQuestions,
-        fallbackContent.englishPhrases,
-        fallbackContent.resources
+        fallbackContent.englishPhrases
       );
 
-      await interaction.editReply({ 
+      await interaction.editReply({
         embeds: [fallbackEmbed],
-        content: '⚠️ Having trouble fetching some data, but here are great topics and questions!'
+        content: '⚠️ Having trouble fetching some data, but here are great topics and questions!',
       });
     }
   },

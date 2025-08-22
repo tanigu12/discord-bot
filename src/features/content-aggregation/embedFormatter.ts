@@ -40,7 +40,7 @@ export class RandomContentEmbedFormatter {
     }
 
     // Add tips and resources
-    this.addTipsAndResourcesFields(embed, content.resources);
+    this.addTipsAndResourcesFields(embed);
 
     // Send main embed
     await interaction.editReply({ embeds: [embed] });
@@ -61,8 +61,7 @@ export class RandomContentEmbedFormatter {
    */
   createFallbackEmbed(
     technicalQuestions: TechnicalQuestion[],
-    englishPhrases: EnglishPhrase[],
-    resources: { listening: string; reading: string }
+    englishPhrases: EnglishPhrase[]
   ): EmbedBuilder {
     const embed = new EmbedBuilder()
       .setTitle('📝 Random Content (Backup)')
@@ -98,10 +97,20 @@ export class RandomContentEmbedFormatter {
       inline: false,
     });
 
+    const externalLinks = [
+      `**For Listening:**`,
+      `[YouTube Subscriptions](https://www.youtube.com/feed/subscriptions)`,
+      `**For Reading:**`,
+      `[Google News](https://news.google.com/home?hl=en-US&gl=US&ceid=US:en)`,
+      `[X (Twitter)](https://x.com/home)`,
+      `**Checking Tasks:**`,
+      `[Asana](https://app.asana.com/1/1184068549429528/project/1211072064033611/list/1211072065102773)`,
+    ];
+
     // Add resources
     embed.addFields({
       name: '🔗 Recommended Resources',
-      value: `**For Listening:** [YouTube Subscriptions](${resources.listening})\n**For Reading:** [Google News](${resources.reading})`,
+      value: externalLinks.join(`\n`),
       inline: false,
     });
 
@@ -130,7 +139,10 @@ export class RandomContentEmbedFormatter {
   /**
    * Send complete diary content for interactions
    */
-  private async sendLongDiaryContentInteraction(content: RandomContentResult, interaction: ChatInputCommandInteraction): Promise<void> {
+  private async sendLongDiaryContentInteraction(
+    content: RandomContentResult,
+    interaction: ChatInputCommandInteraction
+  ): Promise<void> {
     if (!content.diaryPrompts) return;
 
     // Collect all content in one text first
@@ -171,10 +183,13 @@ export class RandomContentEmbedFormatter {
 
     // Apply long content treatment function to the collected text
     if (allContent.trim()) {
-      await this.sendLongContentInteraction("📝 Complete Diary Content", allContent.trim(), interaction);
+      await this.sendLongContentInteraction(
+        '📝 Complete Diary Content',
+        allContent.trim(),
+        interaction
+      );
     }
   }
-
 
   /**
    * Add technical questions field
@@ -215,7 +230,7 @@ export class RandomContentEmbedFormatter {
    */
   private addShortAsanaTasksField(embed: EmbedBuilder, tasks: any[]): void {
     // Show up to 5 tasks in main embed to give better preview
-    const shortList = tasks.slice(0, 5); 
+    const shortList = tasks.slice(0, 5);
     const tasksText = shortList
       .map((task, index) => {
         const status = task.completed ? '✅' : '⏳';
@@ -236,32 +251,35 @@ export class RandomContentEmbedFormatter {
   /**
    * Send complete task list for interactions (up to 10 tasks with full details)
    */
-  private async sendLongTasksContentInteraction(tasks: any[], interaction: ChatInputCommandInteraction): Promise<void> {
+  private async sendLongTasksContentInteraction(
+    tasks: any[],
+    interaction: ChatInputCommandInteraction
+  ): Promise<void> {
     // Show up to 10 tasks as requested
     const displayTasks = tasks.slice(0, 10);
     const tasksText = displayTasks
       .map((task, index) => {
         const status = task.completed ? '✅' : '⏳';
         const dueDate = task.due_on ? ` (Due: ${task.due_on})` : '';
-        const projectName = task.projects && task.projects.length > 0 ? ` [${task.projects[0].name}]` : '';
+        const projectName =
+          task.projects && task.projects.length > 0 ? ` [${task.projects[0].name}]` : '';
         return `${index + 1}. ${status} **${task.name}**${dueDate}${projectName}\n   \`GID: ${task.gid}\``;
       })
       .join('\n\n');
 
-    const remainingText = tasks.length > 10 ? `\n\n*Note: Showing 10 of ${tasks.length} tasks. Use \`/asana list\` to see all.*` : '';
+    const remainingText =
+      tasks.length > 10
+        ? `\n\n*Note: Showing 10 of ${tasks.length} tasks. Use \`/asana list\` to see all.*`
+        : '';
     const title = `📋 Your Asana Tasks (${Math.min(tasks.length, 10)}${tasks.length > 10 ? ` of ${tasks.length}` : ''})`;
 
     await this.sendLongContentInteraction(title, tasksText + remainingText, interaction);
   }
 
-
   /**
    * Add tips and resources fields
    */
-  private addTipsAndResourcesFields(
-    embed: EmbedBuilder,
-    resources: { listening: string; reading: string }
-  ): void {
+  private addTipsAndResourcesFields(embed: EmbedBuilder): void {
     // Add encouragement from diary prompts if available
     // (This would be passed in the content if available)
 
@@ -273,10 +291,20 @@ export class RandomContentEmbedFormatter {
       inline: false,
     });
 
+    const externalLinks = [
+      `**For Listening:**`,
+      `[YouTube Subscriptions](https://www.youtube.com/feed/subscriptions)`,
+      `**For Reading:**`,
+      `[Google News](https://news.google.com/home?hl=en-US&gl=US&ceid=US:en)`,
+      `[X (Twitter)](https://x.com/home)`,
+      `**Checking Tasks:**`,
+      `[Asana](https://app.asana.com/1/1184068549429528/project/1211072064033611/list/1211072065102773)`,
+    ];
+
     // Add resources
     embed.addFields({
       name: '🔗 Recommended Resources',
-      value: `**For Listening:** [YouTube Subscriptions](${resources.listening})\n**For Reading:** [Google News](${resources.reading})`,
+      value: externalLinks.join(`\n`),
       inline: false,
     });
   }
@@ -284,7 +312,11 @@ export class RandomContentEmbedFormatter {
   /**
    * Send long content for interactions using followUp
    */
-  private async sendLongContentInteraction(title: string, content: string, interaction: ChatInputCommandInteraction): Promise<void> {
+  private async sendLongContentInteraction(
+    title: string,
+    content: string,
+    interaction: ChatInputCommandInteraction
+  ): Promise<void> {
     if (content.length <= 2000) {
       // Single message
       const embed = new EmbedBuilder()
@@ -292,24 +324,23 @@ export class RandomContentEmbedFormatter {
         .setDescription(content)
         .setColor(0x00d4aa)
         .setTimestamp();
-      
+
       await interaction.followUp({ embeds: [embed] });
     } else {
       // Multiple messages
       const chunks = this.splitTextIntoChunks(content, 2000);
-      
+
       for (let i = 0; i < chunks.length; i++) {
         const embed = new EmbedBuilder()
           .setTitle(`${title} (${i + 1}/${chunks.length})`)
           .setDescription(chunks[i])
           .setColor(0x00d4aa)
           .setTimestamp();
-        
+
         await interaction.followUp({ embeds: [embed] });
       }
     }
   }
-
 
   /**
    * Split text into chunks at natural breakpoints (copied from diary formatter)
