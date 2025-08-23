@@ -77,14 +77,14 @@ export class YoutubeResponseHandler extends BaseAIService implements ResponseHan
 
     
 1. Understand the entire context of the video captions
-2. If the video is longer than 10 minutes of content, focus on analyzing and translating only the FIRST 10 MINUTES to provide manageable learning content
+2. This video analysis is automatically limited to the first 20 minutes (1200 seconds) via API for manageable learning content
 3. Divide the content into logical sections based on topics/themes
 4. Translate each section into Japanese while maintaining context
 5. Provide clear section headers that reflect the content
 
 **CRITICAL: DO NOT MODIFY OR CHANGE THE ORIGINAL ENGLISH CAPTIONS IN ANY WAY. The user studies these captions while listening to YouTube videos for language learning, so exact original text preservation is essential.**
 
-**For long videos (>10 minutes): Focus only on the first 10 minutes of transcript content to keep the learning session manageable. Indicate if content was truncated.**
+**Video Processing: Analysis automatically limited to first 20 minutes via API to keep learning sessions focused and manageable.**
 
 Format your response as follows:
 

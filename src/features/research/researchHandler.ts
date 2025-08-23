@@ -35,7 +35,11 @@ export class ResearchHandler extends BaseAIService {
       console.log(`🔬 Processing research request: "${content.substring(0, 50)}..."`);
 
       // Collect context using shared service for research channel
-      const analysisContext = await this.analysisService.collectReplyContext(message, 5);
+      // const analysisContext = await this.analysisService.collectReplyContext(message, 5);
+      const analysisContext = {
+        context: '',
+        contextInfo: '',
+      };
 
       console.log('🔍 Using Larry AI for research analysis...');
 
