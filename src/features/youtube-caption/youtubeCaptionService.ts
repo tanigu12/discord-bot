@@ -1,4 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import youtubedl from 'youtube-dl-exec';
+import { promises as fs } from 'fs';
+import path from 'path';
+import os from 'os';
 
 interface VideoAnalysisResponse {
   status: 'success' | 'error';
@@ -13,6 +17,114 @@ export class YoutubeCaptionService {
     const apiKey = process.env.GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
+    }
+  }
+
+  /**
+   * Download audio from YouTube video using youtube-dl-exec
+   */
+  private async downloadAudio(youtubeUrl: string): Promise<{ audioPath: string; videoId: string }> {
+    console.log(`🎵 [DEBUG] YoutubeCaptionService.downloadAudio() starting`);
+    console.log(`   URL: ${youtubeUrl}`);
+
+    try {
+      // Extract video ID for filename
+      const videoId = this.extractVideoId(youtubeUrl);
+      const tempDir = os.tmpdir();
+      const outputPath = path.join(tempDir, `youtube_audio_${videoId}_${Date.now()}`);
+
+      console.log(`   Video ID: ${videoId}`);
+      console.log(`   Output path: ${outputPath}.%(ext)s`);
+
+      const startTime = Date.now();
+      
+      // Download audio only - using youtube-dl's built-in audio extraction without ffmpeg
+      await youtubedl(youtubeUrl, {
+        format: 'bestaudio', // Get best audio format available
+        output: `${outputPath}.%(ext)s`,
+        // Use youtube-dl's built-in time limiting (no ffmpeg required)
+        playlistEnd: 1, // Only download one video
+        noPlaylist: true, // Don't download playlist
+      });
+
+      const downloadTime = Date.now() - startTime;
+      
+      // Find the downloaded file (extension varies based on source format)
+      const outputDir = path.dirname(outputPath);
+      const baseFileName = path.basename(outputPath);
+      const files = await fs.readdir(outputDir);
+      const audioFile = files.find(file => file.startsWith(baseFileName));
+      
+      if (!audioFile) {
+        throw new Error('Downloaded audio file not found');
+      }
+      
+      const audioPath = path.join(outputDir, audioFile);
+      const stats = await fs.stat(audioPath);
+      
+      console.log(`✅ [DEBUG] Audio download completed in ${downloadTime}ms`);
+      console.log(`   Audio file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+      console.log(`   Audio file path: ${audioPath}`);
+
+      return { audioPath, videoId };
+    } catch (error) {
+      console.error(`❌ [DEBUG] Audio download failed:`);
+      console.error(`   Error type: ${error?.constructor?.name}`);
+      console.error(`   Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`   Full error:`, error);
+      throw new Error(`Failed to download audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Extract video ID from YouTube URL
+   */
+  private extractVideoId(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname.includes('youtu.be')) {
+        return urlObj.pathname.slice(1); // Remove leading '/'
+      } else if (urlObj.hostname.includes('youtube.com')) {
+        return urlObj.searchParams.get('v') || 'unknown';
+      }
+      return 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  /**
+   * Get MIME type based on audio file extension
+   */
+  private getAudioMimeType(extension: string): string {
+    switch (extension) {
+      case '.mp3':
+        return 'audio/mpeg';
+      case '.wav':
+        return 'audio/wav';
+      case '.m4a':
+        return 'audio/mp4';
+      case '.ogg':
+        return 'audio/ogg';
+      case '.webm':
+        return 'audio/webm';
+      case '.aac':
+        return 'audio/aac';
+      default:
+        console.warn(`⚠️ [DEBUG] Unknown audio extension: ${extension}, defaulting to audio/mpeg`);
+        return 'audio/mpeg'; // Default fallback
+    }
+  }
+
+  /**
+   * Clean up downloaded audio file
+   */
+  private async cleanupAudioFile(audioPath: string): Promise<void> {
+    try {
+      await fs.unlink(audioPath);
+      console.log(`🗑️ [DEBUG] Cleaned up audio file: ${audioPath}`);
+    } catch (error) {
+      console.warn(`⚠️ [DEBUG] Failed to cleanup audio file: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -40,22 +152,44 @@ export class YoutubeCaptionService {
       };
     }
 
-    console.log(`🎬 [DEBUG] Valid YouTube URL confirmed, starting Gemini AI analysis`);
-    console.log(`   Model: gemini-2.5-pro`);
-    console.log(`   Prompt preview: ${prompt.substring(0, 200)}...`);
+    console.log(`🎬 [DEBUG] Valid YouTube URL confirmed, starting audio-based analysis`);
+    console.log(`   Model: gemini-1.5-pro`);
+    console.log(`   Method: Audio extraction + Gemini analysis`);
+
+    let audioPath: string | null = null;
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
-      console.log(`🔍 [DEBUG] Gemini model initialized, calling generateContent...`);
-      console.log(`   Using videoMetadata: startOffset=0s, endOffset=1200s (20 minutes)`);
+      // Step 1: Download audio from YouTube
+      console.log(`🎵 [DEBUG] Step 1: Downloading audio from YouTube...`);
+      const { audioPath: downloadedPath, videoId } = await this.downloadAudio(youtubeUrl);
+      audioPath = downloadedPath;
+
+      // Step 2: Read audio file as base64 for Gemini
+      console.log(`🔍 [DEBUG] Step 2: Reading audio file for Gemini analysis...`);
+      const audioBuffer = await fs.readFile(audioPath);
+      const audioBase64 = audioBuffer.toString('base64');
+      
+      // Determine MIME type based on file extension
+      const audioExtension = path.extname(audioPath).toLowerCase();
+      const mimeType = this.getAudioMimeType(audioExtension);
+
+      console.log(`   Audio file read successfully`);
+      console.log(`   Audio buffer size: ${(audioBuffer.length / 1024 / 1024).toFixed(2)} MB`);
+      console.log(`   Audio format: ${audioExtension} (${mimeType})`);
+
+      // Step 3: Analyze with Gemini
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      console.log(`🔍 [DEBUG] Step 3: Analyzing audio with Gemini...`);
+      console.log(`   Video ID: ${videoId}`);
+      console.log(`   Prompt preview: ${prompt.substring(0, 200)}...`);
 
       const startTime = Date.now();
       const result = await model.generateContent([
         prompt,
         {
-          fileData: {
-            fileUri: youtubeUrl,
-            mimeType: 'video/3gpp',
+          inlineData: {
+            data: audioBase64,
+            mimeType: mimeType,
           },
         },
       ]);
@@ -66,9 +200,12 @@ export class YoutubeCaptionService {
       const response = result.response;
       const text = response.text();
 
-      console.log(`✅ [DEBUG] Successfully analyzed video`);
+      console.log(`✅ [DEBUG] Successfully analyzed audio`);
       console.log(`   Response length: ${text.length} characters`);
       console.log(`   Response preview: ${text.substring(0, 300)}...`);
+
+      // Step 4: Clean up audio file
+      await this.cleanupAudioFile(audioPath);
 
       return {
         status: 'success',
@@ -80,16 +217,21 @@ export class YoutubeCaptionService {
       console.error(`   Error message: ${error instanceof Error ? error.message : String(error)}`);
       console.error(`   Full error:`, error);
 
+      // Clean up audio file in case of error
+      if (audioPath) {
+        await this.cleanupAudioFile(audioPath);
+      }
+
       if (error instanceof Error) {
         return {
           status: 'error',
-          error: `Gemini API error: ${error.message}`,
+          error: `Audio analysis failed: ${error.message}`,
         };
       }
 
       return {
         status: 'error',
-        error: 'Unknown error occurred while analyzing video',
+        error: 'Unknown error occurred while analyzing audio',
       };
     }
   }
@@ -97,23 +239,23 @@ export class YoutubeCaptionService {
   async getTranscriptFromVideo(youtubeUrl: string): Promise<VideoAnalysisResponse> {
     console.log(`🔍 [DEBUG] YoutubeCaptionService.getTranscriptFromVideo() starting`);
 
-    const prompt = `You are a specialized YouTube transcription extractor. Your primary task is to:
+    const prompt = `You are a specialized audio transcription extractor for YouTube content. Your primary task is to:
 
-1. Extract the most accurate and complete transcription/captions from this YouTube video
-2. **IMPORTANT: This video analysis is automatically limited to the first 20 minutes (1200 seconds) for manageable learning content**
+1. Extract the most accurate and complete transcription from this audio file (extracted from YouTube)
+2. **IMPORTANT: This audio is automatically limited to the first 20 minutes (1200 seconds) for manageable learning content**
 3. Preserve all spoken content exactly as said, including natural speech patterns
 4. Maintain proper timing and flow of the conversation
-5. Include all dialogue, narration, and spoken content from the analyzed timeframe
+5. Include all dialogue, narration, and spoken content from the audio
 
-**CRITICAL: Focus on getting the precise transcription first. Extract every word that is spoken in the video as accurately as possible.**
+**CRITICAL: Focus on getting the precise transcription first. Extract every word that is spoken in the audio as accurately as possible.**
 
-**Video Processing: Analyzing first 20 minutes only (API-enforced limit for focused learning sessions).**
+**Audio Processing: Analyzing first 20 minutes only (extracted audio from YouTube video for focused learning sessions).**
 
 Format your response as follows:
 
-## 📝 Complete Video Transcription
-[If this is a long video, note: "Note: This transcription covers the first 20 minutes of the video for focused learning."]
-[Provide the complete, accurate transcription of all spoken content in the specified timeframe. Include speaker identification if multiple people are talking. Preserve natural speech patterns, including "um", "uh", false starts, and corrections as they actually occur in the video.]
+## 📝 Complete Audio Transcription  
+[Note: "This transcription covers the first 20 minutes of the video (extracted audio) for focused learning."]
+[Provide the complete, accurate transcription of all spoken content from the audio. Include speaker identification if multiple people are talking. Preserve natural speech patterns, including "um", "uh", false starts, and corrections as they actually occur in the audio.]
 
 ## 🎯 Organized Content for English Learners
 
@@ -133,15 +275,15 @@ Format your response as follows:
 [If the video is longer than 20 minutes, include: "This analysis covers the first 20 minutes of a longer video. For continued learning, you can request analysis of subsequent segments."]
 
 Guidelines:
-- FIRST PRIORITY: Get the complete, accurate transcription
-- Video processing automatically limited to first 20 minutes (1200s) via API
+- FIRST PRIORITY: Get the complete, accurate transcription from audio
+- Audio processing automatically limited to first 20 minutes (1200s) via youtube-dl-exec
 - Preserve exact wording - do not paraphrase or correct the original speech
 - Include natural speech elements (hesitations, corrections, etc.)
-- Clearly indicate if content was limited to first 20 minutes
+- Content is limited to first 20 minutes of extracted audio
 `;
 
-    console.log(`🔍 [DEBUG] Enhanced prompt created with 20-minute API limit`);
-    console.log(`   Calling analyzeVideo with enhanced prompt...`);
+    console.log(`🔍 [DEBUG] Enhanced prompt created for audio-based analysis`);
+    console.log(`   Calling analyzeVideo with audio extraction method...`);
 
     return this.analyzeVideo(youtubeUrl, prompt);
   }

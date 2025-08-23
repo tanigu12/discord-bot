@@ -48,12 +48,13 @@
     "axios": "^1.11.0",
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
-    "openai": "^5.12.2"
+    "openai": "^5.12.2",
+    "youtube-dl-exec": "^3.0.24"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@types/asana": "^0.18.16",
-    "@types/node": "^24.2.1",
+    "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
     "@vitest/ui": "^3.2.4",

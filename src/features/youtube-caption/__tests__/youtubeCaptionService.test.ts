@@ -10,6 +10,22 @@ vi.mock('@google/generative-ai', () => ({
   })),
 }));
 
+// Mock youtube-dl-exec
+vi.mock('youtube-dl-exec', () => ({
+  default: vi.fn()
+}));
+
+// Mock fs promises
+vi.mock('fs', () => ({
+  promises: {
+    readFile: vi.fn(),
+    unlink: vi.fn(),
+    access: vi.fn(),
+    stat: vi.fn(),
+    readdir: vi.fn()
+  }
+}));
+
 describe('YoutubeCaptionService', () => {
   let service: YoutubeCaptionService;
   let mockGenAI: any;
@@ -104,10 +120,20 @@ describe('YoutubeCaptionService', () => {
       expect(console.error).toHaveBeenCalledWith(`❌ [DEBUG] Invalid YouTube URL: ${invalidUrl}`);
     });
 
-    it('should successfully analyze video with proper debug logging', async () => {
+    it('should successfully analyze video using audio extraction (simplified test)', async () => {
       const testUrl = 'https://www.youtube.com/watch?v=wUrvXN-yiyo';
       const testPrompt = 'Test analysis prompt';
-      const mockResponseText = 'Analyzed video content response';
+      const mockResponseText = 'Analyzed audio content response';
+
+      // Mock the downloadAudio method to return a success
+      const mockDownloadAudio = vi.spyOn(service as any, 'downloadAudio').mockResolvedValue({
+        audioPath: '/tmp/test_audio.m4a',
+        videoId: 'wUrvXN-yiyo'
+      });
+
+      // Mock fs.readFile to return audio buffer
+      const fs = await import('fs');
+      vi.mocked(fs.promises.readFile).mockResolvedValue(Buffer.from('mock-audio-data'));
 
       // Mock the Gemini API response
       const mockModel = {
@@ -122,51 +148,42 @@ describe('YoutubeCaptionService', () => {
         mockGenAI.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
       }
 
+      // Mock cleanupAudioFile
+      const mockCleanup = vi.spyOn(service as any, 'cleanupAudioFile').mockResolvedValue(undefined);
+
       const result = await service.analyzeVideo(testUrl, testPrompt);
 
       expect(result.status).toBe('success');
       expect(result.summary).toBe(mockResponseText);
 
-      // Check debug logging
-      expect(console.log).toHaveBeenCalledWith(
-        '🔍 [DEBUG] YoutubeCaptionService.analyzeVideo() starting'
-      );
-      expect(console.log).toHaveBeenCalledWith(`   URL: ${testUrl}`);
-      expect(console.log).toHaveBeenCalledWith(`   Prompt length: ${testPrompt.length} characters`);
-      expect(console.log).toHaveBeenCalledWith(
-        '🎬 [DEBUG] Valid YouTube URL confirmed, starting Gemini AI analysis'
-      );
-      expect(console.log).toHaveBeenCalledWith('✅ [DEBUG] Successfully analyzed video');
+      // Verify mocked methods were called
+      expect(mockDownloadAudio).toHaveBeenCalledWith(testUrl);
+      expect(mockCleanup).toHaveBeenCalledWith('/tmp/test_audio.m4a');
+      expect(mockModel.generateContent).toHaveBeenCalled();
     });
 
-    it('should handle Gemini API errors with detailed logging', async () => {
+    it('should handle audio download errors with detailed logging', async () => {
       const testUrl = 'https://www.youtube.com/watch?v=wUrvXN-yiyo';
       const testPrompt = 'Test prompt';
-      const apiError = new Error('API rate limit exceeded');
+      const downloadError = new Error('youtube-dl-exec failed');
 
-      // Mock the Gemini API to throw an error
-      const mockModel = {
-        generateContent: vi.fn().mockRejectedValue(apiError),
-      };
-
-      if (mockGenAI) {
-        mockGenAI.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
-      }
+      // Mock youtube-dl-exec to throw an error
+      const youtubedl = await import('youtube-dl-exec');
+      vi.mocked(youtubedl.default).mockRejectedValue(downloadError);
 
       const result = await service.analyzeVideo(testUrl, testPrompt);
 
       expect(result.status).toBe('error');
-      expect(result.error).toContain('Gemini API error: API rate limit exceeded');
+      expect(result.error).toContain('Audio analysis failed: Failed to download audio');
 
       // Check error logging
       expect(console.error).toHaveBeenCalledWith('❌ [DEBUG] Error analyzing video:');
-      expect(console.error).toHaveBeenCalledWith(`   Error type: ${apiError.constructor.name}`);
-      expect(console.error).toHaveBeenCalledWith(`   Error message: ${apiError.message}`);
+      expect(console.error).toHaveBeenCalledWith(`   Error type: ${downloadError.constructor.name}`);
     });
   });
 
   describe('getTranscriptFromVideo', () => {
-    it('should call analyzeVideo with enhanced 20-minute API limit prompt', async () => {
+    it('should call analyzeVideo with enhanced audio-based analysis prompt', async () => {
       const testUrl = 'https://www.youtube.com/watch?v=wUrvXN-yiyo';
 
       // Spy on analyzeVideo method
@@ -180,19 +197,19 @@ describe('YoutubeCaptionService', () => {
       expect(analyzeVideoSpy).toHaveBeenCalledWith(
         testUrl,
         expect.stringContaining(
-          'This video analysis is automatically limited to the first 20 minutes (1200 seconds)'
+          'Extract the most accurate and complete transcription from this audio file (extracted from YouTube)'
         )
       );
       expect(analyzeVideoSpy).toHaveBeenCalledWith(
         testUrl,
         expect.stringContaining(
-          'Video processing automatically limited to first 20 minutes (1200s) via API'
+          'Audio processing automatically limited to first 20 minutes (1200s) via youtube-dl-exec'
         )
       );
       expect(analyzeVideoSpy).toHaveBeenCalledWith(
         testUrl,
         expect.stringContaining(
-          'Note: This transcription covers the first 20 minutes of the video for focused learning'
+          'This transcription covers the first 20 minutes of the video (extracted audio) for focused learning'
         )
       );
 
@@ -201,11 +218,11 @@ describe('YoutubeCaptionService', () => {
         '🔍 [DEBUG] YoutubeCaptionService.getTranscriptFromVideo() starting'
       );
       expect(console.log).toHaveBeenCalledWith(
-        '🔍 [DEBUG] Enhanced prompt created with 20-minute API limit'
+        '🔍 [DEBUG] Enhanced prompt created for audio-based analysis'
       );
     });
 
-    it('should include video length note section in prompt', async () => {
+    it('should include audio transcription sections in prompt', async () => {
       const testUrl = 'https://www.youtube.com/watch?v=wUrvXN-yiyo';
 
       const analyzeVideoSpy = vi.spyOn(service, 'analyzeVideo').mockResolvedValue({
@@ -216,6 +233,7 @@ describe('YoutubeCaptionService', () => {
       await service.getTranscriptFromVideo(testUrl);
 
       const [, prompt] = analyzeVideoSpy.mock.calls[0];
+      expect(prompt).toContain('## 📝 Complete Audio Transcription');
       expect(prompt).toContain('## ⏱️ Video Length Note');
       expect(prompt).toContain('This analysis covers the first 20 minutes of a longer video');
     });
