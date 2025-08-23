@@ -1,0 +1,9 @@
+# Nixpacks configuration for Railway deployment
+
+[phases.setup]
+# Install Python3 and pip for youtube-dl-exec dependency
+aptPkgs = ["python3", "python3-pip", "python-is-python3"]
+
+[phases.build]
+# Ensure python command is available
+cmds = ["ln -sf /usr/bin/python3 /usr/local/bin/python || true"]
