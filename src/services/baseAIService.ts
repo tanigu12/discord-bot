@@ -80,7 +80,7 @@ export class BaseAIService {
             content: truncatedUserMessage,
           },
         ],
-        max_completion_tokens: options.maxCompletionTokens || 3000,
+        max_completion_tokens: options.maxCompletionTokens || 5000,
         // GPT-5-mini only supports default temperature (1.0)
       };
 
