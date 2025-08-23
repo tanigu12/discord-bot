@@ -55,7 +55,7 @@ export class YoutubeCaptionService {
         {
           fileData: {
             fileUri: youtubeUrl,
-            mimeType: 'video/mp4',
+            mimeType: 'video/3gpp',
           },
         },
       ]);
