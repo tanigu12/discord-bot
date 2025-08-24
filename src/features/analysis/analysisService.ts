@@ -6,7 +6,6 @@ import {
   ResponseHandler,
 } from '../search/response-handlers/types';
 import { WebResponseHandler } from '../search/response-handlers/webResponseHandler';
-import { YoutubeResponseHandler } from '../search/response-handlers/youtubeResponseHandler';
 import { TextResponseHandler } from '../search/response-handlers/textResponseHandler';
 import { AnalysisContext, AnalysisResult, AnalysisConfig, AnalysisSource } from './types';
 
@@ -20,8 +19,8 @@ export class AnalysisService {
 
   constructor() {
     // Initialize handlers for content analysis
+    // Note: YouTube processing is now handled independently by YouTubeAnalysisService
     this.handlers = [
-      new YoutubeResponseHandler(),
       new WebResponseHandler(),
       new TextResponseHandler(), // Fallback handler
     ];
