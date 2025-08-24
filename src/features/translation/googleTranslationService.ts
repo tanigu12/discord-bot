@@ -23,7 +23,10 @@ export class GoogleTranslationService {
       const [translation] = await translate.translate(text, 'en');
       return translation;
     } catch (error) {
-      console.error('Translation to English failed:', error);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Translation to English failed:', error);
+      }
       throw error;
     }
   }
@@ -34,7 +37,10 @@ export class GoogleTranslationService {
       const [translation] = await translate.translate(text, 'ja');
       return translation;
     } catch (error) {
-      console.error('Translation to Japanese failed:', error);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Translation to Japanese failed:', error);
+      }
       throw error;
     }
   }

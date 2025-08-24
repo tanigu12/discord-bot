@@ -94,8 +94,11 @@ export class YouTubeAnalysisService extends BaseAIService {
         error: analysisResult.error || 'Failed to extract transcript'
       };
     } catch (error) {
-      console.error('❌ [DEBUG] Transcript extraction failed:');
-      console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('❌ [DEBUG] Transcript extraction failed:');
+        console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      }
       
       return {
         status: 'error',
@@ -156,8 +159,11 @@ export class YouTubeAnalysisService extends BaseAIService {
       }
 
     } catch (error) {
-      console.error('❌ [DEBUG] Failed to send transcript to Discord:');
-      console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('❌ [DEBUG] Failed to send transcript to Discord:');
+        console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      }
       
       // Send fallback error message
       try {
@@ -165,7 +171,9 @@ export class YouTubeAnalysisService extends BaseAIService {
           await message.reply(`❌ Failed to process YouTube video: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       } catch (replyError) {
-        console.error('❌ Failed to send error reply:', replyError);
+        if (process.env.NODE_ENV !== 'test') {
+          console.error('❌ Failed to send error reply:', replyError);
+        }
       }
     }
   }
@@ -245,8 +253,11 @@ Channel Context: This analysis is being done in a Discord channel for English le
 
       return response;
     } catch (error) {
-      console.error('❌ [DEBUG] Summary generation failed:');
-      console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('❌ [DEBUG] Summary generation failed:');
+        console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      }
       throw error;
     }
   }
@@ -294,7 +305,9 @@ Channel Context: This analysis is being done in a Discord channel for English le
         // Start summary generation asynchronously (don't await)
         this.generateAndSendSummary(message, transcriptResult.transcript, url, onSummaryComplete)
           .catch(error => {
-            console.error('❌ [DEBUG] Async summary generation failed:', error);
+            if (process.env.NODE_ENV !== 'test') {
+              console.error('❌ [DEBUG] Async summary generation failed:', error);
+            }
           });
       }
 
@@ -303,8 +316,11 @@ Channel Context: This analysis is being done in a Discord channel for English le
       return result;
 
     } catch (error) {
-      console.error('❌ [DEBUG] YouTube URL processing failed:');
-      console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('❌ [DEBUG] YouTube URL processing failed:');
+        console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      }
       
       result.error = `Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
       
@@ -314,7 +330,9 @@ Channel Context: This analysis is being done in a Discord channel for English le
           await message.reply(`❌ YouTube processing failed: ${result.error}`);
         }
       } catch (replyError) {
-        console.error('❌ Failed to send error reply:', replyError);
+        if (process.env.NODE_ENV !== 'test') {
+          console.error('❌ Failed to send error reply:', replyError);
+        }
       }
       
       return result;
@@ -358,12 +376,17 @@ Channel Context: This analysis is being done in a Discord channel for English le
           await onComplete();
           console.log('✅ [DEBUG] Completion callback executed successfully');
         } catch (callbackError) {
-          console.error('❌ [DEBUG] Completion callback failed:', callbackError);
+          if (process.env.NODE_ENV !== 'test') {
+            console.error('❌ [DEBUG] Completion callback failed:', callbackError);
+          }
         }
       }
       
     } catch (error) {
-      console.error('❌ [DEBUG] Failed to generate and send summary:', error);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('❌ [DEBUG] Failed to generate and send summary:', error);
+      }
       
       // Send error message about summary failure
       try {
@@ -371,7 +394,9 @@ Channel Context: This analysis is being done in a Discord channel for English le
           await message.channel.send(`⚠️ Summary generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       } catch (sendError) {
-        console.error('❌ Failed to send summary error message:', sendError);
+        if (process.env.NODE_ENV !== 'test') {
+          console.error('❌ Failed to send summary error message:', sendError);
+        }
       }
       
       // Still call completion callback even if summary failed
@@ -380,7 +405,9 @@ Channel Context: This analysis is being done in a Discord channel for English le
           await onComplete();
           console.log('✅ [DEBUG] Completion callback executed after summary error');
         } catch (callbackError) {
-          console.error('❌ [DEBUG] Completion callback failed after summary error:', callbackError);
+          if (process.env.NODE_ENV !== 'test') {
+            console.error('❌ [DEBUG] Completion callback failed after summary error:', callbackError);
+          }
         }
       }
     }

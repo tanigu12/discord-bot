@@ -70,7 +70,10 @@ export class ReplyStrategyService {
         return { strategy: 'message', characterCount, sent: true };
       }
     } catch (error) {
-      console.error('❌ Error in conditional reply:', error);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('❌ Error in conditional reply:', error);
+      }
 
       // Fallback: try sending as attachment if direct message fails
       if (!useAttachment) {
@@ -90,7 +93,10 @@ export class ReplyStrategyService {
 
           return { strategy: 'attachment', characterCount, sent: true };
         } catch (fallbackError) {
-          console.error('💥 Fallback also failed:', fallbackError);
+          // Only log in non-test environment
+          if (process.env.NODE_ENV !== 'test') {
+            console.error('💥 Fallback also failed:', fallbackError);
+          }
           throw fallbackError;
         }
       }
@@ -139,7 +145,10 @@ export class ReplyStrategyService {
         return { strategy: 'message', characterCount, sent: true };
       }
     } catch (error) {
-      console.error('❌ Error in conditional interaction reply:', error);
+      // Only log in non-test environment
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('❌ Error in conditional interaction reply:', error);
+      }
 
       // Fallback: try sending as attachment if direct message fails
       if (!useAttachment) {
@@ -159,7 +168,10 @@ export class ReplyStrategyService {
 
           return { strategy: 'attachment', characterCount, sent: true };
         } catch (fallbackError) {
-          console.error('💥 Interaction fallback also failed:', fallbackError);
+          // Only log in non-test environment
+          if (process.env.NODE_ENV !== 'test') {
+            console.error('💥 Interaction fallback also failed:', fallbackError);
+          }
           throw fallbackError;
         }
       }

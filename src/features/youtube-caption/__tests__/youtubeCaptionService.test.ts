@@ -203,13 +203,13 @@ describe('YoutubeCaptionService', () => {
       expect(analyzeVideoSpy).toHaveBeenCalledWith(
         testUrl,
         expect.stringContaining(
-          'Audio processing automatically limited to first 20 minutes (1200s) via youtube-dl-exec'
+          'Process ONLY the first 30 minutes of content - stop processing after 30:00'
         )
       );
       expect(analyzeVideoSpy).toHaveBeenCalledWith(
         testUrl,
         expect.stringContaining(
-          'This transcription covers the first 20 minutes of the video (extracted audio) for focused learning'
+          'Audio Processing: Analyzing first 30 minutes of video content with timestamp markers'
         )
       );
 
@@ -218,7 +218,7 @@ describe('YoutubeCaptionService', () => {
         '🔍 [DEBUG] YoutubeCaptionService.getTranscriptFromVideo() starting'
       );
       expect(console.log).toHaveBeenCalledWith(
-        '🔍 [DEBUG] Enhanced prompt created for audio-based analysis'
+        '🔍 [DEBUG] Enhanced prompt created for first 30 minutes audio-based analysis'
       );
     });
 
@@ -234,8 +234,8 @@ describe('YoutubeCaptionService', () => {
 
       const [, prompt] = analyzeVideoSpy.mock.calls[0];
       expect(prompt).toContain('## 📝 Complete Audio Transcription');
-      expect(prompt).toContain('## ⏱️ Video Length Note');
-      expect(prompt).toContain('This analysis covers the first 20 minutes of a longer video');
+      expect(prompt).toContain('## 📊 Video Analysis Summary');
+      expect(prompt).toContain('Only the first 30 minutes were analyzed for optimal processing efficiency');
     });
   });
 
