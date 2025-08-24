@@ -254,7 +254,12 @@ Channel Context: This analysis is being done in a Discord channel for English le
   /**
    * Main orchestration method: Process YouTube URL with three-phase approach
    */
-  async processYouTubeUrl(message: Message, url: string, shouldGenerateSummary: boolean = true): Promise<YouTubeAnalysisResult> {
+  async processYouTubeUrl(
+    message: Message, 
+    url: string, 
+    shouldGenerateSummary: boolean = true,
+    onSummaryComplete?: () => Promise<void>
+  ): Promise<YouTubeAnalysisResult> {
     console.log('🎬 [DEBUG] YouTubeAnalysisService.processYouTubeUrl() starting');
     console.log(`   URL: ${url}`);
     console.log(`   Should generate summary: ${shouldGenerateSummary}`);
@@ -287,7 +292,7 @@ Channel Context: This analysis is being done in a Discord channel for English le
         console.log('🤖 [DEBUG] Phase 3: Generating summary asynchronously...');
         
         // Start summary generation asynchronously (don't await)
-        this.generateAndSendSummary(message, transcriptResult.transcript, url)
+        this.generateAndSendSummary(message, transcriptResult.transcript, url, onSummaryComplete)
           .catch(error => {
             console.error('❌ [DEBUG] Async summary generation failed:', error);
           });
@@ -319,7 +324,12 @@ Channel Context: This analysis is being done in a Discord channel for English le
   /**
    * Generate summary and send as separate message (async operation)
    */
-  private async generateAndSendSummary(message: Message, transcript: string, url: string): Promise<void> {
+  private async generateAndSendSummary(
+    message: Message, 
+    transcript: string, 
+    url: string,
+    onComplete?: () => Promise<void>
+  ): Promise<void> {
     try {
       console.log('📊 [DEBUG] Starting async summary generation...');
       
@@ -342,6 +352,16 @@ Channel Context: This analysis is being done in a Discord channel for English le
 
       console.log('✅ [DEBUG] Summary sent to Discord successfully');
       
+      // Call completion callback if provided
+      if (onComplete) {
+        try {
+          await onComplete();
+          console.log('✅ [DEBUG] Completion callback executed successfully');
+        } catch (callbackError) {
+          console.error('❌ [DEBUG] Completion callback failed:', callbackError);
+        }
+      }
+      
     } catch (error) {
       console.error('❌ [DEBUG] Failed to generate and send summary:', error);
       
@@ -352,6 +372,16 @@ Channel Context: This analysis is being done in a Discord channel for English le
         }
       } catch (sendError) {
         console.error('❌ Failed to send summary error message:', sendError);
+      }
+      
+      // Still call completion callback even if summary failed
+      if (onComplete) {
+        try {
+          await onComplete();
+          console.log('✅ [DEBUG] Completion callback executed after summary error');
+        } catch (callbackError) {
+          console.error('❌ [DEBUG] Completion callback failed after summary error:', callbackError);
+        }
       }
     }
   }

@@ -26,6 +26,7 @@ export class YoutubeCaptionService {
   private async downloadAudio(youtubeUrl: string): Promise<{ audioPath: string; videoId: string }> {
     console.log(`🎵 [DEBUG] YoutubeCaptionService.downloadAudio() starting`);
     console.log(`   URL: ${youtubeUrl}`);
+    console.log(`   Time limit: First 30 minutes only`);
 
     try {
       // Extract video ID for filename
@@ -38,11 +39,12 @@ export class YoutubeCaptionService {
 
       const startTime = Date.now();
 
-      // Download audio only - using youtube-dl's built-in audio extraction without ffmpeg
+      // Download audio only - limit to first 30 minutes using youtube-dl's built-in options
       await youtubedl(youtubeUrl, {
         format: 'bestaudio', // Get best audio format available
         output: `${outputPath}.%(ext)s`,
-        // Use youtube-dl's built-in time limiting (no ffmpeg required)
+        // Time range options to download only first 30 minutes (30 minutes = 1800 seconds)
+        downloadSections: '*0:00:00-0:30:00', // Download from 0:00:00 to 0:30:00
         playlistEnd: 1, // Only download one video
         noPlaylist: true, // Don't download playlist
       });
@@ -65,6 +67,7 @@ export class YoutubeCaptionService {
       console.log(`✅ [DEBUG] Audio download completed in ${downloadTime}ms`);
       console.log(`   Audio file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
       console.log(`   Audio file path: ${audioPath}`);
+      console.log(`   Content: First 30 minutes only`);
 
       return { audioPath, videoId };
     } catch (error) {
@@ -246,20 +249,20 @@ export class YoutubeCaptionService {
     const prompt = `You are a specialized audio transcription extractor for YouTube content. Your primary task is to:
 
 1. Extract the most accurate and complete transcription from this audio file (extracted from YouTube)
-2. **IMPORTANT: Process the ENTIRE video content - no time restrictions**
+2. **IMPORTANT: Process ONLY the first 30 minutes of content - stop processing after 30:00**
 3. Preserve all spoken content exactly as said, including natural speech patterns
 4. Maintain proper timing and flow of the conversation
-5. Include all dialogue, narration, and spoken content from the audio
+5. Include all dialogue, narration, and spoken content from the first 30 minutes
 6. **CRITICAL: Include approximate timestamps for major topic transitions**
 
 **CRITICAL: Focus on getting the precise transcription first. Extract every word that is spoken in the audio as accurately as possible.**
 
-**Audio Processing: Analyzing complete video content with timestamp markers.**
+**Audio Processing: Analyzing first 30 minutes of video content with timestamp markers.**
 
 Format your response as follows:
 
-## 📝 Complete Audio Transcription  
-[Provide the complete, accurate transcription of all spoken content from the audio. Include speaker identification if multiple people are talking. Preserve natural speech patterns, including "um", "uh", false starts, and corrections as they actually occur in the audio.]
+## 📝 Complete Audio Transcription (First 30 Minutes)
+[Provide the complete, accurate transcription of all spoken content from the first 30 minutes of audio. Include speaker identification if multiple people are talking. Preserve natural speech patterns, including "um", "uh", false starts, and corrections as they actually occur in the audio.]
 
 ## 🎯 Organized Content for English Learners
 
@@ -273,25 +276,27 @@ Format your response as follows:
 **Japanese Translation:** [Natural Japanese translation of this section]
 **Key Learning Points:** [Important vocabulary, expressions, or grammar patterns]
 
-[Continue this pattern for all logical sections with appropriate timestamps...]
+[Continue this pattern for all logical sections with appropriate timestamps within the first 30 minutes...]
 
 ## 📊 Video Analysis Summary
-**Total Content Processed:** [Full video length]
+**Content Processed:** First 30 minutes of video
 **Number of Sections:** [X sections based on topic transitions]
-**Key Topics Covered:** [Brief list of main topics with timestamps]
+**Key Topics Covered:** [Brief list of main topics with timestamps from 00:00:00 to 30:00:00]
+**Processing Note:** Only the first 30 minutes were analyzed for optimal processing efficiency
 
 Guidelines:
-- FIRST PRIORITY: Get the complete, accurate transcription from entire audio
+- FIRST PRIORITY: Get the complete, accurate transcription from first 30 minutes of audio
 - Include timestamps in format [HH:MM:SS] for each section header
-- Process COMPLETE video - no time limitations
+- Process ONLY first 30 minutes - stop at 30:00:00
 - Preserve exact wording - do not paraphrase or correct the original speech
 - Include natural speech elements (hesitations, corrections, etc.)
-- Provide timestamps based on approximate timing of topic transitions
-- If video is very long (>2 hours), create logical section breaks every 10-15 minutes
+- Provide timestamps based on approximate timing of topic transitions within first 30 minutes
+- Create logical section breaks every 5-10 minutes within the 30-minute window
+- If the video is shorter than 30 minutes, process the entire video
 `;
 
-    console.log(`🔍 [DEBUG] Enhanced prompt created for full audio-based analysis`);
-    console.log(`   Calling analyzeVideo with complete audio extraction method...`);
+    console.log(`🔍 [DEBUG] Enhanced prompt created for first 30 minutes audio-based analysis`);
+    console.log(`   Calling analyzeVideo with limited time audio extraction method...`);
 
     return this.analyzeVideo(youtubeUrl, prompt);
   }
