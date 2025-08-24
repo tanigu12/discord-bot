@@ -172,6 +172,12 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
       }
     }
 
+    // Check if this is a bot reaction in research channel and ignore it
+    if (user.bot && reaction.message.channel.type === 0 && reaction.message.channel.name === 'research') {
+      console.log('🤖 Bot reaction in research channel detected, ignoring...');
+      return;
+    }
+
     console.log(`📄 Message content preview: "${reaction.message.content?.substring(0, 50)}..."`);
     console.log('🚀 Calling reaction handler...');
 
