@@ -1,5 +1,4 @@
 import { Message } from 'discord.js';
-import { ContextCollectorService } from '../../services/contextCollectorService';
 import { ReplyStrategyService } from '../../services/replyStrategyService';
 import { TextAggregator } from '../../utils/textAggregator';
 import {
@@ -17,55 +16,15 @@ import { AnalysisContext, AnalysisResult, AnalysisConfig, AnalysisSource } from 
  * Does not include AI personality - for basic content processing only
  */
 export class AnalysisService {
-  private contextCollector: ContextCollectorService;
   private handlers: ResponseHandler[];
 
   constructor() {
-    this.contextCollector = new ContextCollectorService();
-
     // Initialize handlers for content analysis
     this.handlers = [
       new YoutubeResponseHandler(),
       new WebResponseHandler(),
       new TextResponseHandler(), // Fallback handler
     ];
-  }
-
-
-  /**
-   * Collect conversation context for reply-based interactions
-   * Used when analyzing messages in specific channels
-   */
-  async collectReplyContext(source: Message, messageLimit: number): Promise<AnalysisContext> {
-    const channel = source.channel;
-
-    // Only collect context for text channels
-    const shouldCollectContext = channel.type === 0;
-
-    if (!shouldCollectContext) {
-      console.log('📝 Skipping reply context - not in a text channel');
-      return { context: null, contextInfo: '' };
-    }
-
-    console.log('💬 Collecting channel conversation context...');
-
-    let context = null;
-    let contextInfo = '';
-
-    try {
-      context = await this.contextCollector.collectReplyContext(source, messageLimit);
-
-      const channelName = channel.name || 'Unknown Channel';
-      contextInfo = `\n\n**Channel Context:** Analyzed ${context.messageCount} recent messages from #${channelName} channel with ${context.participants.length} participants over ${context.timespan}`;
-
-      console.log(
-        `✅ Reply context collected from #${channelName}: ${context.messageCount} messages from ${context.participants.join(', ')}`
-      );
-    } catch (error) {
-      console.warn('⚠️ Failed to collect reply context, falling back to regular analysis:', error);
-    }
-
-    return { context, contextInfo };
   }
 
   /**
@@ -149,9 +108,7 @@ export class AnalysisService {
     });
 
     // Log the strategy used
-    console.log(
-      `🎯 Analysis reply: ${ReplyStrategyService.getStrategyStatusMessage(replyResult)}`
-    );
+    console.log(`🎯 Analysis reply: ${ReplyStrategyService.getStrategyStatusMessage(replyResult)}`);
 
     // If sent as direct message, add context info as follow-up
     if (replyResult.strategy === 'message' && contextStatus) {
@@ -168,11 +125,7 @@ export class AnalysisService {
   /**
    * Handle errors for both interaction and message contexts
    */
-  async handleError(
-    source: AnalysisSource,
-    error: unknown,
-    query: string
-  ): Promise<void> {
+  async handleError(source: AnalysisSource, error: unknown, query: string): Promise<void> {
     console.error('❌ Error in analysis service:', error);
 
     const errorMessage = '❌ **Analysis Error**\n\n';
@@ -231,5 +184,4 @@ export class AnalysisService {
 
     return `• **Error Details**: ${message}\n• Please try again or contact support if the issue persists`;
   }
-
 }

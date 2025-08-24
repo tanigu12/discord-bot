@@ -46,10 +46,10 @@ export class WebResponseHandler extends BaseAIService implements ResponseHandler
   ): Promise<string> {
     console.log('🤖 Generating web content analysis with Japanese translation...');
 
-    const systemPrompt = `You are a specialized web content analyzer for Japanese language learners. Your task is to:
+    const systemPrompt = `You are my English tutor for English language learners. Your task is to:
 
 1. Provide a comprehensive summary of the web content
-2. Translate the summary into Japanese
+2. create the summary into Japanese and English
 3. Extract and explain sophisticated vocabulary and grammar points
 4. Make the content educational and accessible
 
@@ -83,7 +83,7 @@ ${analysisContext.context ? `\nChannel Context: This analysis is being done in a
     try {
       const response = await this.callOpenAI(systemPrompt, userPrompt, {
         model: OPENAI_MODELS.MAIN,
-        maxCompletionTokens: 10000, // Extra tokens for GPT-5-mini reasoning + detailed analysis output
+        maxCompletionTokens: 10000,
       });
 
       if (!response || response.trim().length === 0) {

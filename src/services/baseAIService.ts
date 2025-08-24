@@ -47,24 +47,9 @@ export class BaseAIService {
     try {
       const openai = this.getOpenAI();
 
-      // Limit userMessage length to prevent "AI response failed" due to excessive input
-      const maxUserMessageLength = 5000;
-      const truncatedUserMessage =
-        userMessage.length > maxUserMessageLength
-          ? userMessage.slice(0, maxUserMessageLength) +
-            '\n\n[Content truncated due to length limit...]'
-          : userMessage;
-
-      // Log if truncation occurred
-      if (userMessage.length > maxUserMessageLength) {
-        console.warn(
-          `[WARN]UserMessage truncated from ${userMessage.length} to ${truncatedUserMessage.length} characters`
-        );
-      }
-
       // check prompt
       console.info('[log]systemPrompt================', systemPrompt);
-      console.info('[log]userPrompt================', truncatedUserMessage);
+      console.info('[log]userPrompt================', userMessage);
       console.info('[log]options================', JSON.stringify(options));
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -77,7 +62,7 @@ export class BaseAIService {
           },
           {
             role: 'user',
-            content: truncatedUserMessage,
+            content: userMessage,
           },
         ],
         max_completion_tokens: options.maxCompletionTokens || 5000,
