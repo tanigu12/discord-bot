@@ -1,9 +1,12 @@
 # Nixpacks configuration for Railway deployment
 
 [phases.setup]
-# Install Python3 and pip for youtube-dl-exec dependency
-aptPkgs = ["python3", "python3-pip", "python-is-python3"]
+# Install Python3, pip for youtube-dl-exec dependency and FFmpeg for audio processing
+aptPkgs = ["python3", "python3-pip", "python-is-python3", "ffmpeg"]
 
 [phases.build]
-# Ensure python command is available
-cmds = ["ln -sf /usr/bin/python3 /usr/local/bin/python || true"]
+# Ensure python command is available and verify FFmpeg installation
+cmds = [
+  "ln -sf /usr/bin/python3 /usr/local/bin/python || true",
+  "ffmpeg -version || echo 'FFmpeg installation check failed'"
+]
