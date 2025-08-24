@@ -37,7 +37,7 @@ export class YoutubeCaptionService {
       console.log(`   Output path: ${outputPath}.%(ext)s`);
 
       const startTime = Date.now();
-      
+
       // Download audio only - using youtube-dl's built-in audio extraction without ffmpeg
       await youtubedl(youtubeUrl, {
         format: 'bestaudio', // Get best audio format available
@@ -48,20 +48,20 @@ export class YoutubeCaptionService {
       });
 
       const downloadTime = Date.now() - startTime;
-      
+
       // Find the downloaded file (extension varies based on source format)
       const outputDir = path.dirname(outputPath);
       const baseFileName = path.basename(outputPath);
       const files = await fs.readdir(outputDir);
       const audioFile = files.find(file => file.startsWith(baseFileName));
-      
+
       if (!audioFile) {
         throw new Error('Downloaded audio file not found');
       }
-      
+
       const audioPath = path.join(outputDir, audioFile);
       const stats = await fs.stat(audioPath);
-      
+
       console.log(`✅ [DEBUG] Audio download completed in ${downloadTime}ms`);
       console.log(`   Audio file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
       console.log(`   Audio file path: ${audioPath}`);
@@ -72,7 +72,9 @@ export class YoutubeCaptionService {
       console.error(`   Error type: ${error?.constructor?.name}`);
       console.error(`   Error message: ${error instanceof Error ? error.message : String(error)}`);
       console.error(`   Full error:`, error);
-      throw new Error(`Failed to download audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to download audio: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -124,7 +126,9 @@ export class YoutubeCaptionService {
       await fs.unlink(audioPath);
       console.log(`🗑️ [DEBUG] Cleaned up audio file: ${audioPath}`);
     } catch (error) {
-      console.warn(`⚠️ [DEBUG] Failed to cleanup audio file: ${error instanceof Error ? error.message : String(error)}`);
+      console.warn(
+        `⚠️ [DEBUG] Failed to cleanup audio file: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -153,7 +157,7 @@ export class YoutubeCaptionService {
     }
 
     console.log(`🎬 [DEBUG] Valid YouTube URL confirmed, starting audio-based analysis`);
-    console.log(`   Model: gemini-1.5-pro`);
+    console.log(`   Model: gemini-2.5-pro`);
     console.log(`   Method: Audio extraction + Gemini analysis`);
 
     let audioPath: string | null = null;
@@ -168,7 +172,7 @@ export class YoutubeCaptionService {
       console.log(`🔍 [DEBUG] Step 2: Reading audio file for Gemini analysis...`);
       const audioBuffer = await fs.readFile(audioPath);
       const audioBase64 = audioBuffer.toString('base64');
-      
+
       // Determine MIME type based on file extension
       const audioExtension = path.extname(audioPath).toLowerCase();
       const mimeType = this.getAudioMimeType(audioExtension);
@@ -178,7 +182,7 @@ export class YoutubeCaptionService {
       console.log(`   Audio format: ${audioExtension} (${mimeType})`);
 
       // Step 3: Analyze with Gemini
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
       console.log(`🔍 [DEBUG] Step 3: Analyzing audio with Gemini...`);
       console.log(`   Video ID: ${videoId}`);
       console.log(`   Prompt preview: ${prompt.substring(0, 200)}...`);
@@ -242,48 +246,52 @@ export class YoutubeCaptionService {
     const prompt = `You are a specialized audio transcription extractor for YouTube content. Your primary task is to:
 
 1. Extract the most accurate and complete transcription from this audio file (extracted from YouTube)
-2. **IMPORTANT: This audio is automatically limited to the first 20 minutes (1200 seconds) for manageable learning content**
+2. **IMPORTANT: Process the ENTIRE video content - no time restrictions**
 3. Preserve all spoken content exactly as said, including natural speech patterns
 4. Maintain proper timing and flow of the conversation
 5. Include all dialogue, narration, and spoken content from the audio
+6. **CRITICAL: Include approximate timestamps for major topic transitions**
 
 **CRITICAL: Focus on getting the precise transcription first. Extract every word that is spoken in the audio as accurately as possible.**
 
-**Audio Processing: Analyzing first 20 minutes only (extracted audio from YouTube video for focused learning sessions).**
+**Audio Processing: Analyzing complete video content with timestamp markers.**
 
 Format your response as follows:
 
 ## 📝 Complete Audio Transcription  
-[Note: "This transcription covers the first 20 minutes of the video (extracted audio) for focused learning."]
 [Provide the complete, accurate transcription of all spoken content from the audio. Include speaker identification if multiple people are talking. Preserve natural speech patterns, including "um", "uh", false starts, and corrections as they actually occur in the audio.]
 
 ## 🎯 Organized Content for English Learners
 
-### Section 1: [Topic/Theme Title]
+### [00:00:00] Section 1: [Topic/Theme Title]
 **Original Transcript:** [Exact transcript portion for this section - DO NOT MODIFY]
 **Japanese Translation:** [Natural Japanese translation of this section]
 **Key Learning Points:** [Important vocabulary, expressions, or grammar patterns]
 
-### Section 2: [Topic/Theme Title]  
+### [HH:MM:SS] Section 2: [Topic/Theme Title]  
 **Original Transcript:** [Exact transcript portion for this section - DO NOT MODIFY]
 **Japanese Translation:** [Natural Japanese translation of this section]
 **Key Learning Points:** [Important vocabulary, expressions, or grammar patterns]
 
-[Continue this pattern for all logical sections...]
+[Continue this pattern for all logical sections with appropriate timestamps...]
 
-## ⏱️ Video Length Note
-[If the video is longer than 20 minutes, include: "This analysis covers the first 20 minutes of a longer video. For continued learning, you can request analysis of subsequent segments."]
+## 📊 Video Analysis Summary
+**Total Content Processed:** [Full video length]
+**Number of Sections:** [X sections based on topic transitions]
+**Key Topics Covered:** [Brief list of main topics with timestamps]
 
 Guidelines:
-- FIRST PRIORITY: Get the complete, accurate transcription from audio
-- Audio processing automatically limited to first 20 minutes (1200s) via youtube-dl-exec
+- FIRST PRIORITY: Get the complete, accurate transcription from entire audio
+- Include timestamps in format [HH:MM:SS] for each section header
+- Process COMPLETE video - no time limitations
 - Preserve exact wording - do not paraphrase or correct the original speech
 - Include natural speech elements (hesitations, corrections, etc.)
-- Content is limited to first 20 minutes of extracted audio
+- Provide timestamps based on approximate timing of topic transitions
+- If video is very long (>2 hours), create logical section breaks every 10-15 minutes
 `;
 
-    console.log(`🔍 [DEBUG] Enhanced prompt created for audio-based analysis`);
-    console.log(`   Calling analyzeVideo with audio extraction method...`);
+    console.log(`🔍 [DEBUG] Enhanced prompt created for full audio-based analysis`);
+    console.log(`   Calling analyzeVideo with complete audio extraction method...`);
 
     return this.analyzeVideo(youtubeUrl, prompt);
   }

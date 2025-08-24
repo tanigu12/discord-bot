@@ -90,7 +90,7 @@ describe('YoutubeResponseHandler', () => {
 
       expect(result.content).toBe(mockSummary);
       expect(result.sourceInfo).toContain(testUrl);
-      expect(result.sourceInfo).toContain('YouTube Video Analysis');
+      expect(result.sourceInfo).toContain('YouTube Video Complete Transcript');
       expect(result.sourceInfo).toContain('Gemini AI Analysis');
       expect(mockYoutubeCaptionService.getTranscriptFromVideo).toHaveBeenCalledWith(testUrl);
     });
@@ -141,7 +141,7 @@ describe('YoutubeResponseHandler', () => {
   });
 
   describe('generateResponse', () => {
-    it('should generate response with enhanced 20-minute API limit prompt', async () => {
+    it('should generate response with timestamp support and full video analysis', async () => {
       const testUrl = 'https://www.youtube.com/watch?v=wUrvXN-yiyo';
       const contentResult = {
         content: 'Test video transcript content for analysis...',
@@ -161,10 +161,11 @@ describe('YoutubeResponseHandler', () => {
       expect(result).toBe(mockResponse);
       expect(handler['callOpenAI']).toHaveBeenCalled();
 
-      // Check that the system prompt includes 20-minute API limit
+      // Check that the system prompt includes timestamp support and full video analysis
       const [systemPrompt, userPrompt] = (handler['callOpenAI'] as any).mock.calls[0];
-      expect(systemPrompt).toContain('This video analysis is automatically limited to the first 20 minutes (1200 seconds) via API');
-      expect(systemPrompt).toContain('Analysis automatically limited to first 20 minutes via API');
+      expect(systemPrompt).toContain('Include timestamps [HH:MM:SS] in ALL section headers');
+      expect(systemPrompt).toContain('CRITICAL: Include timestamps [HH:MM:SS]');
+      expect(systemPrompt).toContain('[HH:MM:SS] Section');
       expect(userPrompt).toContain(testUrl);
       expect(userPrompt).toContain(contentResult.content);
     });

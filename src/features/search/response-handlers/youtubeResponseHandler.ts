@@ -37,10 +37,12 @@ export class YoutubeResponseHandler extends BaseAIService implements ResponseHan
       console.log(`   Error: ${analysisResult.error || 'none'}`);
 
       if (analysisResult.status === 'success' && analysisResult.summary) {
-        const sourceInfo = `\n\n**Source:** ${query}\n**Type:** YouTube Video Analysis\n**Method:** Gemini AI Analysis`;
+        const sourceInfo = `\n\n**Source:** ${query}\n**Type:** YouTube Video Complete Transcript\n**Method:** Gemini AI Analysis`;
         console.log('✅ [DEBUG] YouTube video analyzed successfully with Gemini');
         console.log(`   Content preview: ${analysisResult.summary.substring(0, 200)}...`);
 
+        // Return only the transcript content - this will be sent as the first reply
+        // The content contains the complete transcript with timestamps as formatted by Gemini
         return { content: analysisResult.summary, sourceInfo };
       }
 
@@ -73,47 +75,44 @@ export class YoutubeResponseHandler extends BaseAIService implements ResponseHan
     console.log(`   Query: ${query}`);
     console.log(`   Has analysis context: ${!!analysisContext.context}`);
 
-    const systemPrompt = `You are a specialized YouTube video analyzer for Japanese language learners. Your task is to:
+    const systemPrompt = `You are a specialized English tutor using YouTube audio for English language learners. Your task is to:
 
-    
-1. Understand the entire context of the video captions
-2. This video analysis is automatically limited to the first 20 minutes (1200 seconds) via API for manageable learning content
-3. Divide the content into logical sections based on topics/themes
-4. Translate each section into Japanese while maintaining context
-5. Provide clear section headers that reflect the content
-
-**CRITICAL: DO NOT MODIFY OR CHANGE THE ORIGINAL ENGLISH CAPTIONS IN ANY WAY. The user studies these captions while listening to YouTube videos for language learning, so exact original text preservation is essential.**
-
-**Video Processing: Analysis automatically limited to first 20 minutes via API to keep learning sessions focused and manageable.**
+1. Understand the entire context of the audio captions
+2. Divide the content into logical sections based on topics/themes
+3. Create each section Japanese and English summary while maintaining context
+4. Provide clear section headers with timestamps that reflect the content
+5. **IMPORTANT: Include timestamps in section titles using format [HH:MM:SS]**
 
 Format your response as follows:
-
-## Section 1: [English Topic/Theme Title]
-[Original English content for this section - PRESERVE EXACTLY AS PROVIDED]
-
-## Section 1（日本語）: [Japanese translation of the topic/theme title]
-[Japanese translation of the content, maintaining natural flow and context]
-
-## Section 2: [English Topic/Theme Title]
-[Original English content for this section - PRESERVE EXACTLY AS PROVIDED]
-
-## Section 2（日本語）: [Japanese translation of the topic/theme title]
-[Japanese translation of the content]
-
-[Continue this pattern for all logical sections...]
 
 ## Video Summary (動画要約)
 [Brief summary in both English and Japanese about what the video covers]
 
+## [00:00:00] Section 1: [English Topic/Theme Title]
+[English summary for this section]
+
+## [00:00:00]（日本語）: [Japanese translation of the topic/theme title]
+[Japanese summary for this section]
+
+## [HH:MM:SS] Section 2: [English Topic/Theme Title]
+[English summary for this section]
+
+## [HH:MM:SS]（日本語）: [Japanese translation of the topic/theme title]
+[Japanese summary for this section]
+
+[Continue this pattern for all logical sections with appropriate timestamps...]
+
 Guidelines:
 - Create 3-6 sections based on natural topic breaks
+- **CRITICAL: Include timestamps [HH:MM:SS] in ALL section headers**
+- Extract timestamps from the provided transcript content
+- Use approximate timestamps based on content flow and topic transitions
 - Maintain context flow between sections
-- **NEVER modify, correct, or change the original English captions - copy them exactly**
-- Translate naturally into Japanese, not word-for-word
-- Use appropriate Japanese expressions and terminology
-- Make section titles descriptive and helpful`;
+- Make section titles descriptive and helpful
+- If exact timestamps aren't available, estimate based on content order and typical speech pace
+- For very long videos, create logical breaks every 10-20 minutes`;
 
-    const userPrompt = `Please analyze these YouTube video captions and provide sectioned translation as specified:
+    const userPrompt = `Please analyze these YouTube video captions and provide sectioned translation with timestamps as specified:
 
 Video URL: ${query}
 Caption content to analyze:
@@ -131,7 +130,7 @@ ${analysisContext.context ? `\nChannel Context: This analysis is being done in a
       const startTime = Date.now();
       const response = await this.callOpenAI(systemPrompt, userPrompt, {
         model: OPENAI_MODELS.MAIN,
-        maxCompletionTokens: 8000,
+        maxCompletionTokens: 10000,
       });
       const apiCallTime = Date.now() - startTime;
 
