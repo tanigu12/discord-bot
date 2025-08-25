@@ -23,7 +23,7 @@ export class TranslationFormatter {
     // 元のターゲット文を追加
     embed.addFields({
       name: `Target Sentence (${this.getLanguageDisplayName(result.detectedLanguage)})`,
-      value: this.truncateText(result.targetSentence, 1000),
+      value: result.targetSentence,
       inline: false,
     });
 
@@ -69,23 +69,23 @@ export class TranslationFormatter {
     switch (result.scenario) {
       case 'japanese-only':
         if (result.threeLevelTranslations) {
-          summaryContent = `🟢 **Beginner:** ${this.truncateText(result.threeLevelTranslations.beginner, 200)}\n` +
-                          `🟡 **Intermediate:** ${this.truncateText(result.threeLevelTranslations.intermediate, 200)}\n` +
-                          `🔴 **Upper:** ${this.truncateText(result.threeLevelTranslations.upper, 200)}`;
+          summaryContent = `🟢 **Beginner:** ${result.threeLevelTranslations.beginner}\n` +
+                          `🟡 **Intermediate:** ${result.threeLevelTranslations.intermediate}\n` +
+                          `🔴 **Upper:** ${result.threeLevelTranslations.upper}`;
         }
         break;
       
       case 'japanese-with-try':
         if (result.threeLevelTranslations && result.translationEvaluation) {
-          summaryContent = `🎯 **Evaluation:** ${this.truncateText(result.translationEvaluation.evaluation, 300)}\n` +
+          summaryContent = `🎯 **Evaluation:** ${result.translationEvaluation.evaluation}\n` +
                           `💡 **Key Point:** ${result.translationEvaluation.studyPoints[0] || 'N/A'}`;
         }
         break;
       
       case 'english-only':
         if (result.japaneseTranslation && result.vocabularyExplanation) {
-          summaryContent = `🇯🇵 **Translation:** ${this.truncateText(result.japaneseTranslation, 200)}\n` +
-                          `📖 **Key Vocabulary:** ${this.truncateText(result.vocabularyExplanation, 200)}`;
+          summaryContent = `🇯🇵 **Translation:** ${result.japaneseTranslation}\n` +
+                          `📖 **Key Vocabulary:** ${result.vocabularyExplanation}`;
         }
         break;
     }
