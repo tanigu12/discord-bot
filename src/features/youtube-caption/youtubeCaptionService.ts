@@ -26,7 +26,7 @@ export class YoutubeCaptionService {
   private async downloadAudio(youtubeUrl: string): Promise<{ audioPath: string; videoId: string }> {
     console.log(`🎵 [DEBUG] YoutubeCaptionService.downloadAudio() starting`);
     console.log(`   URL: ${youtubeUrl}`);
-    console.log(`   Time limit: First 30 minutes only`);
+    console.log(`   File size limit: Max 50MB (roughly 30-45 minutes of audio)`);
 
     try {
       // Extract video ID for filename
@@ -43,12 +43,10 @@ export class YoutubeCaptionService {
       const cookiesPath = path.join(process.cwd(), 'cookies.txt');
       console.log(`   Using cookies file: ${cookiesPath}`);
 
-      // Download audio only - limit to first 30 minutes using youtube-dl's built-in options
+      // Download audio only - use file size limit instead of time-based downloading to avoid ffmpeg dependency
       await youtubedl(youtubeUrl, {
-        format: 'bestaudio', // Get best audio format available
+        format: 'bestaudio[filesize<50M]', // Limit file size to roughly 30 minutes worth of audio
         output: `${outputPath}.%(ext)s`,
-        // Time range options to download only first 30 minutes (30 minutes = 1800 seconds)
-        downloadSections: '*0:00:00-0:30:00', // Download from 0:00:00 to 0:30:00
         playlistEnd: 1, // Only download one video
         noPlaylist: true, // Don't download playlist
         cookies: cookiesPath, // Use cookies.txt file
@@ -72,7 +70,7 @@ export class YoutubeCaptionService {
       console.log(`✅ [DEBUG] Audio download completed in ${downloadTime}ms`);
       console.log(`   Audio file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
       console.log(`   Audio file path: ${audioPath}`);
-      console.log(`   Content: First 30 minutes only`);
+      console.log(`   Content: Limited by file size (max 50MB)`);
       console.log(`   Used cookies: ${cookiesPath}`);
 
       return { audioPath, videoId };
