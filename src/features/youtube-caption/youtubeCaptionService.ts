@@ -39,6 +39,10 @@ export class YoutubeCaptionService {
 
       const startTime = Date.now();
 
+      // Path to cookies file
+      const cookiesPath = path.join(process.cwd(), 'cookies.txt');
+      console.log(`   Using cookies file: ${cookiesPath}`);
+
       // Download audio only - limit to first 30 minutes using youtube-dl's built-in options
       await youtubedl(youtubeUrl, {
         format: 'bestaudio', // Get best audio format available
@@ -47,6 +51,7 @@ export class YoutubeCaptionService {
         downloadSections: '*0:00:00-0:30:00', // Download from 0:00:00 to 0:30:00
         playlistEnd: 1, // Only download one video
         noPlaylist: true, // Don't download playlist
+        cookies: cookiesPath, // Use cookies.txt file
       });
 
       const downloadTime = Date.now() - startTime;
@@ -68,6 +73,7 @@ export class YoutubeCaptionService {
       console.log(`   Audio file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
       console.log(`   Audio file path: ${audioPath}`);
       console.log(`   Content: First 30 minutes only`);
+      console.log(`   Used cookies: ${cookiesPath}`);
 
       return { audioPath, videoId };
     } catch (error) {

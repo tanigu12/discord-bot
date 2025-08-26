@@ -115,13 +115,6 @@ export class TranslationFormatter {
     }
   }
 
-  // テキストを指定長で切り詰め
-  private truncateText(text: string, maxLength: number): string {
-    if (text.length <= maxLength) {
-      return text;
-    }
-    return text.substring(0, maxLength - 3) + '...';
-  }
 
   // 長いテキストを100文字ごとに改行
   private addLineBreaks(text: string, maxLineLength: number = 100): string {
