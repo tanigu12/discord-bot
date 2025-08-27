@@ -111,6 +111,11 @@ export class PomodoroService {
     return true;
   }
 
+  getThreadId(userId: string): string | undefined {
+    const session = this.sessions.get(userId);
+    return session?.threadId;
+  }
+
   updateConfig(userId: string, config: Partial<PomodoroConfig>): boolean {
     const session = this.sessions.get(userId);
     if (!session) {

@@ -105,6 +105,8 @@ export class RandomContentEmbedFormatter {
       `[X (Twitter)](https://x.com/home)`,
       `**Checking Tasks:**`,
       `[Asana](https://app.asana.com/1/1184068549429528/project/1211072064033611/list/1211072065102773)`,
+      `[Duo3.0](https://app.abceed.com/libraries/detail/duo?from=home)`,
+      `[英語のハノン](https://app.abceed.com/libraries/detail/hanon_shokyu_2?from=find-text)`,
     ];
 
     // Add resources

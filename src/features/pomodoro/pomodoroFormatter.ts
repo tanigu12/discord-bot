@@ -44,20 +44,6 @@ export class PomodoroFormatter {
     return embed;
   }
 
-  createCompletionEmbed(user: User, stats: PomodoroStats): EmbedBuilder {
-    return new EmbedBuilder()
-      .setColor(0x4ecdc4)
-      .setTitle('🎉 Pomodoro Session Complete!')
-      .setDescription(`Great job, ${user.displayName}!`)
-      .addFields(
-        { name: '🍅 Completed Pomodoros', value: `${stats.completedPomodoros}`, inline: true },
-        { name: '⏱️ Total Work Time', value: this.formatTime(stats.totalWorkTime), inline: true },
-        { name: '☕ Total Break Time', value: this.formatTime(stats.totalBreakTime), inline: true },
-        { name: '🔥 Current Streak', value: `${stats.currentStreak} pomodoros`, inline: true }
-      )
-      .setTimestamp();
-  }
-
   createPausedEmbed(user: User): EmbedBuilder {
     return new EmbedBuilder()
       .setColor(0xffe66d)
@@ -110,38 +96,6 @@ export class PomodoroFormatter {
       .setTitle(`❌ ${title}`)
       .setDescription(description)
       .setTimestamp();
-  }
-
-  createChannelRestrictionEmbed(currentChannel: string): EmbedBuilder {
-    return new EmbedBuilder()
-      .setColor(0xf39c12)
-      .setTitle('🚫 Channel Restriction')
-      .setDescription(
-        `Pomodoro command can only be used in the **times-tanigu12** channel.\n\n` +
-          `Current channel: **${currentChannel}**\n` +
-          `Please use the command in **#times-tanigu12** for your productivity sessions.`
-      )
-      .addFields({
-        name: '💡 Why this restriction?',
-        value:
-          'The pomodoro command is designed for focused work sessions and is restricted to your personal times channel.',
-        inline: false,
-      })
-      .setTimestamp();
-  }
-
-  createPhaseTransitionMessage(
-    phase: 'work' | 'short-break' | 'long-break',
-    completedPomodoros: number
-  ): string {
-    const phaseEmoji = this.getPhaseEmoji(phase);
-
-    if (phase === 'work') {
-      return `${phaseEmoji} Break complete! Time to focus. You've completed ${completedPomodoros} pomodoros.`;
-    } else {
-      const breakType = phase === 'long-break' ? 'long break' : 'short break';
-      return `${phaseEmoji} Great work! Time for a ${breakType}. You've completed ${completedPomodoros} pomodoros.`;
-    }
   }
 
   private getPhaseEmoji(phase: string): string {

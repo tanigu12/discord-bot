@@ -11,7 +11,6 @@ import { CoachingMessage, PhaseCompletionNotification } from '../pomodoro/types'
 const pomodoroService = new PomodoroService();
 const pomodoroFormatter = new PomodoroFormatter();
 
-
 export const pomodoroCommand = {
   data: new SlashCommandBuilder()
     .setName('pomodoro')
@@ -101,6 +100,7 @@ export const pomodoroCommand = {
     const subcommand = interaction.options.getSubcommand();
     const userId = interaction.user.id;
     const channelId = interaction.channelId;
+
 
     try {
       switch (subcommand) {
@@ -355,6 +355,47 @@ async function handleStatus(interaction: ChatInputCommandInteraction, userId: st
 
   const embed = pomodoroFormatter.createStatusEmbed(interaction.user, status);
   await interaction.reply({ embeds: [embed] });
+
+  // Generate reflection message for active sessions (not paused)
+  if (!status.isPaused && pomodoroService.hasActiveSession(userId)) {
+    try {
+      const reflectionContent = await pomodoroService.generateCoachingMessage(userId, 'reflection');
+
+      if (reflectionContent) {
+        const reflectionMessage: CoachingMessage = {
+          type: 'reflection',
+          content: reflectionContent,
+          timestamp: new Date(),
+        };
+
+        const reflectionEmbed = pomodoroFormatter.createCoachingEmbed(
+          interaction.user,
+          reflectionMessage
+        );
+
+        // Try to send in thread if available, otherwise follow-up in channel
+        const threadId = pomodoroService.getThreadId(userId);
+        if (threadId && interaction.guild) {
+          try {
+            const thread = await interaction.guild.channels.fetch(threadId);
+            if (thread?.isThread()) {
+              await thread.send({ embeds: [reflectionEmbed] });
+            } else {
+              await interaction.followUp({ embeds: [reflectionEmbed] });
+            }
+          } catch {
+            await interaction.followUp({ embeds: [reflectionEmbed] });
+          }
+        } else {
+          await interaction.followUp({ embeds: [reflectionEmbed] });
+        }
+      }
+    } catch (error) {
+      // Gracefully handle reflection generation failures
+      console.warn('⚠️ Could not generate reflection for status command:', error);
+      // Don't send error to user - reflection is optional enhancement
+    }
+  }
 }
 
 async function handleConfig(interaction: ChatInputCommandInteraction) {
