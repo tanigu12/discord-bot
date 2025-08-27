@@ -1,6 +1,12 @@
 import { Client, Events, GatewayIntentBits, Collection } from 'discord.js';
 import dotenv from 'dotenv';
-import { randomCommand, formatCommand, bskyCommand, asanaCommand, pomodoroCommand } from './features/commands';
+import {
+  randomCommand,
+  formatCommand,
+  bskyCommand,
+  asanaCommand,
+  pomodoroCommand,
+} from './features/commands';
 import { ReactionHandler } from './features/reactions';
 import { TranslationHandler } from './features/translation';
 import { IdeaHandler } from './features/ideas';
@@ -121,24 +127,28 @@ client.on(Events.MessageCreate, async message => {
       if (message.mentions.has(client.user!.id)) {
         console.log('📨 Bot mention detected, processing mention...');
         await handleBotMention(message);
+        return;
       }
 
       // Check if this is a translation channel message
       if (translationHandler.isTranslationChannel(message)) {
         console.log('🌐 Translation channel detected, processing auto-translation...');
         await translationHandler.handleTranslationMessage(message);
+        return;
       }
 
       // Check if this is an idea channel message
       if (ideaHandler.isIdeaChannel(message)) {
         console.log('💡 Idea channel detected, processing idea message...');
         await ideaHandler.handleIdeaMessage(message);
+        return;
       }
 
       // Check if this is a research channel message
       if (researchHandler.isResearchChannel(message)) {
         console.log('🔬 Research channel detected, processing research request...');
         await researchHandler.handleResearchMessage(message);
+        return;
       }
     }
   } catch (error) {
@@ -174,7 +184,11 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     }
 
     // Check if this is a bot reaction in research channel and ignore it
-    if (user.bot && reaction.message.channel.type === 0 && reaction.message.channel.name === 'research') {
+    if (
+      user.bot &&
+      reaction.message.channel.type === 0 &&
+      reaction.message.channel.name === 'research'
+    ) {
       console.log('🤖 Bot reaction in research channel detected, ignoring...');
       return;
     }
