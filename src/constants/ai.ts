@@ -14,7 +14,7 @@ export const MODEL_CONFIGS = {
   // 日記処理用
   DIARY_PROCESSING: {
     model: OPENAI_MODELS.MAIN,
-    maxCompletionTokens: 3000,
+    maxCompletionTokens: 5000,
   },
 
   // 翻訳用
