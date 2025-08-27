@@ -77,7 +77,7 @@ export class TranslationHandler {
 
   // 言語シナリオに基づく翻訳処理
   private async getGoogleTranslation(scenario: string, text: string): Promise<string | null> {
-    if (scenario === 'japanese-only' || scenario === 'japanese-with-try') {
+    if (scenario === 'japanese-only' || scenario === 'japanese-with-try' || scenario === 'mixing') {
       console.log(`🇯🇵 Translating Japanese to English...`);
       const translation = await googleTranslationService.translateToEnglish(text);
       console.log(`✨ Google Translation (JA→EN): "${translation}"`);

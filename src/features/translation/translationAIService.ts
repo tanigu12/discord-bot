@@ -143,6 +143,28 @@ When users send English text (especially learners' challenging attempts), your t
 
 4. **Learning Support:** Include vocabulary, grammar, and usage explanations integrated into your educational guidance.`;
 
+      case 'mixing':
+        return `${basePrompt}
+
+SCENARIO 4: Mixed language input analysis and improvement
+When users send mixed Japanese and English text, your task:
+
+1. **English Quality Assessment:** Analyze the English portions for:
+   - Grammar accuracy and naturalness
+   - Word choice appropriateness  
+   - Sentence structure clarity
+   - Common learner mistakes
+
+2. **Educational Feedback:** Provide constructive feedback:
+   - Identify specific improvement areas
+   - Suggest more natural alternatives
+   - Explain why certain phrases work better
+   - Point out positive aspects to encourage learning
+
+3. **Japanese Translation:** Provide accurate Japanese translation
+
+4. **Learning Support:** Include vocabulary, grammar, and usage explanations integrated into your educational guidance.`;
+
       default:
         return basePrompt;
     }
@@ -295,6 +317,29 @@ When users send English text (especially learners' challenging attempts), your t
           },
         };
 
+      case 'mixing':
+        return {
+          name: 'mixing_processing',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              japaneseTranslation: {
+                type: 'string',
+                description: 'Japanese translation of the mixed language text',
+              },
+              educationalExplanation: {
+                type: 'string',
+                description:
+                  'Comprehensive educational feedback including English quality assessment, improvement suggestions, vocabulary, grammar, and usage explanations for the mixed language text',
+              },
+              ...commonQuestionAnswers,
+            },
+            required: ['japaneseTranslation', 'educationalExplanation', 'questionAnswers'],
+            additionalProperties: false,
+          },
+        };
+
       default:
         throw new Error(`Unknown scenario: ${scenario}`);
     }
@@ -333,7 +378,7 @@ When users send English text (especially learners' challenging attempts), your t
     let result: DetectedLanguage;
     if (hasJapanese && hasEnglish) {
       // 日本語と英語の両方が含まれている場合は「混合」だが、英語として扱う
-      result = 'english';
+      result = 'mixing';
       console.log(`🎯 Result: MIXING (Japanese + English detected) but treat as English`);
     } else if (hasJapanese) {
       // 日本語のみ

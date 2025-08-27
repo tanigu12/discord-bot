@@ -52,8 +52,10 @@ export class TranslationService {
 
     if (detectedLanguage === 'japanese') {
       return parsedEntry.tryTranslation ? 'japanese-with-try' : 'japanese-only';
+    } else if (detectedLanguage === 'mixing') {
+      return 'mixing';
     } else {
-      // 'english' (including mixed content treated as english)
+      // 'english'
       return 'english-only';
     }
   }

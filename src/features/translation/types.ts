@@ -38,7 +38,8 @@ interface QuestionAnswer {
 export type ProcessingScenario = 
   | 'japanese-only'           // 1. 日本語のみ
   | 'japanese-with-try'       // 2. 日本語 + [try]英語翻訳
-  | 'english-only';           // 3. 英語のみ（日本語混在あり）
+  | 'english-only'            // 3. 英語のみ（日本語混在あり）
+  | 'mixing';                 // 4. 混合（日本語+英語）
 
 // 日記処理結果の型定義
 export interface TranslationProcessingResult {
