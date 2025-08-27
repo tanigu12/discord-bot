@@ -17,8 +17,7 @@ export class AICoachingService extends BaseAIService {
       'You are an AI productivity coach for Pomodoro technique users.',
       prompt,
       {
-        maxCompletionTokens: 150,
-        temperature: 0.7,
+        maxCompletionTokens: 3000,
       }
     );
   }
@@ -37,12 +36,14 @@ export class AICoachingService extends BaseAIService {
   }
 
   getUserProfile(userId: string): UserProfile {
-    return this.userProfiles.get(userId) || {
-      userId,
-      preferredCoachingStyle: 'encouraging',
-      goals: [],
-      motivationalKeywords: [],
-    };
+    return (
+      this.userProfiles.get(userId) || {
+        userId,
+        preferredCoachingStyle: 'encouraging',
+        goals: [],
+        motivationalKeywords: [],
+      }
+    );
   }
 
   private buildPrompt(type: CoachingMessage['type'], context: AICoachingContext): string {
@@ -67,7 +68,7 @@ export class AICoachingService extends BaseAIService {
 
   private buildBaseContext(context: AICoachingContext, userProfile: UserProfile): string {
     const { currentSession, stats, timeOfDay, recentPerformance } = context;
-    
+
     return `
 You are an AI productivity coach for a Pomodoro technique user. Your role is to provide ${userProfile.preferredCoachingStyle} guidance.
 
@@ -134,13 +135,15 @@ Keep it relevant to their Pomodoro practice and encouraging.`;
 
   generateTimeBasedInsight(stats: PomodoroStats, currentHour: number): string {
     let insight = '';
-    
+
     if (currentHour >= 6 && currentHour < 12) {
       insight = "Morning sessions often yield the highest focus. You're starting strong! 🌅";
     } else if (currentHour >= 12 && currentHour < 17) {
-      insight = "Afternoon focus can dip after lunch. Stay hydrated and consider a short walk during breaks. 🌤️";
+      insight =
+        'Afternoon focus can dip after lunch. Stay hydrated and consider a short walk during breaks. 🌤️';
     } else if (currentHour >= 17 && currentHour < 21) {
-      insight = "Evening sessions are great for wrapping up tasks. Review your progress from today! 🌆";
+      insight =
+        'Evening sessions are great for wrapping up tasks. Review your progress from today! 🌆';
     } else {
       insight = "Late-night sessions can be productive, but don't sacrifice sleep for work. 🌙";
     }
@@ -159,15 +162,20 @@ Keep it relevant to their Pomodoro practice and encouraging.`;
   } {
     const totalSessions = stats.completedPomodoros + stats.completedBreaks;
     const focusScore = Math.min(100, (stats.currentStreak / totalSessions) * 100);
-    const consistencyScore = Math.min(100, (stats.completedPomodoros / Math.max(1, totalSessions * 0.6)) * 100);
+    const consistencyScore = Math.min(
+      100,
+      (stats.completedPomodoros / Math.max(1, totalSessions * 0.6)) * 100
+    );
 
     let improvementSuggestion = '';
     if (focusScore < 70) {
       improvementSuggestion = 'Try eliminating distractions before starting your next session.';
     } else if (consistencyScore < 70) {
-      improvementSuggestion = 'Consider shorter sessions if you\'re having trouble maintaining focus.';
+      improvementSuggestion =
+        "Consider shorter sessions if you're having trouble maintaining focus.";
     } else {
-      improvementSuggestion = 'Excellent focus and consistency! Consider gradually increasing session length.';
+      improvementSuggestion =
+        'Excellent focus and consistency! Consider gradually increasing session length.';
     }
 
     return {
