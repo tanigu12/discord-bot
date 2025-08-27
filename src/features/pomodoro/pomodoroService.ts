@@ -1,9 +1,10 @@
-import { PomodoroConfig, PomodoroSession, PomodoroStats, TimerStatus, PomodoroPhase, AICoachingContext, CoachingMessage, PhaseCompletionNotification, DiscordNotificationCallback } from './types';
+import { PomodoroConfig, PomodoroSession, PomodoroStats, TimerStatus, PomodoroPhase, AICoachingContext, CoachingMessage, PhaseCompletionNotification, DiscordNotificationCallback, AutoStatusUpdate } from './types';
 import { AICoachingService } from './aiCoachingService';
 
 export class PomodoroService {
   private sessions: Map<string, PomodoroSession> = new Map();
   private timers: Map<string, NodeJS.Timeout> = new Map();
+  private statusIntervals: Map<string, NodeJS.Timeout> = new Map();
   private aiCoachingService = new AICoachingService();
   private coachingCallbacks: Map<string, (message: CoachingMessage) => void> = new Map();
   private discordNotificationCallbacks: Map<string, DiscordNotificationCallback> = new Map();
@@ -13,6 +14,9 @@ export class PomodoroService {
     shortBreakDuration: 5,
     longBreakDuration: 15,
     longBreakInterval: 4,
+    autoStatusInterval: 5,
+    enableAutoStatus: true,
+    includeLogicChecking: true,
   };
 
   startSession(userId: string, channelId: string, config?: Partial<PomodoroConfig>): boolean {
@@ -35,6 +39,10 @@ export class PomodoroService {
     this.sessions.set(userId, session);
     this.startTimer(userId);
     
+    if (sessionConfig.enableAutoStatus) {
+      this.startStatusInterval(userId);
+    }
+    
     setTimeout(async () => {
       await this.generateCoachingMessage(userId, 'start');
     }, 1000);
@@ -51,6 +59,7 @@ export class PomodoroService {
     session.isPaused = true;
     session.pausedAt = new Date();
     this.clearTimer(userId);
+    this.clearStatusInterval(userId);
     return true;
   }
 
@@ -63,6 +72,11 @@ export class PomodoroService {
     session.isPaused = false;
     session.pausedAt = undefined;
     this.startTimer(userId);
+    
+    if (session.config.enableAutoStatus) {
+      this.startStatusInterval(userId);
+    }
+    
     return true;
   }
 
@@ -73,6 +87,7 @@ export class PomodoroService {
     }
 
     this.clearTimer(userId);
+    this.clearStatusInterval(userId);
     const stats = this.calculateStats(session);
     
     setTimeout(async () => {
@@ -176,6 +191,12 @@ export class PomodoroService {
 
     session.startTime = new Date();
     this.startTimer(userId);
+    
+    // Restart auto-status interval for new phase
+    if (session.config.enableAutoStatus) {
+      this.clearStatusInterval(userId);
+      this.startStatusInterval(userId);
+    }
   }
 
   private getNextBreakPhase(completedPomodoros: number, longBreakInterval: number): PomodoroPhase {
@@ -322,5 +343,99 @@ export class PomodoroService {
     } catch (error) {
       console.error('Error sending Discord phase completion notification:', error);
     }
+  }
+
+  private startStatusInterval(userId: string): void {
+    const session = this.sessions.get(userId);
+    if (!session || !session.config.enableAutoStatus) return;
+
+    const intervalMs = (session.config.autoStatusInterval || 5) * 60 * 1000;
+    
+    const interval = setInterval(async () => {
+      await this.sendAutoStatusUpdate(userId);
+    }, intervalMs);
+
+    this.statusIntervals.set(userId, interval);
+  }
+
+  private clearStatusInterval(userId: string): void {
+    const interval = this.statusIntervals.get(userId);
+    if (interval) {
+      clearInterval(interval);
+      this.statusIntervals.delete(userId);
+    }
+  }
+
+  private async sendAutoStatusUpdate(userId: string): Promise<void> {
+    const session = this.sessions.get(userId);
+    if (!session || session.isPaused) return;
+
+    const status = this.getStatus(userId);
+    if (!status) return;
+
+    const callback = this.discordNotificationCallbacks.get(userId);
+    if (!callback) return;
+
+    const autoStatusUpdate: AutoStatusUpdate = {
+      userId,
+      channelId: session.channelId,
+      threadId: session.threadId,
+      status,
+      sessionInfo: {
+        startTime: session.startTime,
+        currentPhase: session.phase,
+        nextPhaseIn: status.remainingTime,
+      },
+      logicCheck: session.config.includeLogicChecking ? this.performLogicCheck(session, status) : undefined,
+      timestamp: new Date(),
+    };
+
+    try {
+      await callback(autoStatusUpdate);
+    } catch (error) {
+      console.error('Error sending auto-status update:', error);
+    }
+  }
+
+  private performLogicCheck(session: PomodoroSession, status: TimerStatus): AutoStatusUpdate['logicCheck'] {
+    const diagnostics: string[] = [];
+    let timerAccuracy: 'accurate' | 'drift' | 'error' = 'accurate';
+    let sessionConsistency = true;
+
+    // Check timer accuracy
+    const expectedRemainingTime = this.calculateRemainingTime(session);
+    const timeDiff = Math.abs(status.remainingTime - expectedRemainingTime);
+    
+    if (timeDiff > 1) {
+      timerAccuracy = timeDiff > 5 ? 'error' : 'drift';
+      diagnostics.push(`Timer drift detected: ${timeDiff.toFixed(1)} minutes difference`);
+    }
+
+    // Check session consistency
+    if (status.phase !== session.phase) {
+      sessionConsistency = false;
+      diagnostics.push(`Phase mismatch: status=${status.phase}, session=${session.phase}`);
+    }
+
+    if (status.completedPomodoros !== session.completedPomodoros) {
+      sessionConsistency = false;
+      diagnostics.push(`Pomodoro count mismatch: status=${status.completedPomodoros}, session=${session.completedPomodoros}`);
+    }
+
+    // Check if session is active but paused
+    if (session.isPaused && status.isActive) {
+      sessionConsistency = false;
+      diagnostics.push('Session marked as paused but status shows active');
+    }
+
+    // Add general info
+    diagnostics.push(`Session running for ${Math.floor((Date.now() - session.startTime.getTime()) / 60000)} minutes`);
+    diagnostics.push(`Current phase: ${session.phase} (${status.remainingTime.toFixed(1)}m remaining)`);
+
+    return {
+      timerAccuracy,
+      sessionConsistency,
+      diagnostics,
+    };
   }
 }

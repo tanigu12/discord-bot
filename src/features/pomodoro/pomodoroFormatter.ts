@@ -5,6 +5,7 @@ import {
   PomodoroConfig,
   CoachingMessage,
   PhaseCompletionNotification,
+  AutoStatusUpdate,
 } from './types';
 
 export class PomodoroFormatter {
@@ -211,6 +212,64 @@ export class PomodoroFormatter {
         }
       )
       .setTimestamp();
+  }
+
+  createAutoStatusEmbed(user: User, update: AutoStatusUpdate): EmbedBuilder {
+    const phaseEmoji = this.getPhaseEmoji(update.status.phase);
+    const phaseText = this.getPhaseText(update.status.phase);
+    const sessionDuration = Math.floor((Date.now() - update.sessionInfo.startTime.getTime()) / 60000);
+    
+    const embed = new EmbedBuilder()
+      .setColor(0x95a5a6) // Gray color for auto-status
+      .setTitle(`📊 ${phaseEmoji} Auto Status Check`)
+      .setDescription(`**${user.displayName}**'s Pomodoro progress update`)
+      .addFields(
+        { 
+          name: '🎯 Current Phase', 
+          value: `${phaseText} (${update.status.remainingTime.toFixed(1)} min remaining)`,
+          inline: true 
+        },
+        { 
+          name: '🍅 Completed', 
+          value: `${update.status.completedPomodoros} pomodoros`,
+          inline: true 
+        },
+        { 
+          name: '⏰ Session Time', 
+          value: `${sessionDuration} minutes`,
+          inline: true 
+        }
+      );
+
+    // Add logic checking information if available
+    if (update.logicCheck) {
+      const { timerAccuracy, sessionConsistency, diagnostics } = update.logicCheck;
+      
+      // Status indicators
+      const accuracyEmoji = timerAccuracy === 'accurate' ? '✅' : timerAccuracy === 'drift' ? '⚠️' : '❌';
+      const consistencyEmoji = sessionConsistency ? '✅' : '❌';
+      
+      embed.addFields(
+        { 
+          name: '🔍 Logic Check', 
+          value: `${accuracyEmoji} Timer: ${timerAccuracy}\n${consistencyEmoji} Consistency: ${sessionConsistency ? 'Good' : 'Issues detected'}`,
+          inline: false 
+        }
+      );
+
+      // Add diagnostics if there are issues or if verbose mode
+      if (diagnostics.length > 0 && (!sessionConsistency || timerAccuracy !== 'accurate')) {
+        embed.addFields(
+          { 
+            name: '🔧 Diagnostics', 
+            value: diagnostics.slice(0, 3).join('\n'), // Limit to 3 lines to avoid spam
+            inline: false 
+          }
+        );
+      }
+    }
+
+    return embed.setTimestamp(update.timestamp);
   }
 
   private getCoachingColor(type: CoachingMessage['type']): number {

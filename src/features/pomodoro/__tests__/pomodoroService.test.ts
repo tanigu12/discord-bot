@@ -175,6 +175,9 @@ describe('PomodoroService', () => {
         shortBreakDuration: 5,
         longBreakDuration: 15,
         longBreakInterval: 4,
+        autoStatusInterval: 5,
+        enableAutoStatus: true,
+        includeLogicChecking: true,
       });
     });
   });

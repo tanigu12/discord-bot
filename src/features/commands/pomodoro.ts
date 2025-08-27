@@ -6,7 +6,7 @@ import {
   NewsChannel,
 } from 'discord.js';
 import { PomodoroService, PomodoroFormatter } from '../pomodoro';
-import { CoachingMessage, PhaseCompletionNotification } from '../pomodoro/types';
+import { CoachingMessage, PhaseCompletionNotification, AutoStatusUpdate } from '../pomodoro/types';
 
 const pomodoroService = new PomodoroService();
 const pomodoroFormatter = new PomodoroFormatter();
@@ -212,34 +212,46 @@ async function handleStart(
         }
       });
 
-      // Set up Discord notification callback for timer completions
+      // Set up Discord notification callback for timer completions and auto-status
       pomodoroService.setDiscordNotificationCallback(
         userId,
-        async (notification: PhaseCompletionNotification) => {
+        async (notification: PhaseCompletionNotification | AutoStatusUpdate) => {
           try {
-            const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
-              interaction.user,
-              notification
-            );
-            const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification);
+            // Check if this is an AutoStatusUpdate or PhaseCompletionNotification
+            if ('status' in notification) {
+              // AutoStatusUpdate
+              const autoStatusEmbed = pomodoroFormatter.createAutoStatusEmbed(
+                interaction.user,
+                notification as AutoStatusUpdate
+              );
+              await thread.send({ embeds: [autoStatusEmbed] });
+            } else {
+              // PhaseCompletionNotification  
+              const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
+                interaction.user,
+                notification as PhaseCompletionNotification
+              );
+              const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification as PhaseCompletionNotification);
 
-            // Send both embed and text message to thread
-            await thread.send({
-              content: autoMessage,
-              embeds: [completionEmbed],
-            });
+              // Send both embed and text message to thread
+              await thread.send({
+                content: autoMessage,
+                embeds: [completionEmbed],
+              });
 
-            // Also send a simple message to the main channel to get user's attention
-            if (interaction.channel && 'send' in interaction.channel) {
-              const channelMessage =
-                notification.previousPhase === 'work'
-                  ? `🍅 <@${userId}> Pomodoro #${notification.completedPomodoros} completed! Time for a break!`
-                  : `⏰ <@${userId}> Break's over! Ready for your next focus session?`;
+              // Also send a simple message to the main channel to get user's attention
+              if (interaction.channel && 'send' in interaction.channel) {
+                const phaseNotification = notification as PhaseCompletionNotification;
+                const channelMessage =
+                  phaseNotification.previousPhase === 'work'
+                    ? `🍅 <@${userId}> Pomodoro #${phaseNotification.completedPomodoros} completed! Time for a break!`
+                    : `⏰ <@${userId}> Break's over! Ready for your next focus session?`;
 
-              await interaction.channel.send(channelMessage);
+                await interaction.channel.send(channelMessage);
+              }
             }
           } catch (error) {
-            console.error('❌ Error sending phase completion notification:', error);
+            console.error('❌ Error sending Discord notification:', error);
           }
         }
       );
@@ -247,22 +259,32 @@ async function handleStart(
       // Fallback: set up notification callback to send to main channel if no thread
       pomodoroService.setDiscordNotificationCallback(
         userId,
-        async (notification: PhaseCompletionNotification) => {
+        async (notification: PhaseCompletionNotification | AutoStatusUpdate) => {
           try {
             if (interaction.channel && 'send' in interaction.channel) {
-              const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification);
-              const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
-                interaction.user,
-                notification
-              );
+              if ('status' in notification) {
+                // AutoStatusUpdate - send to main channel but less prominently
+                const autoStatusEmbed = pomodoroFormatter.createAutoStatusEmbed(
+                  interaction.user,
+                  notification as AutoStatusUpdate
+                );
+                await interaction.channel.send({ embeds: [autoStatusEmbed] });
+              } else {
+                // PhaseCompletionNotification
+                const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification as PhaseCompletionNotification);
+                const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
+                  interaction.user,
+                  notification as PhaseCompletionNotification
+                );
 
-              await interaction.channel.send({
-                content: `<@${userId}> ${autoMessage}`,
-                embeds: [completionEmbed],
-              });
+                await interaction.channel.send({
+                  content: `<@${userId}> ${autoMessage}`,
+                  embeds: [completionEmbed],
+                });
+              }
             }
           } catch (error) {
-            console.error('❌ Error sending phase completion notification to main channel:', error);
+            console.error('❌ Error sending Discord notification to main channel:', error);
           }
         }
       );

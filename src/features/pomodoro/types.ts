@@ -3,6 +3,9 @@ export interface PomodoroConfig {
   shortBreakDuration: number;
   longBreakDuration: number;
   longBreakInterval: number;
+  autoStatusInterval?: number; // in minutes, default 5
+  enableAutoStatus?: boolean; // default true
+  includeLogicChecking?: boolean; // default true
 }
 
 export interface PomodoroSession {
@@ -67,4 +70,22 @@ export interface PhaseCompletionNotification {
   isSessionComplete?: boolean;
 }
 
-export type DiscordNotificationCallback = (notification: PhaseCompletionNotification) => Promise<void>;
+export interface AutoStatusUpdate {
+  userId: string;
+  channelId: string;
+  threadId?: string;
+  status: TimerStatus;
+  sessionInfo: {
+    startTime: Date;
+    currentPhase: PomodoroPhase;
+    nextPhaseIn: number; // minutes
+  };
+  logicCheck?: {
+    timerAccuracy: 'accurate' | 'drift' | 'error';
+    sessionConsistency: boolean;
+    diagnostics: string[];
+  };
+  timestamp: Date;
+}
+
+export type DiscordNotificationCallback = (notification: PhaseCompletionNotification | AutoStatusUpdate) => Promise<void>;
