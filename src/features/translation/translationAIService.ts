@@ -332,8 +332,8 @@ When users send English text (especially learners' challenging attempts), your t
 
     let result: DetectedLanguage;
     if (hasJapanese && hasEnglish) {
-      // 日本語と英語の両方が含まれている場合は「混合」
-      result = 'english'; // mixing
+      // 日本語と英語の両方が含まれている場合は「混合」だが、英語として扱う
+      result = 'english';
       console.log(`🎯 Result: MIXING (Japanese + English detected) but treat as English`);
     } else if (hasJapanese) {
       // 日本語のみ

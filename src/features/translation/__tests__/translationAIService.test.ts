@@ -101,7 +101,7 @@ describe('TranslationAIService', () => {
 
       testCases.forEach((testCase) => {
         const result = diaryAIService.detectLanguageByPattern(testCase);
-        expect(result).toBe('mixing' as DetectedLanguage);
+        expect(result).toBe('english' as DetectedLanguage);
       });
     });
 
@@ -133,7 +133,7 @@ describe('TranslationAIService', () => {
         expect.stringContaining('Character detection results:')
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('🎯 Result: MIXING')
+        expect.stringContaining('🎯 Result: MIXING (Japanese + English detected) but treat as English')
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('✅ Language detection completed:')
@@ -175,17 +175,17 @@ describe('TranslationAIService', () => {
       const complexTestCases = [
         {
           input: '今日は東京駅でMeetingがありました。とてもinterestingでした！',
-          expected: 'mixing' as DetectedLanguage,
+          expected: 'english' as DetectedLanguage,
           description: 'complex mixed content with multiple scripts and English words'
         },
         {
           input: 'プロジェクトのStatusは？',
-          expected: 'mixing' as DetectedLanguage,
+          expected: 'english' as DetectedLanguage,
           description: 'katakana + English'
         },
         {
           input: 'Let me know about your 気持ち',
-          expected: 'mixing' as DetectedLanguage,
+          expected: 'english' as DetectedLanguage,
           description: 'English + kanji'
         }
       ];

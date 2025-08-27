@@ -50,10 +50,10 @@ export class TranslationService {
       parsedEntry.targetSentence
     );
 
-    if (detectedLanguage === 'japanese' || detectedLanguage === 'mixing') {
+    if (detectedLanguage === 'japanese') {
       return parsedEntry.tryTranslation ? 'japanese-with-try' : 'japanese-only';
     } else {
-      // 'english'
+      // 'english' (including mixed content treated as english)
       return 'english-only';
     }
   }

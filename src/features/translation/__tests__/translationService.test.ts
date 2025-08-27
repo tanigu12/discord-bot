@@ -217,7 +217,7 @@ Today was a wonderful day.
       expect(scenario).toBe('english-only');
     });
 
-    it('should return "japanese-with-try" for mixing language with [try]', () => {
+    it('should return "english-only" for mixing language with [try]', () => {
       const parsedEntry: ParsedTranslationEntry = {
         targetSentence: 'Today I went to 学校.',
         tryTranslation: 'I tried to translate this mixed sentence.',
@@ -226,7 +226,7 @@ Today was a wonderful day.
 
       const scenario = translationService.determineProcessingScenario(parsedEntry);
 
-      expect(scenario).toBe('japanese-with-try');
+      expect(scenario).toBe('english-only');
     });
   });
 
