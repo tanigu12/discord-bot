@@ -11,17 +11,6 @@ import { CoachingMessage, PhaseCompletionNotification } from '../pomodoro/types'
 const pomodoroService = new PomodoroService();
 const pomodoroFormatter = new PomodoroFormatter();
 
-function isValidPomodoroChannel(interaction: ChatInputCommandInteraction): boolean {
-  const allowedChannelName = 'times-tanigu12';
-  const channel = interaction.channel;
-
-  // Check if channel exists and has a name property (excludes DM channels)
-  if (channel && 'name' in channel) {
-    return channel.name === allowedChannelName;
-  }
-
-  return false;
-}
 
 export const pomodoroCommand = {
   data: new SlashCommandBuilder()
@@ -109,16 +98,6 @@ export const pomodoroCommand = {
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
-    // Check if command is being used in the correct channel
-    if (!isValidPomodoroChannel(interaction)) {
-      const channel = interaction.channel;
-      const currentChannelName =
-        channel && 'name' in channel && channel.name ? channel.name : 'unknown';
-      const embed = pomodoroFormatter.createChannelRestrictionEmbed(currentChannelName);
-      await interaction.reply({ embeds: [embed], ephemeral: true });
-      return;
-    }
-
     const subcommand = interaction.options.getSubcommand();
     const userId = interaction.user.id;
     const channelId = interaction.channelId;
