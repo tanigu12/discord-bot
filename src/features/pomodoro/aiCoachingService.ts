@@ -80,9 +80,8 @@ User Context:
 - Time of day: ${timeOfDay}
 - Recent performance: ${recentPerformance}
 - User goals: ${userProfile.goals.join(', ') || 'No specific goals set'}
-- Motivational keywords: ${userProfile.motivationalKeywords.join(', ') || 'productivity, focus, achievement'}
 
-Keep responses concise (1-2 sentences), ${userProfile.preferredCoachingStyle}, and actionable.
+Keep responses concise (1-2 sentences), ${userProfile.preferredCoachingStyle}, and add actionable question.
 `;
   }
 
@@ -121,9 +120,18 @@ Reference their progress and remind them of their capabilities.`;
   private buildReflectionPrompt(baseContext: string, _context: AICoachingContext): string {
     return `${baseContext}
 
-Guide the user through reflection on their Pomodoro session.
-Ask thought-provoking questions about their focus, productivity patterns, and learnings.
-Help them identify improvements for future sessions.`;
+Guide the user through reflection on their Pomodoro session using focus coaching questions.
+Ask 1-2 of these specific accountability questions to help them reflect:
+
+- Do you have what you should report to your manager?
+- What's your question about this task?
+- What's your barrier or obstacle about this task?
+- When will you finish this task?
+- What do you have the list of these tasks in this project?
+- What work remains to be done?
+
+Choose the most relevant questions based on their current pomodoro phase and session progress.
+Help them identify improvements for future sessions through these focused inquiries.`;
   }
 
   private buildGenericPrompt(baseContext: string): string {

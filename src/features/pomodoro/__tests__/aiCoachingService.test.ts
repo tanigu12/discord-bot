@@ -51,7 +51,7 @@ describe('AICoachingService', () => {
       expect((aiCoachingService as any).callOpenAI).toHaveBeenCalledWith(
         'You are an AI productivity coach for Pomodoro technique users.',
         expect.stringContaining('starting a new work session'),
-        { maxCompletionTokens: 150, temperature: 0.7 }
+        { maxCompletionTokens: 3000 }
       );
     });
 
@@ -65,7 +65,7 @@ describe('AICoachingService', () => {
       expect((aiCoachingService as any).callOpenAI).toHaveBeenCalledWith(
         'You are an AI productivity coach for Pomodoro technique users.',
         expect.stringContaining('starting their work'),
-        { maxCompletionTokens: 150, temperature: 0.7 }
+        { maxCompletionTokens: 3000 }
       );
     });
 
@@ -79,7 +79,7 @@ describe('AICoachingService', () => {
       expect((aiCoachingService as any).callOpenAI).toHaveBeenCalledWith(
         'You are an AI productivity coach for Pomodoro technique users.',
         expect.stringContaining('completed their Pomodoro session with 2 pomodoros'),
-        { maxCompletionTokens: 150, temperature: 0.7 }
+        { maxCompletionTokens: 3000 }
       );
     });
 
@@ -93,11 +93,11 @@ describe('AICoachingService', () => {
       expect((aiCoachingService as any).callOpenAI).toHaveBeenCalledWith(
         'You are an AI productivity coach for Pomodoro technique users.',
         expect.stringContaining('needs motivational support'),
-        { maxCompletionTokens: 150, temperature: 0.7 }
+        { maxCompletionTokens: 3000 }
       );
     });
 
-    it('should generate a reflection coaching message', async () => {
+    it('should generate a reflection coaching message with focus coaching questions', async () => {
       const expectedMessage = 'What did you learn about your focus patterns today?';
       (aiCoachingService as any).callOpenAI = vi.fn().mockResolvedValue(expectedMessage);
 
@@ -106,9 +106,18 @@ describe('AICoachingService', () => {
       expect(result).toBe(expectedMessage);
       expect((aiCoachingService as any).callOpenAI).toHaveBeenCalledWith(
         'You are an AI productivity coach for Pomodoro technique users.',
-        expect.stringContaining('reflection on their Pomodoro session'),
-        { maxCompletionTokens: 150, temperature: 0.7 }
+        expect.stringContaining('using focus coaching questions'),
+        { maxCompletionTokens: 3000 }
       );
+      
+      // Verify the prompt includes the focus coaching accountability questions
+      const calledPrompt = ((aiCoachingService as any).callOpenAI as any).mock.calls[0][1];
+      expect(calledPrompt).toContain('Do you have what you should report to your manager?');
+      expect(calledPrompt).toContain('What\'s your question about this task?');
+      expect(calledPrompt).toContain('What\'s your barrier or obstacle about this task?');
+      expect(calledPrompt).toContain('When will you finish this task?');
+      expect(calledPrompt).toContain('What do you have the list of these tasks in this project?');
+      expect(calledPrompt).toContain('What work remains to be done?');
     });
   });
 
