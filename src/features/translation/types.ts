@@ -54,8 +54,7 @@ export interface TranslationProcessingResult {
   
   // シナリオ3: 英語入力の場合の翻訳と解説
   japaneseTranslation?: string;
-  vocabularyExplanation?: string;
-  grammarExplanation?: string;
+  educationalExplanation?: string;
   
   // 共通: 質問回答
   hasQuestions?: boolean;
@@ -77,8 +76,7 @@ export interface UnifiedTranslationProcessingResult {
   
   // シナリオ3: 英語入力の場合の翻訳と解説
   japaneseTranslation?: string | null;
-  vocabularyExplanation?: string | null;
-  grammarExplanation?: string | null;
+  educationalExplanation?: string | null;
   
   // 共通: 質問回答
   hasQuestions?: boolean;

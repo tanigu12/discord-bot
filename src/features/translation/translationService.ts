@@ -85,8 +85,7 @@ export class TranslationService {
         threeLevelTranslations: result.threeLevelTranslations || undefined,
         translationEvaluation: result.translationEvaluation || undefined,
         japaneseTranslation: result.japaneseTranslation || undefined,
-        vocabularyExplanation: result.vocabularyExplanation || undefined,
-        grammarExplanation: result.grammarExplanation || undefined,
+        educationalExplanation: result.educationalExplanation || undefined,
         hasQuestions: result.hasQuestions,
         questionAnswers: result.questionAnswers || undefined,
       };

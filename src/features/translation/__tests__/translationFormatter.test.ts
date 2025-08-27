@@ -196,8 +196,7 @@ describe('TranslationFormatter', () => {
       const mockResult = createMockResult({
         scenario: 'english-only',
         japaneseTranslation: longTranslation,
-        vocabularyExplanation: longVocabulary,
-        grammarExplanation: longGrammar,
+        educationalExplanation: `${longVocabulary}\n\n${longGrammar}`,
         threeLevelTranslations: undefined,
       });
 
@@ -209,8 +208,7 @@ describe('TranslationFormatter', () => {
       
       // Verify all content sections are present
       expect(result).toContain('🇯🇵 JAPANESE TRANSLATION:');
-      expect(result).toContain('📖 VOCABULARY EXPLANATION:');
-      expect(result).toContain('📝 GRAMMAR EXPLANATION:');
+      expect(result).toContain('🎓 EDUCATIONAL FEEDBACK & ANALYSIS:');
     });
   });
 

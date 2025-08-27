@@ -83,9 +83,9 @@ export class TranslationFormatter {
         break;
       
       case 'english-only':
-        if (result.japaneseTranslation && result.vocabularyExplanation) {
+        if (result.japaneseTranslation && result.educationalExplanation) {
           summaryContent = `🇯🇵 **Translation:** ${result.japaneseTranslation}\n` +
-                          `📖 **Key Vocabulary:** ${result.vocabularyExplanation}`;
+                          `🎓 **Educational Feedback:** ${result.educationalExplanation}`;
         }
         break;
     }
@@ -288,17 +288,13 @@ export class TranslationFormatter {
         break;
 
       case 'english-only':
-        if (result.japaneseTranslation && result.vocabularyExplanation && result.grammarExplanation) {
+        if (result.japaneseTranslation && result.educationalExplanation) {
           lines.push(`🇯🇵 JAPANESE TRANSLATION:`);
           lines.push(...this.addLineBreaks(result.japaneseTranslation).split('\n'));
           lines.push(``);
           
-          lines.push(`📖 VOCABULARY EXPLANATION:`);
-          lines.push(...this.addLineBreaks(result.vocabularyExplanation).split('\n'));
-          lines.push(``);
-          
-          lines.push(`📝 GRAMMAR EXPLANATION:`);
-          lines.push(...this.addLineBreaks(result.grammarExplanation).split('\n'));
+          lines.push(`🎓 EDUCATIONAL FEEDBACK & ANALYSIS:`);
+          lines.push(...this.addLineBreaks(result.educationalExplanation).split('\n'));
           lines.push(``);
         }
         break;

@@ -88,8 +88,7 @@ export class TranslationAIService extends BaseAIService {
         threeLevelTranslations: parsed.threeLevelTranslations || undefined,
         translationEvaluation: parsed.translationEvaluation || undefined,
         japaneseTranslation: parsed.japaneseTranslation || undefined,
-        vocabularyExplanation: parsed.vocabularyExplanation || undefined,
-        grammarExplanation: parsed.grammarExplanation || undefined,
+        educationalExplanation: parsed.educationalExplanation || undefined,
         hasQuestions,
         questionAnswers: parsed.questionAnswers || undefined,
       };
@@ -126,8 +125,24 @@ Your task:
       case 'english-only':
         return `${basePrompt}
 
-SCENARIO 3: English input (may contain some Japanese)
-Your task: Translate to Japanese and provide detailed explanations of vocabulary and grammar to help with English learning.`;
+SCENARIO 3: English input analysis and improvement
+When users send English text (especially learners' challenging attempts), your task:
+
+1. **English Quality Assessment:** Analyze the English for:
+   - Grammar accuracy and naturalness
+   - Word choice appropriateness  
+   - Sentence structure clarity
+   - Common learner mistakes
+
+2. **Educational Feedback:** Provide constructive feedback:
+   - Identify specific improvement areas
+   - Suggest more natural alternatives
+   - Explain why certain phrases work better
+   - Point out positive aspects to encourage learning
+
+3. **Japanese Translation:** Provide accurate Japanese translation
+
+4. **Learning Support:** Include vocabulary, grammar, and usage explanations integrated into your educational guidance.`;
 
       default:
         return basePrompt;
@@ -269,20 +284,15 @@ Your task: Translate to Japanese and provide detailed explanations of vocabulary
                 type: 'string',
                 description: 'Japanese translation of the English text',
               },
-              vocabularyExplanation: {
+              educationalExplanation: {
                 type: 'string',
-                description: 'Detailed explanation of key vocabulary',
-              },
-              grammarExplanation: {
-                type: 'string',
-                description: 'Detailed explanation of grammar structures',
+                description: 'Comprehensive educational feedback including English quality assessment, improvement suggestions, vocabulary, grammar, and usage explanations',
               },
               ...commonQuestionAnswers,
             },
             required: [
               'japaneseTranslation',
-              'vocabularyExplanation',
-              'grammarExplanation',
+              'educationalExplanation',
               'questionAnswers',
             ],
             additionalProperties: false,
