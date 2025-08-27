@@ -52,7 +52,6 @@ export class TranslationAIService extends BaseAIService {
   }
 
   // 日記専用翻訳
-  
 
   // 統一された日記処理（シナリオベース）
   async processUnifiedDiary(
@@ -286,15 +285,12 @@ When users send English text (especially learners' challenging attempts), your t
               },
               educationalExplanation: {
                 type: 'string',
-                description: 'Comprehensive educational feedback including English quality assessment, improvement suggestions, vocabulary, grammar, and usage explanations',
+                description:
+                  'Comprehensive educational feedback including English quality assessment, improvement suggestions, vocabulary, grammar, and usage explanations',
               },
               ...commonQuestionAnswers,
             },
-            required: [
-              'japaneseTranslation',
-              'educationalExplanation',
-              'questionAnswers',
-            ],
+            required: ['japaneseTranslation', 'educationalExplanation', 'questionAnswers'],
             additionalProperties: false,
           },
         };
@@ -337,8 +333,8 @@ When users send English text (especially learners' challenging attempts), your t
     let result: DetectedLanguage;
     if (hasJapanese && hasEnglish) {
       // 日本語と英語の両方が含まれている場合は「混合」
-      result = 'mixing';
-      console.log(`🎯 Result: MIXING (Japanese + English detected)`);
+      result = 'english'; // mixing
+      console.log(`🎯 Result: MIXING (Japanese + English detected) but treat as English`);
     } else if (hasJapanese) {
       // 日本語のみ
       result = 'japanese';

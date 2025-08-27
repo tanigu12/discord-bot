@@ -12,7 +12,7 @@ export class TranslationService {
   // 新しい翻訳フォーマットを解析
   parseTranslationEntry(content: string): ParsedTranslationEntry {
     const lines = content.trim().split('\n');
-    
+
     let tryTranslation: string | undefined;
     const questions: string[] = [];
     const targetLines: string[] = [];
@@ -99,20 +99,6 @@ export class TranslationService {
   isValidTranslationChannel(channelName?: string): boolean {
     if (!channelName) return false;
     return channelName.toLowerCase().includes('translation');
-  }
-
-  // 言語名を表示用に変換
-  getLanguageDisplayName(language: string): string {
-    switch (language) {
-      case 'japanese':
-        return '🇯🇵 Japanese';
-      case 'english':
-        return '🇺🇸 English';
-      case 'mixing':
-        return '🇯🇵🇺🇸 Mixed (JP + EN)';
-      default:
-        return '🌍 Other';
-    }
   }
 
   // テキストを指定長で切り詰め
