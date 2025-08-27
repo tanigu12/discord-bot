@@ -3,6 +3,17 @@ import { RandomContentResult } from './contentAggregationService';
 import { TechnicalQuestion } from '../technical-questions';
 import { EnglishPhrase } from '../english-phrases';
 
+const EXTERNAL_LINKS = [
+  `**For Listening:**`,
+  `[YouTube Subscriptions](https://www.youtube.com/feed/subscriptions)`,
+  `**For Reading:**`,
+  `[Google News](https://news.google.com/home?hl=en-US&gl=US&ceid=US:en)`,
+  `[X (Twitter)](https://x.com/home)`,
+  `**Checking Tasks:**`,
+  `[Asana](https://app.asana.com/1/1184068549429528/project/1211072064033611/list/1211072065102773)`,
+  `[Duo3.0](https://app.abceed.com/libraries/detail/duo?from=home)`,
+  `[英語のハノン](https://app.abceed.com/libraries/detail/hanon_shokyu_2?from=find-text)`,
+];
 export class RandomContentEmbedFormatter {
   /**
    * Create comprehensive response with main embed and follow-up messages for long content
@@ -97,22 +108,10 @@ export class RandomContentEmbedFormatter {
       inline: false,
     });
 
-    const externalLinks = [
-      `**For Listening:**`,
-      `[YouTube Subscriptions](https://www.youtube.com/feed/subscriptions)`,
-      `**For Reading:**`,
-      `[Google News](https://news.google.com/home?hl=en-US&gl=US&ceid=US:en)`,
-      `[X (Twitter)](https://x.com/home)`,
-      `**Checking Tasks:**`,
-      `[Asana](https://app.asana.com/1/1184068549429528/project/1211072064033611/list/1211072065102773)`,
-      `[Duo3.0](https://app.abceed.com/libraries/detail/duo?from=home)`,
-      `[英語のハノン](https://app.abceed.com/libraries/detail/hanon_shokyu_2?from=find-text)`,
-    ];
-
     // Add resources
     embed.addFields({
       name: '🔗 Recommended Resources',
-      value: externalLinks.join(`\n`),
+      value: EXTERNAL_LINKS.join(`\n`),
       inline: false,
     });
 
@@ -293,20 +292,10 @@ export class RandomContentEmbedFormatter {
       inline: false,
     });
 
-    const externalLinks = [
-      `**For Listening:**`,
-      `[YouTube Subscriptions](https://www.youtube.com/feed/subscriptions)`,
-      `**For Reading:**`,
-      `[Google News](https://news.google.com/home?hl=en-US&gl=US&ceid=US:en)`,
-      `[X (Twitter)](https://x.com/home)`,
-      `**Checking Tasks:**`,
-      `[Asana](https://app.asana.com/1/1184068549429528/project/1211072064033611/list/1211072065102773)`,
-    ];
-
     // Add resources
     embed.addFields({
       name: '🔗 Recommended Resources',
-      value: externalLinks.join(`\n`),
+      value: EXTERNAL_LINKS.join(`\n`),
       inline: false,
     });
   }
