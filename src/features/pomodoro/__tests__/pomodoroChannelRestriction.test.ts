@@ -18,9 +18,9 @@ describe('Pomodoro Channel Restriction', () => {
   });
 
   describe('Channel validation', () => {
-    it('should allow command in times-taigu12 channel', async () => {
+    it('should allow command in times-tanigu12 channel', async () => {
       mockInteraction.channel = {
-        name: 'times-taigu12',
+        name: 'times-tanigu12',
         isTextBased: vi.fn().mockReturnValue(true),
       } as any;
 
@@ -31,7 +31,7 @@ describe('Pomodoro Channel Restriction', () => {
       await pomodoroCommand.execute(mockInteraction);
 
       expect(pomodoroCommand.execute).toHaveBeenCalledWith(mockInteraction);
-      
+
       // Restore original function
       pomodoroCommand.execute = originalExecute;
     });
@@ -49,7 +49,7 @@ describe('Pomodoro Channel Restriction', () => {
           expect.objectContaining({
             data: expect.objectContaining({
               title: '🚫 Channel Restriction',
-              description: expect.stringContaining('times-taigu12'),
+              description: expect.stringContaining('times-tanigu12'),
             }),
           }),
         ]),

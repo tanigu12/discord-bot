@@ -1,4 +1,10 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, ThreadChannel, TextChannel, NewsChannel } from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  ThreadChannel,
+  TextChannel,
+  NewsChannel,
+} from 'discord.js';
 import { PomodoroService, PomodoroFormatter } from '../pomodoro';
 import { CoachingMessage, PhaseCompletionNotification } from '../pomodoro/types';
 
@@ -6,14 +12,14 @@ const pomodoroService = new PomodoroService();
 const pomodoroFormatter = new PomodoroFormatter();
 
 function isValidPomodoroChannel(interaction: ChatInputCommandInteraction): boolean {
-  const allowedChannelName = 'times-taigu12';
+  const allowedChannelName = 'times-tanigu12';
   const channel = interaction.channel;
-  
+
   // Check if channel exists and has a name property (excludes DM channels)
   if (channel && 'name' in channel) {
     return channel.name === allowedChannelName;
   }
-  
+
   return false;
 }
 
@@ -48,29 +54,19 @@ export const pomodoroCommand = {
         )
     )
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('pause')
-        .setDescription('Pause your current pomodoro session')
+      subcommand.setName('pause').setDescription('Pause your current pomodoro session')
     )
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('resume')
-        .setDescription('Resume your paused pomodoro session')
+      subcommand.setName('resume').setDescription('Resume your paused pomodoro session')
     )
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('stop')
-        .setDescription('Stop your current pomodoro session')
+      subcommand.setName('stop').setDescription('Stop your current pomodoro session')
     )
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('status')
-        .setDescription('Check your current pomodoro session status')
+      subcommand.setName('status').setDescription('Check your current pomodoro session status')
     )
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('config')
-        .setDescription('View your current pomodoro configuration')
+      subcommand.setName('config').setDescription('View your current pomodoro configuration')
     )
     .addSubcommand(subcommand =>
       subcommand
@@ -88,9 +84,7 @@ export const pomodoroCommand = {
         )
     )
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('insight')
-        .setDescription('Get personalized performance insights')
+      subcommand.setName('insight').setDescription('Get personalized performance insights')
     )
     .addSubcommand(subcommand =>
       subcommand
@@ -107,14 +101,10 @@ export const pomodoroCommand = {
             )
         )
         .addStringOption(option =>
-          option
-            .setName('goals')
-            .setDescription('Your goals (comma-separated)')
+          option.setName('goals').setDescription('Your goals (comma-separated)')
         )
         .addStringOption(option =>
-          option
-            .setName('keywords')
-            .setDescription('Motivational keywords (comma-separated)')
+          option.setName('keywords').setDescription('Motivational keywords (comma-separated)')
         )
     ),
 
@@ -122,7 +112,8 @@ export const pomodoroCommand = {
     // Check if command is being used in the correct channel
     if (!isValidPomodoroChannel(interaction)) {
       const channel = interaction.channel;
-      const currentChannelName = (channel && 'name' in channel && channel.name) ? channel.name : 'unknown';
+      const currentChannelName =
+        channel && 'name' in channel && channel.name ? channel.name : 'unknown';
       const embed = pomodoroFormatter.createChannelRestrictionEmbed(currentChannelName);
       await interaction.reply({ embeds: [embed], ephemeral: true });
       return;
@@ -169,10 +160,15 @@ export const pomodoroCommand = {
       }
     } catch (error) {
       console.error('❌ Error executing pomodoro command:', error);
-      
+
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          embeds: [pomodoroFormatter.createErrorEmbed('Command Error', 'Something went wrong. Please try again.')],
+          embeds: [
+            pomodoroFormatter.createErrorEmbed(
+              'Command Error',
+              'Something went wrong. Please try again.'
+            ),
+          ],
           ephemeral: true,
         });
       }
@@ -180,10 +176,19 @@ export const pomodoroCommand = {
   },
 };
 
-async function handleStart(interaction: ChatInputCommandInteraction, userId: string, channelId: string) {
+async function handleStart(
+  interaction: ChatInputCommandInteraction,
+  userId: string,
+  channelId: string
+) {
   if (pomodoroService.hasActiveSession(userId)) {
     await interaction.reply({
-      embeds: [pomodoroFormatter.createErrorEmbed('Session Active', 'You already have an active pomodoro session. Use `/pomodoro stop` to end it first.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed(
+          'Session Active',
+          'You already have an active pomodoro session. Use `/pomodoro stop` to end it first.'
+        ),
+      ],
       ephemeral: true,
     });
     return;
@@ -200,10 +205,12 @@ async function handleStart(interaction: ChatInputCommandInteraction, userId: str
   };
 
   const started = pomodoroService.startSession(userId, channelId, config);
-  
+
   if (!started) {
     await interaction.reply({
-      embeds: [pomodoroFormatter.createErrorEmbed('Failed to Start', 'Could not start pomodoro session.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed('Failed to Start', 'Could not start pomodoro session.'),
+      ],
       ephemeral: true,
     });
     return;
@@ -215,7 +222,7 @@ async function handleStart(interaction: ChatInputCommandInteraction, userId: str
     const thread = await createPomodoroThread(interaction);
     if (thread) {
       pomodoroService.setThreadId(userId, thread.id);
-      
+
       // Set up coaching callback for AI messages in thread
       pomodoroService.setCoachingCallback(userId, async (message: CoachingMessage) => {
         try {
@@ -227,46 +234,59 @@ async function handleStart(interaction: ChatInputCommandInteraction, userId: str
       });
 
       // Set up Discord notification callback for timer completions
-      pomodoroService.setDiscordNotificationCallback(userId, async (notification: PhaseCompletionNotification) => {
-        try {
-          const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(interaction.user, notification);
-          const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification);
-          
-          // Send both embed and text message to thread
-          await thread.send({ 
-            content: autoMessage,
-            embeds: [completionEmbed] 
-          });
-          
-          // Also send a simple message to the main channel to get user's attention
-          if (interaction.channel && 'send' in interaction.channel) {
-            const channelMessage = notification.previousPhase === 'work' 
-              ? `🍅 <@${userId}> Pomodoro #${notification.completedPomodoros} completed! Time for a break!`
-              : `⏰ <@${userId}> Break's over! Ready for your next focus session?`;
-            
-            await interaction.channel.send(channelMessage);
+      pomodoroService.setDiscordNotificationCallback(
+        userId,
+        async (notification: PhaseCompletionNotification) => {
+          try {
+            const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
+              interaction.user,
+              notification
+            );
+            const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification);
+
+            // Send both embed and text message to thread
+            await thread.send({
+              content: autoMessage,
+              embeds: [completionEmbed],
+            });
+
+            // Also send a simple message to the main channel to get user's attention
+            if (interaction.channel && 'send' in interaction.channel) {
+              const channelMessage =
+                notification.previousPhase === 'work'
+                  ? `🍅 <@${userId}> Pomodoro #${notification.completedPomodoros} completed! Time for a break!`
+                  : `⏰ <@${userId}> Break's over! Ready for your next focus session?`;
+
+              await interaction.channel.send(channelMessage);
+            }
+          } catch (error) {
+            console.error('❌ Error sending phase completion notification:', error);
           }
-        } catch (error) {
-          console.error('❌ Error sending phase completion notification:', error);
         }
-      });
+      );
     } else {
       // Fallback: set up notification callback to send to main channel if no thread
-      pomodoroService.setDiscordNotificationCallback(userId, async (notification: PhaseCompletionNotification) => {
-        try {
-          if (interaction.channel && 'send' in interaction.channel) {
-            const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification);
-            const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(interaction.user, notification);
-            
-            await interaction.channel.send({ 
-              content: `<@${userId}> ${autoMessage}`,
-              embeds: [completionEmbed] 
-            });
+      pomodoroService.setDiscordNotificationCallback(
+        userId,
+        async (notification: PhaseCompletionNotification) => {
+          try {
+            if (interaction.channel && 'send' in interaction.channel) {
+              const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification);
+              const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
+                interaction.user,
+                notification
+              );
+
+              await interaction.channel.send({
+                content: `<@${userId}> ${autoMessage}`,
+                embeds: [completionEmbed],
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error sending phase completion notification to main channel:', error);
           }
-        } catch (error) {
-          console.error('❌ Error sending phase completion notification to main channel:', error);
         }
-      });
+      );
     }
 
     const finalConfig = { ...pomodoroService.getDefaultConfig(), ...config };
@@ -291,10 +311,15 @@ async function handleStart(interaction: ChatInputCommandInteraction, userId: str
 
 async function handlePause(interaction: ChatInputCommandInteraction, userId: string) {
   const paused = pomodoroService.pauseSession(userId);
-  
+
   if (!paused) {
     await interaction.reply({
-      embeds: [pomodoroFormatter.createErrorEmbed('Cannot Pause', 'No active session found or session is already paused.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed(
+          'Cannot Pause',
+          'No active session found or session is already paused.'
+        ),
+      ],
       ephemeral: true,
     });
     return;
@@ -306,7 +331,7 @@ async function handlePause(interaction: ChatInputCommandInteraction, userId: str
 
 async function handleResume(interaction: ChatInputCommandInteraction, userId: string) {
   const resumed = pomodoroService.resumeSession(userId);
-  
+
   if (!resumed) {
     await interaction.reply({
       embeds: [pomodoroFormatter.createErrorEmbed('Cannot Resume', 'No paused session found.')],
@@ -321,10 +346,12 @@ async function handleResume(interaction: ChatInputCommandInteraction, userId: st
 
 async function handleStop(interaction: ChatInputCommandInteraction, userId: string) {
   const stats = pomodoroService.stopSession(userId);
-  
+
   if (!stats) {
     await interaction.reply({
-      embeds: [pomodoroFormatter.createErrorEmbed('No Session', 'No active pomodoro session found.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed('No Session', 'No active pomodoro session found.'),
+      ],
       ephemeral: true,
     });
     return;
@@ -336,10 +363,12 @@ async function handleStop(interaction: ChatInputCommandInteraction, userId: stri
 
 async function handleStatus(interaction: ChatInputCommandInteraction, userId: string) {
   const status = pomodoroService.getStatus(userId);
-  
+
   if (!status) {
     await interaction.reply({
-      embeds: [pomodoroFormatter.createErrorEmbed('No Session', 'No active pomodoro session found.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed('No Session', 'No active pomodoro session found.'),
+      ],
       ephemeral: true,
     });
     return;
@@ -355,7 +384,9 @@ async function handleConfig(interaction: ChatInputCommandInteraction) {
   await interaction.reply({ embeds: [embed] });
 }
 
-async function createPomodoroThread(interaction: ChatInputCommandInteraction): Promise<ThreadChannel | null> {
+async function createPomodoroThread(
+  interaction: ChatInputCommandInteraction
+): Promise<ThreadChannel | null> {
   if (!interaction.channel || !interaction.channel.isTextBased()) {
     return null;
   }
@@ -383,22 +414,32 @@ async function createPomodoroThread(interaction: ChatInputCommandInteraction): P
 async function handleCoach(interaction: ChatInputCommandInteraction, userId: string) {
   if (!pomodoroService.hasActiveSession(userId)) {
     await interaction.reply({
-      embeds: [pomodoroFormatter.createErrorEmbed('No Session', 'You need an active pomodoro session to get AI coaching.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed(
+          'No Session',
+          'You need an active pomodoro session to get AI coaching.'
+        ),
+      ],
       ephemeral: true,
     });
     return;
   }
 
   const coachingType = interaction.options.getString('type', true) as 'motivation' | 'reflection';
-  
+
   await interaction.deferReply();
 
   try {
     const coachingContent = await pomodoroService.generateCoachingMessage(userId, coachingType);
-    
+
     if (!coachingContent) {
       await interaction.editReply({
-        embeds: [pomodoroFormatter.createErrorEmbed('Coaching Error', 'Unable to generate coaching message. Please try again.')],
+        embeds: [
+          pomodoroFormatter.createErrorEmbed(
+            'Coaching Error',
+            'Unable to generate coaching message. Please try again.'
+          ),
+        ],
       });
       return;
     }
@@ -414,17 +455,27 @@ async function handleCoach(interaction: ChatInputCommandInteraction, userId: str
   } catch (error) {
     console.error('❌ Error generating coaching message:', error);
     await interaction.editReply({
-      embeds: [pomodoroFormatter.createErrorEmbed('Coaching Error', 'An error occurred while generating your coaching message.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed(
+          'Coaching Error',
+          'An error occurred while generating your coaching message.'
+        ),
+      ],
     });
   }
 }
 
 async function handleInsight(interaction: ChatInputCommandInteraction, userId: string) {
   const insight = pomodoroService.getPerformanceInsight(userId);
-  
+
   if (!insight) {
     await interaction.reply({
-      embeds: [pomodoroFormatter.createErrorEmbed('No Session', 'You need an active pomodoro session to get performance insights.')],
+      embeds: [
+        pomodoroFormatter.createErrorEmbed(
+          'No Session',
+          'You need an active pomodoro session to get performance insights.'
+        ),
+      ],
       ephemeral: true,
     });
     return;
@@ -435,20 +486,34 @@ async function handleInsight(interaction: ChatInputCommandInteraction, userId: s
 }
 
 async function handleCoachingConfig(interaction: ChatInputCommandInteraction, userId: string) {
-  const style = interaction.options.getString('style') as 'encouraging' | 'neutral' | 'challenging' | null;
+  const style = interaction.options.getString('style') as
+    | 'encouraging'
+    | 'neutral'
+    | 'challenging'
+    | null;
   const goalsString = interaction.options.getString('goals');
   const keywordsString = interaction.options.getString('keywords');
 
-  const updates: { preferredStyle?: 'encouraging' | 'neutral' | 'challenging'; goals?: string[]; motivationalKeywords?: string[] } = {};
+  const updates: {
+    preferredStyle?: 'encouraging' | 'neutral' | 'challenging';
+    goals?: string[];
+    motivationalKeywords?: string[];
+  } = {};
 
   if (style) {
     updates.preferredStyle = style;
   }
   if (goalsString) {
-    updates.goals = goalsString.split(',').map(goal => goal.trim()).filter(goal => goal.length > 0);
+    updates.goals = goalsString
+      .split(',')
+      .map(goal => goal.trim())
+      .filter(goal => goal.length > 0);
   }
   if (keywordsString) {
-    updates.motivationalKeywords = keywordsString.split(',').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
+    updates.motivationalKeywords = keywordsString
+      .split(',')
+      .map(keyword => keyword.trim())
+      .filter(keyword => keyword.length > 0);
   }
 
   if (Object.keys(updates).length > 0) {

@@ -1,10 +1,16 @@
 import { EmbedBuilder, User } from 'discord.js';
-import { PomodoroStats, TimerStatus, PomodoroConfig, CoachingMessage, PhaseCompletionNotification } from './types';
+import {
+  PomodoroStats,
+  TimerStatus,
+  PomodoroConfig,
+  CoachingMessage,
+  PhaseCompletionNotification,
+} from './types';
 
 export class PomodoroFormatter {
   createStartEmbed(user: User, config: PomodoroConfig): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0xFF6B6B)
+      .setColor(0xff6b6b)
       .setTitle('🍅 Pomodoro Started!')
       .setDescription(`${user.displayName} started a focus session`)
       .addFields(
@@ -19,7 +25,7 @@ export class PomodoroFormatter {
     const phaseEmoji = this.getPhaseEmoji(status.phase);
     const phaseText = this.getPhaseText(status.phase);
     const progressBar = this.createProgressBar(status);
-    
+
     const embed = new EmbedBuilder()
       .setColor(this.getPhaseColor(status.phase))
       .setTitle(`${phaseEmoji} ${phaseText}`)
@@ -40,7 +46,7 @@ export class PomodoroFormatter {
 
   createCompletionEmbed(user: User, stats: PomodoroStats): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0x4ECDC4)
+      .setColor(0x4ecdc4)
       .setTitle('🎉 Pomodoro Session Complete!')
       .setDescription(`Great job, ${user.displayName}!`)
       .addFields(
@@ -54,7 +60,7 @@ export class PomodoroFormatter {
 
   createPausedEmbed(user: User): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0xFFE66D)
+      .setColor(0xffe66d)
       .setTitle('⏸️ Pomodoro Paused')
       .setDescription(`${user.displayName}'s session is paused`)
       .setTimestamp();
@@ -62,7 +68,7 @@ export class PomodoroFormatter {
 
   createResumedEmbed(user: User): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0xFF6B6B)
+      .setColor(0xff6b6b)
       .setTitle('▶️ Pomodoro Resumed')
       .setDescription(`${user.displayName}'s session is back on track!`)
       .setTimestamp();
@@ -70,7 +76,7 @@ export class PomodoroFormatter {
 
   createStoppedEmbed(user: User, stats: PomodoroStats): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0x95A5A6)
+      .setColor(0x95a5a6)
       .setTitle('🛑 Pomodoro Stopped')
       .setDescription(`${user.displayName} ended their session`)
       .addFields(
@@ -82,21 +88,25 @@ export class PomodoroFormatter {
 
   createConfigEmbed(user: User, config: PomodoroConfig): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0x9B59B6)
+      .setColor(0x9b59b6)
       .setTitle('⚙️ Pomodoro Configuration')
       .setDescription(`${user.displayName}'s settings`)
       .addFields(
         { name: '⏱️ Work Duration', value: `${config.workDuration} minutes`, inline: true },
         { name: '☕ Short Break', value: `${config.shortBreakDuration} minutes`, inline: true },
         { name: '🛋️ Long Break', value: `${config.longBreakDuration} minutes`, inline: true },
-        { name: '🔄 Long Break Interval', value: `Every ${config.longBreakInterval} pomodoros`, inline: true }
+        {
+          name: '🔄 Long Break Interval',
+          value: `Every ${config.longBreakInterval} pomodoros`,
+          inline: true,
+        }
       )
       .setTimestamp();
   }
 
   createErrorEmbed(title: string, description: string): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0xE74C3C)
+      .setColor(0xe74c3c)
       .setTitle(`❌ ${title}`)
       .setDescription(description)
       .setTimestamp();
@@ -104,24 +114,28 @@ export class PomodoroFormatter {
 
   createChannelRestrictionEmbed(currentChannel: string): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0xF39C12)
+      .setColor(0xf39c12)
       .setTitle('🚫 Channel Restriction')
       .setDescription(
-        `Pomodoro command can only be used in the **times-taigu12** channel.\n\n` +
-        `Current channel: **${currentChannel}**\n` +
-        `Please use the command in **#times-taigu12** for your productivity sessions.`
+        `Pomodoro command can only be used in the **times-tanigu12** channel.\n\n` +
+          `Current channel: **${currentChannel}**\n` +
+          `Please use the command in **#times-tanigu12** for your productivity sessions.`
       )
       .addFields({
         name: '💡 Why this restriction?',
-        value: 'The pomodoro command is designed for focused work sessions and is restricted to your personal times channel.',
+        value:
+          'The pomodoro command is designed for focused work sessions and is restricted to your personal times channel.',
         inline: false,
       })
       .setTimestamp();
   }
 
-  createPhaseTransitionMessage(phase: 'work' | 'short-break' | 'long-break', completedPomodoros: number): string {
+  createPhaseTransitionMessage(
+    phase: 'work' | 'short-break' | 'long-break',
+    completedPomodoros: number
+  ): string {
     const phaseEmoji = this.getPhaseEmoji(phase);
-    
+
     if (phase === 'work') {
       return `${phaseEmoji} Break complete! Time to focus. You've completed ${completedPomodoros} pomodoros.`;
     } else {
@@ -132,28 +146,40 @@ export class PomodoroFormatter {
 
   private getPhaseEmoji(phase: string): string {
     switch (phase) {
-      case 'work': return '🍅';
-      case 'short-break': return '☕';
-      case 'long-break': return '🛋️';
-      default: return '⏱️';
+      case 'work':
+        return '🍅';
+      case 'short-break':
+        return '☕';
+      case 'long-break':
+        return '🛋️';
+      default:
+        return '⏱️';
     }
   }
 
   private getPhaseText(phase: string): string {
     switch (phase) {
-      case 'work': return 'Focus Time';
-      case 'short-break': return 'Short Break';
-      case 'long-break': return 'Long Break';
-      default: return 'Timer';
+      case 'work':
+        return 'Focus Time';
+      case 'short-break':
+        return 'Short Break';
+      case 'long-break':
+        return 'Long Break';
+      default:
+        return 'Timer';
     }
   }
 
   private getPhaseColor(phase: string): number {
     switch (phase) {
-      case 'work': return 0xFF6B6B;
-      case 'short-break': return 0x4ECDC4;
-      case 'long-break': return 0x45B7D1;
-      default: return 0x95A5A6;
+      case 'work':
+        return 0xff6b6b;
+      case 'short-break':
+        return 0x4ecdc4;
+      case 'long-break':
+        return 0x45b7d1;
+      default:
+        return 0x95a5a6;
     }
   }
 
@@ -161,14 +187,14 @@ export class PomodoroFormatter {
     const totalDuration = status.phase === 'work' ? 25 : 5; // Simplified for progress bar
     const elapsed = totalDuration - status.remainingTime;
     const progress = Math.min(Math.max(elapsed / totalDuration, 0), 1);
-    
+
     const barLength = 20;
     const filledLength = Math.round(progress * barLength);
     const emptyLength = barLength - filledLength;
-    
+
     const filledBar = '█'.repeat(filledLength);
     const emptyBar = '░'.repeat(emptyLength);
-    
+
     return `\`${filledBar}${emptyBar}\` ${Math.round(progress * 100)}%`;
   }
 
@@ -176,7 +202,7 @@ export class PomodoroFormatter {
     const totalMinutes = Math.floor(minutes);
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${mins}m`;
     }
@@ -199,7 +225,7 @@ export class PomodoroFormatter {
 
   createInsightEmbed(user: User, insight: string): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0x3498DB)
+      .setColor(0x3498db)
       .setTitle('💡 Performance Insight')
       .setDescription(insight)
       .setFooter({ text: `Personalized for ${user.displayName}` })
@@ -213,36 +239,57 @@ export class PomodoroFormatter {
     motivationalKeywords: string[]
   ): EmbedBuilder {
     return new EmbedBuilder()
-      .setColor(0x8E44AD)
+      .setColor(0x8e44ad)
       .setTitle('🎯 AI Coaching Profile')
       .setDescription(`${user.displayName}'s coaching preferences`)
       .addFields(
         { name: '🎨 Coaching Style', value: this.capitalizeFirst(preferredStyle), inline: true },
-        { name: '🎯 Goals', value: goals.length > 0 ? goals.join(', ') : 'No goals set', inline: true },
-        { name: '💪 Keywords', value: motivationalKeywords.length > 0 ? motivationalKeywords.join(', ') : 'Default keywords', inline: false }
+        {
+          name: '🎯 Goals',
+          value: goals.length > 0 ? goals.join(', ') : 'No goals set',
+          inline: true,
+        },
+        {
+          name: '💪 Keywords',
+          value:
+            motivationalKeywords.length > 0 ? motivationalKeywords.join(', ') : 'Default keywords',
+          inline: false,
+        }
       )
       .setTimestamp();
   }
 
   private getCoachingColor(type: CoachingMessage['type']): number {
     switch (type) {
-      case 'start': return 0x2ECC71;
-      case 'break': return 0x3498DB;
-      case 'completion': return 0xF39C12;
-      case 'motivation': return 0xE74C3C;
-      case 'reflection': return 0x9B59B6;
-      default: return 0x95A5A6;
+      case 'start':
+        return 0x2ecc71;
+      case 'break':
+        return 0x3498db;
+      case 'completion':
+        return 0xf39c12;
+      case 'motivation':
+        return 0xe74c3c;
+      case 'reflection':
+        return 0x9b59b6;
+      default:
+        return 0x95a5a6;
     }
   }
 
   private getCoachingTitle(type: CoachingMessage['type']): string {
     switch (type) {
-      case 'start': return '🚀 Focus Coaching';
-      case 'break': return '🌊 Break Guidance';
-      case 'completion': return '🎉 Session Complete';
-      case 'motivation': return '💪 Motivation Boost';
-      case 'reflection': return '🤔 Reflection Time';
-      default: return '🤖 AI Coach';
+      case 'start':
+        return '🚀 Focus Coaching';
+      case 'break':
+        return '🌊 Break Guidance';
+      case 'completion':
+        return '🎉 Session Complete';
+      case 'motivation':
+        return '💪 Motivation Boost';
+      case 'reflection':
+        return '🤔 Reflection Time';
+      default:
+        return '🤖 AI Coach';
     }
   }
 
@@ -253,7 +300,7 @@ export class PomodoroFormatter {
   createPhaseCompletionEmbed(user: User, notification: PhaseCompletionNotification): EmbedBuilder {
     const phaseEmoji = this.getPhaseEmoji(notification.nextPhase);
     const phaseText = this.getPhaseText(notification.nextPhase);
-    
+
     let title: string;
     let description: string;
     let color: number;
@@ -262,12 +309,12 @@ export class PomodoroFormatter {
       // Work completed, starting break
       title = `🎉 Pomodoro #${notification.completedPomodoros} Complete!`;
       description = `Great work, ${user.displayName}! Time for a ${notification.nextPhase === 'long-break' ? 'long' : 'short'} break.`;
-      color = 0x2ECC71; // Green for completion
+      color = 0x2ecc71; // Green for completion
     } else {
       // Break completed, starting work
       title = `${phaseEmoji} Break's Over!`;
       description = `Ready to focus, ${user.displayName}? Let's start your next work session.`;
-      color = 0xFF6B6B; // Red/orange for work
+      color = 0xff6b6b; // Red/orange for work
     }
 
     const embed = new EmbedBuilder()
@@ -275,7 +322,11 @@ export class PomodoroFormatter {
       .setTitle(title)
       .setDescription(description)
       .addFields(
-        { name: '🍅 Completed Pomodoros', value: `${notification.completedPomodoros}`, inline: true },
+        {
+          name: '🍅 Completed Pomodoros',
+          value: `${notification.completedPomodoros}`,
+          inline: true,
+        },
         { name: '⏱️ Next Phase', value: `${phaseEmoji} ${phaseText}`, inline: true }
       )
       .setTimestamp();
@@ -284,7 +335,7 @@ export class PomodoroFormatter {
     if (notification.completedPomodoros >= 4) {
       embed.setFooter({ text: '🔥 Amazing productivity streak! Keep it up!' });
     } else if (notification.completedPomodoros >= 2) {
-      embed.setFooter({ text: '💪 Building momentum! You\'re doing great!' });
+      embed.setFooter({ text: "💪 Building momentum! You're doing great!" });
     } else {
       embed.setFooter({ text: '🌱 Every session counts! Keep going!' });
     }
