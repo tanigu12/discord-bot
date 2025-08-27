@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, Collection } from 'discord.js';
 import dotenv from 'dotenv';
-import { randomCommand, formatCommand, bskyCommand, asanaCommand } from './features/commands';
+import { randomCommand, formatCommand, bskyCommand, asanaCommand, pomodoroCommand } from './features/commands';
 import { ReactionHandler } from './features/reactions';
 import { TranslationHandler } from './features/translation';
 import { IdeaHandler } from './features/ideas';
@@ -28,6 +28,7 @@ client.commands.set(randomCommand.data.name, randomCommand);
 client.commands.set(formatCommand.data.name, formatCommand);
 client.commands.set(bskyCommand.data.name, bskyCommand);
 client.commands.set(asanaCommand.data.name, asanaCommand);
+client.commands.set(pomodoroCommand.data.name, pomodoroCommand);
 
 // Initialize handlers
 const reactionHandler = new ReactionHandler();

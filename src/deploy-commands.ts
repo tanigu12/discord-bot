@@ -4,7 +4,8 @@ import {
   randomCommand,
   formatCommand,
   bskyCommand,
-  asanaCommand
+  asanaCommand,
+  pomodoroCommand
 } from './features/commands';
 
 dotenv.config();
@@ -20,6 +21,7 @@ const commands = [
   formatCommand.data,
   bskyCommand.data,
   asanaCommand.data,
+  pomodoroCommand.data,
 ].map(command => command.toJSON());
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
