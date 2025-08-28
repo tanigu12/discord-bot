@@ -47,7 +47,9 @@ export class TranslationFormatter {
     );
 
     // ログに戦略を記録
-    console.log(`🎯 Larry diary feedback: ${ReplyStrategyService.getStrategyStatusMessage(replyResult)}`);
+    console.log(
+      `🎯 Larry diary feedback: ${ReplyStrategyService.getStrategyStatusMessage(replyResult)}`
+    );
   }
 
   // エラー時の埋め込みメッセージを作成
@@ -64,28 +66,31 @@ export class TranslationFormatter {
   // 短いコンテンツ用のサマリーフィールドを作成
   private createContentSummary(result: TranslationProcessingResult) {
     let summaryContent = '';
-    
+
     // シナリオ別にサマリーを作成
     switch (result.scenario) {
       case 'japanese-only':
         if (result.threeLevelTranslations) {
-          summaryContent = `🟢 **Beginner:** ${result.threeLevelTranslations.beginner}\n` +
-                          `🟡 **Intermediate:** ${result.threeLevelTranslations.intermediate}\n` +
-                          `🔴 **Upper:** ${result.threeLevelTranslations.upper}`;
+          summaryContent =
+            `🟢 **Beginner:** ${result.threeLevelTranslations.beginner}\n` +
+            `🟡 **Intermediate:** ${result.threeLevelTranslations.intermediate}\n` +
+            `🔴 **Upper:** ${result.threeLevelTranslations.upper}`;
         }
         break;
-      
+
       case 'japanese-with-try':
         if (result.threeLevelTranslations && result.translationEvaluation) {
-          summaryContent = `🎯 **Evaluation:** ${result.translationEvaluation.evaluation}\n` +
-                          `💡 **Key Point:** ${result.translationEvaluation.studyPoints[0] || 'N/A'}`;
+          summaryContent =
+            `🎯 **Evaluation:** ${result.translationEvaluation.evaluation}\n` +
+            `💡 **Key Point:** ${result.translationEvaluation.studyPoints[0] || 'N/A'}`;
         }
         break;
-      
+
       case 'english-only':
         if (result.japaneseTranslation && result.educationalExplanation) {
-          summaryContent = `🇯🇵 **Translation:** ${result.japaneseTranslation}\n` +
-                          `🎓 **Educational Feedback:** ${result.educationalExplanation}`;
+          summaryContent =
+            `🇯🇵 **Translation:** ${result.japaneseTranslation}\n` +
+            `🎓 **Educational Feedback:** ${result.educationalExplanation}`;
         }
         break;
     }
@@ -94,10 +99,10 @@ export class TranslationFormatter {
       return {
         name: '📋 Key Feedback Points',
         value: summaryContent,
-        inline: false
+        inline: false,
       };
     }
-    
+
     return null;
   }
 
@@ -115,7 +120,6 @@ export class TranslationFormatter {
     }
   }
 
-
   // 長いテキストを100文字ごとに改行
   private addLineBreaks(text: string, maxLineLength: number = 100): string {
     if (text.length <= maxLineLength) {
@@ -129,7 +133,7 @@ export class TranslationFormatter {
     for (const word of words) {
       // 現在の行に単語を追加した時の長さをチェック
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      
+
       if (testLine.length <= maxLineLength) {
         // 長さが制限内なら追加
         currentLine = testLine;
@@ -166,17 +170,17 @@ export class TranslationFormatter {
   // 完全なメッセージ内容を生成（改行を適切に配置して読みやすく）
   private generateCompleteMessage(result: TranslationProcessingResult, author: User): string {
     const lines: string[] = [];
-    
+
     // ヘッダー部分
     lines.push(`📝 Larry's Complete Diary Feedback for ${author.username}`);
     lines.push(`═══════════════════════════════════════════════════════`);
     lines.push(``);
-    
+
     // 基本情報
     lines.push(`🎯 DETECTED LANGUAGE: ${this.getLanguageDisplayName(result.detectedLanguage)}`);
     lines.push(`📖 SCENARIO: ${result.scenario.toUpperCase().replace(/-/g, ' ')}`);
     lines.push(``);
-    
+
     // ターゲット文
     lines.push(`📝 TARGET SENTENCE:`);
     lines.push(`${result.targetSentence}`);
@@ -195,18 +199,18 @@ export class TranslationFormatter {
       lines.push(``);
       lines.push(`❓ QUESTIONS & ANSWERS:`);
       lines.push(``);
-      
+
       result.questionAnswers.forEach((qa, index) => {
         // 質問も100文字で分割
         const questionText = `Q${index + 1}: ${qa.question}`;
         lines.push(...this.addLineBreaks(questionText).split('\n'));
         lines.push(``);
-        
+
         // 回答も100文字で分割
         const answerText = `A${index + 1}: ${qa.answer}`;
         lines.push(...this.addLineBreaks(answerText).split('\n'));
         lines.push(``);
-        
+
         if (index < result.questionAnswers!.length - 1) {
           lines.push(`---`);
           lines.push(``);
@@ -227,40 +231,22 @@ export class TranslationFormatter {
   // シナリオ別の内容を行配列で取得（改行を適切に配置、長いテキストは100文字で分割）
   private getScenarioContentLines(result: TranslationProcessingResult): string[] {
     const lines: string[] = [];
-    
+
     switch (result.scenario) {
       case 'japanese-only':
+      case 'mixing':
         if (result.threeLevelTranslations) {
           lines.push(`📚 THREE LEVEL ENGLISH TRANSLATIONS:`);
           lines.push(``);
-          
-          lines.push(`🟢 BEGINNER LEVEL:`);
-          lines.push(...this.addLineBreaks(result.threeLevelTranslations.beginner).split('\n'));
-          lines.push(``);
-          
-          lines.push(`🟡 INTERMEDIATE LEVEL:`);
-          lines.push(...this.addLineBreaks(result.threeLevelTranslations.intermediate).split('\n'));
-          lines.push(``);
-          
-          lines.push(`🔴 UPPER LEVEL:`);
-          lines.push(...this.addLineBreaks(result.threeLevelTranslations.upper).split('\n'));
-          lines.push(``);
-        }
-        break;
 
-      case 'japanese-with-try':
-        if (result.threeLevelTranslations) {
-          lines.push(`📚 THREE LEVEL ENGLISH TRANSLATIONS:`);
-          lines.push(``);
-          
           lines.push(`🟢 BEGINNER LEVEL:`);
           lines.push(...this.addLineBreaks(result.threeLevelTranslations.beginner).split('\n'));
           lines.push(``);
-          
+
           lines.push(`🟡 INTERMEDIATE LEVEL:`);
           lines.push(...this.addLineBreaks(result.threeLevelTranslations.intermediate).split('\n'));
           lines.push(``);
-          
+
           lines.push(`🔴 UPPER LEVEL:`);
           lines.push(...this.addLineBreaks(result.threeLevelTranslations.upper).split('\n'));
           lines.push(``);
@@ -269,18 +255,57 @@ export class TranslationFormatter {
         if (result.translationEvaluation) {
           lines.push(`═══════════════════════════════════════════════════════`);
           lines.push(``);
-          
+
           lines.push(`🎯 TRANSLATION EVALUATION:`);
           lines.push(...this.addLineBreaks(result.translationEvaluation.evaluation).split('\n'));
           lines.push(``);
-          
+
           lines.push(`📝 STUDY POINTS:`);
           result.translationEvaluation.studyPoints.forEach((point, index) => {
             const numberedPoint = `${index + 1}. ${point}`;
             lines.push(...this.addLineBreaks(numberedPoint).split('\n'));
           });
           lines.push(``);
-          
+
+          lines.push(`💡 IMPROVEMENTS:`);
+          lines.push(...this.addLineBreaks(result.translationEvaluation.improvements).split('\n'));
+          lines.push(``);
+        }
+        break;
+
+      case 'japanese-with-try':
+        if (result.threeLevelTranslations) {
+          lines.push(`📚 THREE LEVEL ENGLISH TRANSLATIONS:`);
+          lines.push(``);
+
+          lines.push(`🟢 BEGINNER LEVEL:`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.beginner).split('\n'));
+          lines.push(``);
+
+          lines.push(`🟡 INTERMEDIATE LEVEL:`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.intermediate).split('\n'));
+          lines.push(``);
+
+          lines.push(`🔴 UPPER LEVEL:`);
+          lines.push(...this.addLineBreaks(result.threeLevelTranslations.upper).split('\n'));
+          lines.push(``);
+        }
+
+        if (result.translationEvaluation) {
+          lines.push(`═══════════════════════════════════════════════════════`);
+          lines.push(``);
+
+          lines.push(`🎯 TRANSLATION EVALUATION:`);
+          lines.push(...this.addLineBreaks(result.translationEvaluation.evaluation).split('\n'));
+          lines.push(``);
+
+          lines.push(`📝 STUDY POINTS:`);
+          result.translationEvaluation.studyPoints.forEach((point, index) => {
+            const numberedPoint = `${index + 1}. ${point}`;
+            lines.push(...this.addLineBreaks(numberedPoint).split('\n'));
+          });
+          lines.push(``);
+
           lines.push(`💡 IMPROVEMENTS:`);
           lines.push(...this.addLineBreaks(result.translationEvaluation.improvements).split('\n'));
           lines.push(``);
@@ -292,15 +317,14 @@ export class TranslationFormatter {
           lines.push(`🇯🇵 JAPANESE TRANSLATION:`);
           lines.push(...this.addLineBreaks(result.japaneseTranslation).split('\n'));
           lines.push(``);
-          
+
           lines.push(`🎓 EDUCATIONAL FEEDBACK & ANALYSIS:`);
           lines.push(...this.addLineBreaks(result.educationalExplanation).split('\n'));
           lines.push(``);
         }
         break;
     }
-    
+
     return lines;
   }
-
 }
