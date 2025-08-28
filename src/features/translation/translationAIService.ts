@@ -215,6 +215,7 @@ When users send mixed Japanese and English text, your task:
 
     switch (scenario) {
       case 'japanese-only':
+      case 'mixing':
         return {
           name: 'japanese_only_processing',
           strict: true,
@@ -309,29 +310,6 @@ When users send mixed Japanese and English text, your task:
                 type: 'string',
                 description:
                   'Comprehensive educational feedback including English quality assessment, improvement suggestions, vocabulary, grammar, and usage explanations',
-              },
-              ...commonQuestionAnswers,
-            },
-            required: ['japaneseTranslation', 'educationalExplanation', 'questionAnswers'],
-            additionalProperties: false,
-          },
-        };
-
-      case 'mixing':
-        return {
-          name: 'mixing_processing',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              japaneseTranslation: {
-                type: 'string',
-                description: 'Japanese translation of the mixed language text',
-              },
-              educationalExplanation: {
-                type: 'string',
-                description:
-                  'Comprehensive educational feedback including English quality assessment, improvement suggestions, vocabulary, grammar, and usage explanations for the mixed language text',
               },
               ...commonQuestionAnswers,
             },
