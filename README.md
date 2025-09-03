@@ -255,6 +255,13 @@ Larryの日記フィードバックメッセージ（message.txt添付）
 
 **注意:** READMEで言及されている国旗絵文字による翻訳機能（🇺🇸🇯🇵等）は実装されていません。翻訳機能は日記チャンネルでの自動翻訳に置き換えられています。
 
+### youtube-dl-execのクッキー取得
+
+YouTubeの動画を取得するためには、クッキーが必要。
+```bash
+wget --save-cookies cookies.txt --keep-session-cookies -O /dev/null https://www.youtube.com/
+```
+
 ## 🤝 Contributing
 
 プルリクエストやIssueの報告を歓迎します。バグ報告や機能提案がある場合は、GitHubのIssuesセクションをご利用ください。
