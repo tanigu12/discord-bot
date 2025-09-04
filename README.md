@@ -262,6 +262,15 @@ YouTubeの動画を取得するためには、クッキーが必要。
 wget --save-cookies cookies.txt --keep-session-cookies -O /dev/null https://www.youtube.com/
 ```
 
+上記がうまくいかない場合（gitignoreしてます）
+
+
+![ScreenRecording2025-09-05at7.53.28.mov](./ScreenRecording2025-09-05at7.53.28.mov)
+
+もしくは、
+Get cookies.txt LOCALLYという拡張機能を使用してください。
+https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc?utm_source=chatgpt.com&pli=1
+
 ## 🤝 Contributing
 
 プルリクエストやIssueの報告を歓迎します。バグ報告や機能提案がある場合は、GitHubのIssuesセクションをご利用ください。
