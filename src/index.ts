@@ -6,6 +6,7 @@ import {
   bskyCommand,
   asanaCommand,
   pomodoroCommand,
+  debateAnswerCommand,
 } from './features/commands';
 import { ReactionHandler } from './features/reactions';
 import { TranslationHandler } from './features/translation';
@@ -35,6 +36,7 @@ client.commands.set(formatCommand.data.name, formatCommand);
 client.commands.set(bskyCommand.data.name, bskyCommand);
 client.commands.set(asanaCommand.data.name, asanaCommand);
 client.commands.set(pomodoroCommand.data.name, pomodoroCommand);
+client.commands.set(debateAnswerCommand.data.name, debateAnswerCommand);
 
 // Initialize handlers
 const reactionHandler = new ReactionHandler();
