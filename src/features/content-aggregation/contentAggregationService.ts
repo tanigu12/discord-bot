@@ -13,12 +13,14 @@ export interface RandomContentResult {
   };
   technicalQuestions: TechnicalQuestion[];
   englishPhrases: EnglishPhrase[];
+  debateQuestions: EnglishPhrase[];
   asanaTasks: any[];
 }
 
 interface ContentAggregationOptions {
   technicalQuestionCount?: number;
   englishPhraseCount?: number;
+  debateQuestionCount?: number;
   maxAsanaTasks?: number;
   includeNews?: boolean;
   includeDiary?: boolean;
@@ -47,6 +49,7 @@ export class ContentAggregationService {
     const {
       technicalQuestionCount = 3,
       englishPhraseCount = 3,
+      debateQuestionCount = 2,
       maxAsanaTasks = 10,
       includeNews = true,
       includeDiary = true,
@@ -56,14 +59,16 @@ export class ContentAggregationService {
     console.log('📝 Aggregating random content...');
 
     // Get content that doesn't depend on external services first
-    const [technicalQuestions, englishPhrases] = await Promise.all([
+    const [technicalQuestions, englishPhrases, debateQuestions] = await Promise.all([
       Promise.resolve(this.technicalQuestionService.getRandomQuestions(technicalQuestionCount)),
       Promise.resolve(this.englishPhraseService.getRandomPhrases(englishPhraseCount)),
+      Promise.resolve(this.englishPhraseService.getRandomDebateQuestions(debateQuestionCount)),
     ]);
 
     const result: RandomContentResult = {
       technicalQuestions,
       englishPhrases,
+      debateQuestions,
       asanaTasks: [],
     };
 
@@ -106,11 +111,13 @@ export class ContentAggregationService {
    */
   getFallbackContent(
     technicalQuestionCount: number = 3,
-    englishPhraseCount: number = 3
-  ): Pick<RandomContentResult, 'technicalQuestions' | 'englishPhrases'> {
+    englishPhraseCount: number = 3,
+    debateQuestionCount: number = 2
+  ): Pick<RandomContentResult, 'technicalQuestions' | 'englishPhrases' | 'debateQuestions'> {
     return {
       technicalQuestions: this.technicalQuestionService.getRandomQuestions(technicalQuestionCount),
       englishPhrases: this.englishPhraseService.getRandomPhrases(englishPhraseCount),
+      debateQuestions: this.englishPhraseService.getRandomDebateQuestions(debateQuestionCount),
     };
   }
 

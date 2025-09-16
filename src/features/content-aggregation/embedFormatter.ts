@@ -27,7 +27,7 @@ export class RandomContentEmbedFormatter {
     const embed = new EmbedBuilder()
       .setTitle("✨ Today's Random Content")
       .setDescription(
-        'Here are diary topics, technical questions, English phrases, and your tasks! 📖💻🗣️📋'
+        'Here are diary topics, technical questions, English phrases, debate topics, and your tasks! 📖💻🗣️🎭📋'
       )
       .setColor(0x00d4aa)
       .setTimestamp()
@@ -41,9 +41,10 @@ export class RandomContentEmbedFormatter {
       this.addShortDiaryFields(embed, content);
     }
 
-    // Always add technical questions and English phrases to main embed (these are controlled length)
+    // Always add technical questions, English phrases, and debate questions to main embed (these are controlled length)
     this.addTechnicalQuestionsField(embed, content.technicalQuestions);
     this.addEnglishPhrasesField(embed, content.englishPhrases);
+    this.addDebateQuestionsField(embed, content.debateQuestions);
 
     // Add short task list to main embed
     if (content.asanaTasks && content.asanaTasks.length > 0) {
@@ -72,7 +73,8 @@ export class RandomContentEmbedFormatter {
    */
   createFallbackEmbed(
     technicalQuestions: TechnicalQuestion[],
-    englishPhrases: EnglishPhrase[]
+    englishPhrases: EnglishPhrase[],
+    debateQuestions: EnglishPhrase[]
   ): EmbedBuilder {
     const embed = new EmbedBuilder()
       .setTitle('📝 Random Content (Backup)')
@@ -99,6 +101,9 @@ export class RandomContentEmbedFormatter {
 
     // Add English phrases
     this.addEnglishPhrasesField(embed, englishPhrases);
+
+    // Add debate questions
+    this.addDebateQuestionsField(embed, debateQuestions);
 
     // Add daily check-in
     embed.addFields({
@@ -222,6 +227,23 @@ export class RandomContentEmbedFormatter {
     embed.addFields({
       name: '🗣️ English Phrases to Study',
       value: phrasesText,
+      inline: false,
+    });
+  }
+
+  /**
+   * Add debate questions field
+   */
+  private addDebateQuestionsField(embed: EmbedBuilder, debateQuestions: EnglishPhrase[]): void {
+    if (debateQuestions.length === 0) return;
+
+    const debateText = debateQuestions
+      .map((item, index) => `**${index + 1}.** ${item.phrase}`)
+      .join('\n');
+
+    embed.addFields({
+      name: '🎭 Debate Topics for English Practice',
+      value: debateText,
       inline: false,
     });
   }

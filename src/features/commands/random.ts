@@ -21,6 +21,7 @@ export const randomCommand = {
       const content = await contentAggregationService.aggregateRandomContent({
         technicalQuestionCount: 3,
         englishPhraseCount: 3,
+        debateQuestionCount: 2,
         maxAsanaTasks: 10,
         includeNews: true,
         includeDiary: true,
@@ -34,10 +35,11 @@ export const randomCommand = {
       console.error('❌ Error generating random content:', error);
 
       // Get fallback content and create fallback embed
-      const fallbackContent = contentAggregationService.getFallbackContent(3, 3);
+      const fallbackContent = contentAggregationService.getFallbackContent(3, 3, 2);
       const fallbackEmbed = embedFormatter.createFallbackEmbed(
         fallbackContent.technicalQuestions,
-        fallbackContent.englishPhrases
+        fallbackContent.englishPhrases,
+        fallbackContent.debateQuestions
       );
 
       await interaction.editReply({

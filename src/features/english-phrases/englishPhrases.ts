@@ -77,6 +77,29 @@ const ENGLISH_PHRASES = {
     "You're making great progress - You're improving well",
     'Keep up the good work - Continue doing well',
   ],
+
+  debate: [
+    'Do you think remote work will remain the standard in the future, or will most companies return to office-based work? - Future of work discussion',
+    'Should governments regulate social media platforms more strictly to prevent misinformation? - Social media regulation debate',
+    'Do you believe space exploration is worth the huge financial investment, or should the money be used for solving problems on Earth? - Space exploration priorities',
+    'Will renewable energy fully replace fossil fuels within the next 50 years? - Energy transition debate',
+    'Do you think universal basic income (UBI) is a realistic solution to automation and job loss? - Economic policy discussion',
+    'Should companies prioritize employee well-being over maximizing profits? - Corporate responsibility debate',
+    'Do you think globalization has done more good or more harm to local cultures? - Globalization impact discussion',
+    'Will human creativity always remain unique, or could AI eventually surpass us in art, literature, and music? - AI vs human creativity',
+    'Should higher education be free for everyone, or should students pay to ensure value and responsibility? - Education funding debate',
+    'Do you think climate change can still be reversed, or is it too late to prevent serious damage? - Climate change discussion',
+    'Do you think it is better to live in a big city or in the countryside for a happy life? - Lifestyle choice debate',
+    'Should children start learning programming at the same level of importance as mathematics? - Education curriculum discussion',
+    'Do you believe sports stars and entertainers are paid too much compared to doctors and teachers? - Salary inequality debate',
+    'Should governments ban meat consumption in order to fight climate change? - Environmental policy discussion',
+    'Is it better to specialize deeply in one skill, or to become a generalist with many skills? - Career development debate',
+    'Do you think the world will ever achieve lasting global peace? - World peace discussion',
+    'Should people have the right to choose euthanasia if they are suffering from a serious illness? - Medical ethics debate',
+    'Do you think online friendships can be as strong and meaningful as in-person friendships? - Digital relationships discussion',
+    'Should space tourism be allowed, even though it may harm the environment? - Space tourism ethics debate',
+    'Do you think future generations will value physical books, or will digital content completely replace them? - Digital vs physical media',
+  ],
 };
 
 type PhraseCategory = keyof typeof ENGLISH_PHRASES;
@@ -106,6 +129,17 @@ export class EnglishPhraseService {
   getRandomPhrases(count: number = 3): EnglishPhrase[] {
     const allPhrases = this.getAllPhrases();
     const shuffled = [...allPhrases].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  /**
+   * Get random debate questions specifically
+   */
+  getRandomDebateQuestions(count: number = 2): EnglishPhrase[] {
+    const debateQuestions = ENGLISH_PHRASES.debate.map(phraseString => 
+      this.parsePhrase(phraseString, 'debate')
+    );
+    const shuffled = [...debateQuestions].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
 
