@@ -28,16 +28,21 @@ export const techInterviewCommand = {
           iconURL: interaction.user.displayAvatarURL(),
         });
 
+      // Helper function to format arrays as bullet points
+      const formatBulletPoints = (items: string[]): string => {
+        return items.map(item => `• ${item}`).join('\n');
+      };
+
       // Add the extended answer structure
       embed.addFields(
         {
           name: '**📌 Definition / Concept**',
-          value: techAnswer.definition,
+          value: formatBulletPoints(techAnswer.definition),
           inline: false,
         },
         {
           name: '**🔍 Key Characteristics / Differences**',
-          value: techAnswer.keyCharacteristics,
+          value: formatBulletPoints(techAnswer.keyCharacteristics),
           inline: false,
         }
       );
@@ -46,7 +51,7 @@ export const techInterviewCommand = {
       if (techAnswer.advantages && techAnswer.disadvantages) {
         embed.addFields({
           name: '**⚖️ Advantages / Disadvantages**',
-          value: `**Advantages:** ${techAnswer.advantages}\n\n**Disadvantages:** ${techAnswer.disadvantages}`,
+          value: `**Advantages:**\n${formatBulletPoints(techAnswer.advantages)}\n\n**Disadvantages:**\n${formatBulletPoints(techAnswer.disadvantages)}`,
           inline: false,
         });
       }
@@ -54,17 +59,17 @@ export const techInterviewCommand = {
       embed.addFields(
         {
           name: '**💡 Practical Example**',
-          value: techAnswer.practicalExample,
+          value: formatBulletPoints(techAnswer.practicalExample),
           inline: false,
         },
         {
           name: '**✅ Best Practices / When to Use**',
-          value: techAnswer.bestPractices,
+          value: formatBulletPoints(techAnswer.bestPractices),
           inline: false,
         },
         {
           name: '**🎯 Conclusion / Summary**',
-          value: techAnswer.conclusion,
+          value: formatBulletPoints(techAnswer.conclusion),
           inline: false,
         }
       );
