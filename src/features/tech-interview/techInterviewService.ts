@@ -1,5 +1,4 @@
 import { TechInterviewAnswer } from './types';
-export { TechInterviewAnswer };
 import { basicQuestions } from './questions/basicQuestions';
 import { computerScienceFundamentals } from './questions/computerScienceFundamentals';
 import { softwareEngineeringQuestions } from './questions/softwareEngineering';
@@ -16,7 +15,7 @@ export class TechInterviewService {
     ...systemDesignQuestions,
     ...cloudSecurityQuestions,
     ...algorithmQuestions,
-    ...popularSystemDesignQuestions
+    ...popularSystemDesignQuestions,
   ];
 
   getRandomTechInterviewAnswer(): TechInterviewAnswer {

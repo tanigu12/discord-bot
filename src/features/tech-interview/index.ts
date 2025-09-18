@@ -1,1 +1,1 @@
-export { techInterviewService, TechInterviewAnswer } from './techInterviewService';
+export { techInterviewService } from './techInterviewService';
