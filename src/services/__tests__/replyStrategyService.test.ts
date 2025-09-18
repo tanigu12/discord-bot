@@ -9,9 +9,9 @@ vi.mock('../attachmentService', () => ({
     createTextAttachment: vi.fn().mockReturnValue({ name: 'test.txt' }),
     createTempFileAttachment: vi.fn().mockResolvedValue({
       attachment: { name: 'temp.txt' },
-      cleanup: vi.fn()
-    })
-  }
+      cleanup: vi.fn(),
+    }),
+  },
 }));
 
 describe('ReplyStrategyService', () => {
@@ -23,12 +23,12 @@ describe('ReplyStrategyService', () => {
     mockMessage = {
       reply: vi.fn().mockResolvedValue({}),
       channel: {
-        send: vi.fn().mockResolvedValue({})
-      }
+        send: vi.fn().mockResolvedValue({}),
+      },
     } as any;
 
     mockInteraction = {
-      editReply: vi.fn().mockResolvedValue({})
+      editReply: vi.fn().mockResolvedValue({}),
     } as any;
 
     // Reset environment variable
@@ -53,10 +53,10 @@ describe('ReplyStrategyService', () => {
     it('should use custom character limit from environment', () => {
       // Environment variable is set at class load time, so we test the current behavior
       const limit = ReplyStrategyService.CHARACTER_LIMIT;
-      
+
       const contentOverLimit = 'a'.repeat(limit + 1);
       expect(ReplyStrategyService.shouldUseAttachment(contentOverLimit)).toBe(true);
-      
+
       const contentAtLimit = 'a'.repeat(limit);
       expect(ReplyStrategyService.shouldUseAttachment(contentAtLimit)).toBe(false);
     });
@@ -64,10 +64,10 @@ describe('ReplyStrategyService', () => {
     it('should handle edge cases', () => {
       const limit = ReplyStrategyService.CHARACTER_LIMIT;
       expect(ReplyStrategyService.shouldUseAttachment('')).toBe(false);
-      
+
       const exactlyAtLimit = 'a'.repeat(limit);
       expect(ReplyStrategyService.shouldUseAttachment(exactlyAtLimit)).toBe(false);
-      
+
       const overLimit = 'a'.repeat(limit + 1);
       expect(ReplyStrategyService.shouldUseAttachment(overLimit)).toBe(true);
     });
@@ -105,7 +105,7 @@ describe('ReplyStrategyService', () => {
       expect(AttachmentService.createTextAttachment).toHaveBeenCalledWith(longContent, filename);
       expect(mockMessage.reply).toHaveBeenCalledWith({
         content: expect.stringContaining('Response sent as file'),
-        files: [{ name: 'test.txt' }]
+        files: [{ name: 'test.txt' }],
       });
     });
 
@@ -134,7 +134,10 @@ describe('ReplyStrategyService', () => {
 
       await ReplyStrategyService.sendConditionalReply(mockMessage as Message, options);
 
-      expect(AttachmentService.createTextAttachment).toHaveBeenCalledWith(longContent, 'response.txt');
+      expect(AttachmentService.createTextAttachment).toHaveBeenCalledWith(
+        longContent,
+        'response.txt'
+      );
     });
   });
 
@@ -169,7 +172,7 @@ describe('ReplyStrategyService', () => {
       expect(result.sent).toBe(true);
       expect(mockInteraction.editReply).toHaveBeenCalledWith({
         content: expect.stringContaining('Response sent as file'),
-        files: [{ name: 'test.txt' }]
+        files: [{ name: 'test.txt' }],
       });
     });
 
@@ -232,20 +235,23 @@ describe('ReplyStrategyService', () => {
       expect(result.strategy).toBe('attachment');
       expect(result.characterCount).toBe(longContent.length);
       expect(result.sent).toBe(true);
-      expect(AttachmentService.createTempFileAttachment).toHaveBeenCalledWith(longContent, filename);
+      expect(AttachmentService.createTempFileAttachment).toHaveBeenCalledWith(
+        longContent,
+        filename
+      );
       expect(mockMessage.reply).toHaveBeenCalledWith({
         embeds: [mockEmbed],
-        files: [{ name: 'temp.txt' }]
+        files: [{ name: 'temp.txt' }],
       });
     });
 
     it('should call cleanup function after sending attachment', async () => {
       const longContent = 'a'.repeat(2000);
       const mockCleanup = vi.fn();
-      
+
       (AttachmentService.createTempFileAttachment as any).mockResolvedValue({
         attachment: { name: 'temp.txt' },
-        cleanup: mockCleanup
+        cleanup: mockCleanup,
       });
 
       await ReplyStrategyService.sendConditionalEmbedReply(
@@ -262,14 +268,14 @@ describe('ReplyStrategyService', () => {
     it('should return message status for message strategy', () => {
       const result = { strategy: 'message' as const, characterCount: 500, sent: true };
       const message = ReplyStrategyService.getStrategyStatusMessage(result);
-      
+
       expect(message).toBe('💬 Content sent as direct message (500 characters ≤ 1500 limit)');
     });
 
     it('should return attachment status for attachment strategy', () => {
       const result = { strategy: 'attachment' as const, characterCount: 2000, sent: true };
       const message = ReplyStrategyService.getStrategyStatusMessage(result);
-      
+
       expect(message).toBe('📎 Content sent as file attachment (2000 characters > 1500 limit)');
     });
 
@@ -277,8 +283,10 @@ describe('ReplyStrategyService', () => {
       const limit = ReplyStrategyService.CHARACTER_LIMIT;
       const result = { strategy: 'attachment' as const, characterCount: limit + 200, sent: true };
       const message = ReplyStrategyService.getStrategyStatusMessage(result);
-      
-      expect(message).toBe(`📎 Content sent as file attachment (${limit + 200} characters > ${limit} limit)`);
+
+      expect(message).toBe(
+        `📎 Content sent as file attachment (${limit + 200} characters > ${limit} limit)`
+      );
     });
   });
 
@@ -309,7 +317,7 @@ describe('ReplyStrategyService', () => {
     it('should truncate long content with ellipsis', () => {
       const longContent = 'a'.repeat(150);
       const truncated = ReplyStrategyService.truncateForPreview(longContent);
-      
+
       expect(truncated).toBe('a'.repeat(97) + '...');
       expect(truncated.length).toBe(100);
     });
@@ -317,7 +325,7 @@ describe('ReplyStrategyService', () => {
     it('should use custom max length', () => {
       const content = 'a'.repeat(50);
       const truncated = ReplyStrategyService.truncateForPreview(content, 20);
-      
+
       expect(truncated).toBe('a'.repeat(17) + '...');
       expect(truncated.length).toBe(20);
     });
@@ -332,7 +340,9 @@ describe('ReplyStrategyService', () => {
   describe('character limit configuration', () => {
     it('should use default character limit when env var not set', () => {
       // CHARACTER_LIMIT is set at class load time, so we test what it currently is
-      expect(ReplyStrategyService.CHARACTER_LIMIT).toBe(ReplyStrategyService.DEFAULT_CHARACTER_LIMIT);
+      expect(ReplyStrategyService.CHARACTER_LIMIT).toBe(
+        ReplyStrategyService.DEFAULT_CHARACTER_LIMIT
+      );
     });
 
     it('should use environment variable when set', () => {

@@ -10,33 +10,34 @@ const mockYoutubeCaptionService = {
 
 // Mock dependencies
 vi.mock('../../youtube-caption/youtubeCaptionService', () => ({
-  YoutubeCaptionService: vi.fn(() => mockYoutubeCaptionService)
+  YoutubeCaptionService: vi.fn(() => mockYoutubeCaptionService),
 }));
 
 vi.mock('../../../services/replyStrategyService', () => ({
   ReplyStrategyService: {
     sendConditionalReply: vi.fn(),
-  }
+  },
 }));
 
 vi.mock('../../../utils/textAggregator', () => ({
   TextAggregator: {
     aggregateSearchResults: vi.fn(),
     generateFileName: vi.fn(),
-  }
+  },
 }));
 
 // Mock Discord.js Message
-const createMockMessage = (): Partial<Message> => ({
-  content: 'Test content',
-  channel: {
-    type: 0,
-    name: 'test-channel',
-    send: vi.fn().mockResolvedValue({}),
-  } as any,
-  reply: vi.fn().mockResolvedValue({}),
-  valueOf: () => 'mock-message',
-} as any);
+const createMockMessage = (): Partial<Message> =>
+  ({
+    content: 'Test content',
+    channel: {
+      type: 0,
+      name: 'test-channel',
+      send: vi.fn().mockResolvedValue({}),
+    } as any,
+    reply: vi.fn().mockResolvedValue({}),
+    valueOf: () => 'mock-message',
+  }) as any;
 
 describe('YouTubeAnalysisService', () => {
   let service: YouTubeAnalysisService;
@@ -114,9 +115,9 @@ describe('YouTubeAnalysisService', () => {
     it('should return error for invalid YouTube URL', async () => {
       // Mock isYouTubeUrl to return false
       mockYoutubeCaptionService.isYouTubeUrl.mockReturnValue(false);
-      
+
       const result = await service.getTranscriptImmediate('https://www.google.com');
-      
+
       expect(result.status).toBe('error');
       expect(result.error).toBe('Invalid YouTube URL provided');
       expect(result.transcript).toBeUndefined();
@@ -125,15 +126,17 @@ describe('YouTubeAnalysisService', () => {
     it('should return success result with transcript', async () => {
       // Mock isYouTubeUrl to return true
       mockYoutubeCaptionService.isYouTubeUrl.mockReturnValue(true);
-      
+
       // Mock getTranscriptFromVideo to return success
       mockYoutubeCaptionService.getTranscriptFromVideo.mockResolvedValue({
         status: 'success',
         summary: 'Mock transcript content',
       });
 
-      const result = await service.getTranscriptImmediate('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-      
+      const result = await service.getTranscriptImmediate(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      );
+
       expect(result.status).toBe('success');
       expect(result.transcript).toBe('Mock transcript content');
       expect(result.videoId).toBe('dQw4w9WgXcQ');
@@ -145,15 +148,17 @@ describe('YouTubeAnalysisService', () => {
     it('should handle transcript extraction failure', async () => {
       // Mock isYouTubeUrl to return true
       mockYoutubeCaptionService.isYouTubeUrl.mockReturnValue(true);
-      
+
       // Mock getTranscriptFromVideo to return error
       mockYoutubeCaptionService.getTranscriptFromVideo.mockResolvedValue({
         status: 'error',
         error: 'Video unavailable',
       });
 
-      const result = await service.getTranscriptImmediate('https://www.youtube.com/watch?v=invalid');
-      
+      const result = await service.getTranscriptImmediate(
+        'https://www.youtube.com/watch?v=invalid'
+      );
+
       expect(result.status).toBe('error');
       expect(result.error).toBe('Video unavailable');
     });
@@ -161,12 +166,14 @@ describe('YouTubeAnalysisService', () => {
     it('should handle service exceptions', async () => {
       // Mock isYouTubeUrl to return true
       mockYoutubeCaptionService.isYouTubeUrl.mockReturnValue(true);
-      
+
       // Mock getTranscriptFromVideo to throw error
-      mockYoutubeCaptionService.getTranscriptFromVideo.mockRejectedValue(new Error('Service error'));
+      mockYoutubeCaptionService.getTranscriptFromVideo.mockRejectedValue(
+        new Error('Service error')
+      );
 
       const result = await service.getTranscriptImmediate('https://www.youtube.com/watch?v=test');
-      
+
       expect(result.status).toBe('error');
       expect(result.error).toContain('Service error');
     });
@@ -181,10 +188,15 @@ describe('YouTubeAnalysisService', () => {
 
       // Mock ReplyStrategyService
       const { ReplyStrategyService } = await import('../../../services/replyStrategyService');
-      const sendConditionalReplySpy = vi.spyOn(ReplyStrategyService, 'sendConditionalReply')
+      const sendConditionalReplySpy = vi
+        .spyOn(ReplyStrategyService, 'sendConditionalReply')
         .mockResolvedValue({ strategy: 'message', characterCount: 100, sent: true });
 
-      await service.sendTranscriptToDiscord(mockMessage as Message, transcriptResult, 'https://youtu.be/test');
+      await service.sendTranscriptToDiscord(
+        mockMessage as Message,
+        transcriptResult,
+        'https://youtu.be/test'
+      );
 
       expect(sendConditionalReplySpy).toHaveBeenCalledWith(
         mockMessage,
@@ -205,17 +217,22 @@ describe('YouTubeAnalysisService', () => {
       // Mock services
       const { ReplyStrategyService } = await import('../../../services/replyStrategyService');
       const { TextAggregator } = await import('../../../utils/textAggregator');
-      
-      const sendConditionalReplySpy = vi.spyOn(ReplyStrategyService, 'sendConditionalReply')
-        .mockResolvedValue({ strategy: 'message', characterCount: 100, sent: true });
-      
-      const aggregateResultsSpy = vi.spyOn(TextAggregator, 'aggregateSearchResults')
-        .mockReturnValue('Aggregated content');
-      
-      vi.spyOn(TextAggregator, 'generateFileName')
-        .mockReturnValue('youtube-transcript-test.txt');
 
-      await service.sendTranscriptToDiscord(mockMessage as Message, transcriptResult, 'https://youtu.be/test');
+      const sendConditionalReplySpy = vi
+        .spyOn(ReplyStrategyService, 'sendConditionalReply')
+        .mockResolvedValue({ strategy: 'message', characterCount: 100, sent: true });
+
+      const aggregateResultsSpy = vi
+        .spyOn(TextAggregator, 'aggregateSearchResults')
+        .mockReturnValue('Aggregated content');
+
+      vi.spyOn(TextAggregator, 'generateFileName').mockReturnValue('youtube-transcript-test.txt');
+
+      await service.sendTranscriptToDiscord(
+        mockMessage as Message,
+        transcriptResult,
+        'https://youtu.be/test'
+      );
 
       expect(aggregateResultsSpy).toHaveBeenCalledWith(
         'https://youtu.be/test',
@@ -246,7 +263,11 @@ describe('YouTubeAnalysisService', () => {
       };
 
       await expect(
-        service.sendTranscriptToDiscord(mockMessage as Message, transcriptResult, 'https://youtu.be/test')
+        service.sendTranscriptToDiscord(
+          mockMessage as Message,
+          transcriptResult,
+          'https://youtu.be/test'
+        )
       ).resolves.not.toThrow();
 
       // Should send error reply
@@ -264,7 +285,7 @@ describe('YouTubeAnalysisService', () => {
 
       const transcript = 'Mock transcript for analysis';
       const url = 'https://www.youtube.com/watch?v=test';
-      
+
       const result = await service.generateSummaryAsync(transcript, url);
 
       expect(result).toBe('Generated summary content');
@@ -299,16 +320,14 @@ describe('YouTubeAnalysisService', () => {
   describe('processYouTubeUrl', () => {
     it('should complete three-phase processing successfully', async () => {
       // Mock transcript extraction
-      const mockGetTranscript = vi.spyOn(service, 'getTranscriptImmediate')
-        .mockResolvedValue({
-          status: 'success',
-          transcript: 'Mock transcript',
-          videoId: 'test123',
-        });
+      const mockGetTranscript = vi.spyOn(service, 'getTranscriptImmediate').mockResolvedValue({
+        status: 'success',
+        transcript: 'Mock transcript',
+        videoId: 'test123',
+      });
 
       // Mock Discord sending
-      const mockSendToDiscord = vi.spyOn(service, 'sendTranscriptToDiscord')
-        .mockResolvedValue();
+      const mockSendToDiscord = vi.spyOn(service, 'sendTranscriptToDiscord').mockResolvedValue();
 
       const url = 'https://www.youtube.com/watch?v=test123';
       const result = await service.processYouTubeUrl(mockMessage as Message, url, true);
@@ -317,7 +336,7 @@ describe('YouTubeAnalysisService', () => {
       expect(result.transcript).toBe('Mock transcript');
       expect(result.videoId).toBe('test123');
       expect(result.sourceUrl).toBe(url);
-      
+
       expect(mockGetTranscript).toHaveBeenCalledWith(url);
       expect(mockSendToDiscord).toHaveBeenCalledWith(
         mockMessage,
@@ -327,16 +346,17 @@ describe('YouTubeAnalysisService', () => {
     });
 
     it('should handle transcript extraction failure', async () => {
-      vi.spyOn(service, 'getTranscriptImmediate')
-        .mockResolvedValue({
-          status: 'error',
-          error: 'Extraction failed',
-        });
+      vi.spyOn(service, 'getTranscriptImmediate').mockResolvedValue({
+        status: 'error',
+        error: 'Extraction failed',
+      });
 
-      const mockSendToDiscord = vi.spyOn(service, 'sendTranscriptToDiscord')
-        .mockResolvedValue();
+      const mockSendToDiscord = vi.spyOn(service, 'sendTranscriptToDiscord').mockResolvedValue();
 
-      const result = await service.processYouTubeUrl(mockMessage as Message, 'https://youtu.be/test');
+      const result = await service.processYouTubeUrl(
+        mockMessage as Message,
+        'https://youtu.be/test'
+      );
 
       expect(result.status).toBe('error');
       expect(result.error).toBe('Extraction failed');
@@ -348,18 +368,17 @@ describe('YouTubeAnalysisService', () => {
     });
 
     it('should skip summary generation when disabled', async () => {
-      vi.spyOn(service, 'getTranscriptImmediate')
-        .mockResolvedValue({
-          status: 'success',
-          transcript: 'Mock transcript',
-          videoId: 'test123',
-        });
+      vi.spyOn(service, 'getTranscriptImmediate').mockResolvedValue({
+        status: 'success',
+        transcript: 'Mock transcript',
+        videoId: 'test123',
+      });
 
       vi.spyOn(service, 'sendTranscriptToDiscord').mockResolvedValue();
 
       const result = await service.processYouTubeUrl(
-        mockMessage as Message, 
-        'https://youtu.be/test', 
+        mockMessage as Message,
+        'https://youtu.be/test',
         false // shouldGenerateSummary = false
       );
 
@@ -368,10 +387,12 @@ describe('YouTubeAnalysisService', () => {
     });
 
     it('should handle processing exceptions', async () => {
-      vi.spyOn(service, 'getTranscriptImmediate')
-        .mockRejectedValue(new Error('Processing error'));
+      vi.spyOn(service, 'getTranscriptImmediate').mockRejectedValue(new Error('Processing error'));
 
-      const result = await service.processYouTubeUrl(mockMessage as Message, 'https://youtu.be/test');
+      const result = await service.processYouTubeUrl(
+        mockMessage as Message,
+        'https://youtu.be/test'
+      );
 
       expect(result.status).toBe('error');
       expect(result.error).toContain('Processing error');
@@ -383,7 +404,9 @@ describe('YouTubeAnalysisService', () => {
 
   describe('extractVideoId', () => {
     it('should extract video ID from standard YouTube URL', () => {
-      const videoId = (service as any).extractVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+      const videoId = (service as any).extractVideoId(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      );
       expect(videoId).toBe('dQw4w9WgXcQ');
     });
 

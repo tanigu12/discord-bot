@@ -4,10 +4,7 @@ import { YoutubeCaptionService } from '../youtube-caption/youtubeCaptionService'
 import { ReplyStrategyService } from '../../services/replyStrategyService';
 import { TextAggregator } from '../../utils/textAggregator';
 import { OPENAI_MODELS } from '../../constants/ai';
-import type { 
-  TranscriptResult, 
-  YouTubeAnalysisResult
-} from './types';
+import type { TranscriptResult, YouTubeAnalysisResult } from './types';
 
 /**
  * Independent YouTube analysis service that provides:
@@ -36,17 +33,18 @@ export class YouTubeAnalysisService extends BaseAIService {
   extractYouTubeUrl(content: string): string | null {
     console.log('🔍 [DEBUG] YouTubeAnalysisService.extractYouTubeUrl() starting');
     console.log(`   Input content: ${content.substring(0, 100)}...`);
-    
+
     // Look for YouTube URLs in the content
-    const youtubeUrlPattern = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)[\w-]+/gi;
+    const youtubeUrlPattern =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)[\w-]+/gi;
     const matches = content.match(youtubeUrlPattern);
-    
+
     if (matches && matches.length > 0) {
       const url = matches[0];
       console.log(`✅ [DEBUG] YouTube URL found: ${url}`);
       return url;
     }
-    
+
     console.log('❌ [DEBUG] No YouTube URL found in content');
     return null;
   }
@@ -63,12 +61,12 @@ export class YouTubeAnalysisService extends BaseAIService {
       if (!this.isYouTubeUrl(url)) {
         return {
           status: 'error',
-          error: 'Invalid YouTube URL provided'
+          error: 'Invalid YouTube URL provided',
         };
       }
 
       const startTime = Date.now();
-      
+
       // Get transcript using existing caption service
       const analysisResult = await this.youtubeCaptionService.getTranscriptFromVideo(url);
       const processingTime = Date.now() - startTime;
@@ -81,7 +79,7 @@ export class YouTubeAnalysisService extends BaseAIService {
       if (analysisResult.status === 'success' && analysisResult.summary) {
         // Extract video ID for reference
         const videoId = this.extractVideoId(url);
-        
+
         return {
           status: 'success',
           transcript: analysisResult.summary,
@@ -91,7 +89,7 @@ export class YouTubeAnalysisService extends BaseAIService {
 
       return {
         status: 'error',
-        error: analysisResult.error || 'Failed to extract transcript'
+        error: analysisResult.error || 'Failed to extract transcript',
       };
     } catch (error) {
       // Only log in non-test environment
@@ -99,10 +97,10 @@ export class YouTubeAnalysisService extends BaseAIService {
         console.error('❌ [DEBUG] Transcript extraction failed:');
         console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
       }
-      
+
       return {
         status: 'error',
-        error: `Transcript extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        error: `Transcript extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -110,17 +108,21 @@ export class YouTubeAnalysisService extends BaseAIService {
   /**
    * Phase 2: Send transcript to Discord immediately using conditional reply
    */
-  async sendTranscriptToDiscord(message: Message, transcriptResult: TranscriptResult, url: string): Promise<void> {
+  async sendTranscriptToDiscord(
+    message: Message,
+    transcriptResult: TranscriptResult,
+    url: string
+  ): Promise<void> {
     console.log('📤 [DEBUG] YouTubeAnalysisService.sendTranscriptToDiscord() starting');
-    
+
     try {
       if (transcriptResult.status === 'error') {
         // Send error message
         const errorContent = `❌ **YouTube Analysis Failed**\n\n**Error:** ${transcriptResult.error}\n**URL:** ${url}`;
-        
+
         await ReplyStrategyService.sendConditionalReply(message, {
           content: errorContent,
-          filename: 'youtube-error.txt'
+          filename: 'youtube-error.txt',
         });
         return;
       }
@@ -131,7 +133,7 @@ export class YouTubeAnalysisService extends BaseAIService {
 
       // Format transcript for Discord
       const sourceInfo = `\n\n**Source:** ${url}\n**Type:** YouTube Video Complete Transcript\n**Method:** Gemini AI Analysis\n**Video ID:** ${transcriptResult.videoId || 'Unknown'}`;
-      
+
       const aggregatedContent = TextAggregator.aggregateSearchResults(
         url,
         transcriptResult.transcript,
@@ -146,29 +148,32 @@ export class YouTubeAnalysisService extends BaseAIService {
       });
 
       console.log(`🎯 [DEBUG] Transcript sent via ${replyResult.strategy}`);
-      
+
       // Add processing status info
       if (replyResult.strategy === 'message') {
         try {
           if ('send' in message.channel) {
-            await message.channel.send('ℹ️ Transcript extracted immediately | 🤖 Generating summary...');
+            await message.channel.send(
+              'ℹ️ Transcript extracted immediately | 🤖 Generating summary...'
+            );
           }
         } catch (error) {
           console.warn('⚠️ Failed to send status follow-up:', error);
         }
       }
-
     } catch (error) {
       // Only log in non-test environment
       if (process.env.NODE_ENV !== 'test') {
         console.error('❌ [DEBUG] Failed to send transcript to Discord:');
         console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
       }
-      
+
       // Send fallback error message
       try {
         if ('reply' in message) {
-          await message.reply(`❌ Failed to process YouTube video: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          await message.reply(
+            `❌ Failed to process YouTube video: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         }
       } catch (replyError) {
         if (process.env.NODE_ENV !== 'test') {
@@ -266,8 +271,8 @@ Channel Context: This analysis is being done in a Discord channel for English le
    * Main orchestration method: Process YouTube URL with three-phase approach
    */
   async processYouTubeUrl(
-    message: Message, 
-    url: string, 
+    message: Message,
+    url: string,
     shouldGenerateSummary: boolean = true,
     onSummaryComplete?: () => Promise<void>
   ): Promise<YouTubeAnalysisResult> {
@@ -277,14 +282,14 @@ Channel Context: This analysis is being done in a Discord channel for English le
 
     const result: YouTubeAnalysisResult = {
       status: 'error',
-      sourceUrl: url
+      sourceUrl: url,
     };
 
     try {
       // Phase 1: Get transcript immediately
       console.log('📝 [DEBUG] Phase 1: Extracting transcript...');
       const transcriptResult = await this.getTranscriptImmediate(url);
-      
+
       if (transcriptResult.status === 'error') {
         result.error = transcriptResult.error;
         await this.sendTranscriptToDiscord(message, transcriptResult, url);
@@ -301,29 +306,32 @@ Channel Context: This analysis is being done in a Discord channel for English le
       // Phase 3: Generate summary asynchronously (if requested)
       if (shouldGenerateSummary && transcriptResult.transcript) {
         console.log('🤖 [DEBUG] Phase 3: Generating summary asynchronously...');
-        
+
         // Start summary generation asynchronously (don't await)
-        this.generateAndSendSummary(message, transcriptResult.transcript, url, onSummaryComplete)
-          .catch(error => {
-            if (process.env.NODE_ENV !== 'test') {
-              console.error('❌ [DEBUG] Async summary generation failed:', error);
-            }
-          });
+        this.generateAndSendSummary(
+          message,
+          transcriptResult.transcript,
+          url,
+          onSummaryComplete
+        ).catch(error => {
+          if (process.env.NODE_ENV !== 'test') {
+            console.error('❌ [DEBUG] Async summary generation failed:', error);
+          }
+        });
       }
 
       result.status = 'success';
       console.log('✅ [DEBUG] YouTube URL processing completed successfully');
       return result;
-
     } catch (error) {
       // Only log in non-test environment
       if (process.env.NODE_ENV !== 'test') {
         console.error('❌ [DEBUG] YouTube URL processing failed:');
         console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
       }
-      
+
       result.error = `Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      
+
       // Try to send error to Discord
       try {
         if ('reply' in message) {
@@ -334,7 +342,7 @@ Channel Context: This analysis is being done in a Discord channel for English le
           console.error('❌ Failed to send error reply:', replyError);
         }
       }
-      
+
       return result;
     }
   }
@@ -343,16 +351,16 @@ Channel Context: This analysis is being done in a Discord channel for English le
    * Generate summary and send as separate message (async operation)
    */
   private async generateAndSendSummary(
-    message: Message, 
-    transcript: string, 
+    message: Message,
+    transcript: string,
     url: string,
     onComplete?: () => Promise<void>
   ): Promise<void> {
     try {
       console.log('📊 [DEBUG] Starting async summary generation...');
-      
+
       const summary = await this.generateSummaryAsync(transcript, url);
-      
+
       // Send summary as new message
       const summaryContent = TextAggregator.aggregateSearchResults(
         url,
@@ -369,7 +377,7 @@ Channel Context: This analysis is being done in a Discord channel for English le
       });
 
       console.log('✅ [DEBUG] Summary sent to Discord successfully');
-      
+
       // Call completion callback if provided
       if (onComplete) {
         try {
@@ -381,24 +389,25 @@ Channel Context: This analysis is being done in a Discord channel for English le
           }
         }
       }
-      
     } catch (error) {
       // Only log in non-test environment
       if (process.env.NODE_ENV !== 'test') {
         console.error('❌ [DEBUG] Failed to generate and send summary:', error);
       }
-      
+
       // Send error message about summary failure
       try {
         if ('send' in message.channel) {
-          await message.channel.send(`⚠️ Summary generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          await message.channel.send(
+            `⚠️ Summary generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         }
       } catch (sendError) {
         if (process.env.NODE_ENV !== 'test') {
           console.error('❌ Failed to send summary error message:', sendError);
         }
       }
-      
+
       // Still call completion callback even if summary failed
       if (onComplete) {
         try {
@@ -406,7 +415,10 @@ Channel Context: This analysis is being done in a Discord channel for English le
           console.log('✅ [DEBUG] Completion callback executed after summary error');
         } catch (callbackError) {
           if (process.env.NODE_ENV !== 'test') {
-            console.error('❌ [DEBUG] Completion callback failed after summary error:', callbackError);
+            console.error(
+              '❌ [DEBUG] Completion callback failed after summary error:',
+              callbackError
+            );
           }
         }
       }

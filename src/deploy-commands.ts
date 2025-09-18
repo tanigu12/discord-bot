@@ -6,15 +6,14 @@ import {
   bskyCommand,
   asanaCommand,
   pomodoroCommand,
-  debateAnswerCommand
+  debateAnswerCommand,
+  techInterviewCommand,
 } from './features/commands';
 
 dotenv.config();
 
 const commands = [
-  new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Replies with Pong!'),
+  new SlashCommandBuilder().setName('ping').setDescription('Replies with Pong!'),
   new SlashCommandBuilder()
     .setName('help')
     .setDescription('Show emoji reaction guide for AI assistant'),
@@ -24,6 +23,7 @@ const commands = [
   asanaCommand.data,
   pomodoroCommand.data,
   debateAnswerCommand.data,
+  techInterviewCommand.data,
 ].map(command => command.toJSON());
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
@@ -37,20 +37,16 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
     const guildId = process.env.GUILD_ID; // Optional: for guild-specific commands during development
 
     let data: any;
-    
+
     if (guildId) {
       // Register commands for a specific guild (faster for development)
-      data = await rest.put(
-        Routes.applicationGuildCommands(clientId, guildId),
-        { body: commands },
+      data = await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
+      console.log(
+        `Successfully reloaded ${data.length} application (/) commands for guild ${guildId}.`
       );
-      console.log(`Successfully reloaded ${data.length} application (/) commands for guild ${guildId}.`);
     } else {
       // Register commands globally (takes up to 1 hour to sync)
-      data = await rest.put(
-        Routes.applicationCommands(clientId),
-        { body: commands },
-      );
+      data = await rest.put(Routes.applicationCommands(clientId), { body: commands });
       console.log(`Successfully reloaded ${data.length} application (/) commands globally.`);
     }
   } catch (error) {

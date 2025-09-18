@@ -16,25 +16,17 @@ export const asanaCommand = {
     .setName('asana')
     .setDescription('Manage Asana tasks from Discord')
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('me')
-        .setDescription('Show your Asana user information')
+      subcommand.setName('me').setDescription('Show your Asana user information')
     )
     .addSubcommand(subcommand =>
       subcommand
         .setName('create')
         .setDescription('Create a new Asana task')
         .addStringOption(option =>
-          option
-            .setName('name')
-            .setDescription('Task name')
-            .setRequired(true)
+          option.setName('name').setDescription('Task name').setRequired(true)
         )
         .addStringOption(option =>
-          option
-            .setName('notes')
-            .setDescription('Task description/notes')
-            .setRequired(false)
+          option.setName('notes').setDescription('Task description/notes').setRequired(false)
         )
         .addStringOption(option =>
           option
@@ -43,10 +35,7 @@ export const asanaCommand = {
             .setRequired(false)
         )
         .addStringOption(option =>
-          option
-            .setName('due_date')
-            .setDescription('Due date (YYYY-MM-DD)')
-            .setRequired(false)
+          option.setName('due_date').setDescription('Due date (YYYY-MM-DD)').setRequired(false)
         )
     )
     .addSubcommand(subcommand =>
@@ -54,16 +43,10 @@ export const asanaCommand = {
         .setName('list')
         .setDescription('List your Asana tasks')
         .addStringOption(option =>
-          option
-            .setName('project')
-            .setDescription('Project GID to filter tasks')
-            .setRequired(false)
+          option.setName('project').setDescription('Project GID to filter tasks').setRequired(false)
         )
         .addBooleanOption(option =>
-          option
-            .setName('completed')
-            .setDescription('Show completed tasks')
-            .setRequired(false)
+          option.setName('completed').setDescription('Show completed tasks').setRequired(false)
         )
     )
     .addSubcommand(subcommand =>
@@ -71,26 +54,18 @@ export const asanaCommand = {
         .setName('complete')
         .setDescription('Mark a task as completed')
         .addStringOption(option =>
-          option
-            .setName('task_gid')
-            .setDescription('Task GID to complete')
-            .setRequired(true)
+          option.setName('task_gid').setDescription('Task GID to complete').setRequired(true)
         )
     )
     .addSubcommand(subcommand =>
-      subcommand
-        .setName('workspaces')
-        .setDescription('List your Asana workspaces')
+      subcommand.setName('workspaces').setDescription('List your Asana workspaces')
     )
     .addSubcommand(subcommand =>
       subcommand
         .setName('projects')
         .setDescription('List projects in a workspace')
         .addStringOption(option =>
-          option
-            .setName('workspace')
-            .setDescription('Workspace GID')
-            .setRequired(true)
+          option.setName('workspace').setDescription('Workspace GID').setRequired(true)
         )
     ),
 
@@ -100,8 +75,9 @@ export const asanaCommand = {
     // Check if Asana service is available
     if (!asanaService?.isReady()) {
       await interaction.reply({
-        content: '❌ **Asana service unavailable**\n\nThe Asana Personal Access Token is not configured. Please check the `ASANA_PERSONAL_ACCESS_TOKEN` environment variable.',
-        ephemeral: true
+        content:
+          '❌ **Asana service unavailable**\n\nThe Asana Personal Access Token is not configured. Please check the `ASANA_PERSONAL_ACCESS_TOKEN` environment variable.',
+        ephemeral: true,
       });
       return;
     }
@@ -129,18 +105,21 @@ export const asanaCommand = {
         default:
           await interaction.reply({
             content: 'Unknown subcommand.',
-            ephemeral: true
+            ephemeral: true,
           });
       }
     } catch (error) {
       console.error('Asana command error:', error);
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      const isAuthError = errorMessage.includes('401') || errorMessage.includes('authentication') || errorMessage.includes('unauthorized');
-      
+      const isAuthError =
+        errorMessage.includes('401') ||
+        errorMessage.includes('authentication') ||
+        errorMessage.includes('unauthorized');
+
       const errorResponse = {
         content: `❌ **Asana Error**\n\n${errorMessage}${isAuthError ? '\n\n💡 This may be due to an invalid or expired Personal Access Token.' : ''}`,
-        ephemeral: true
+        ephemeral: true,
       };
 
       // Check if interaction has already been replied to or deferred
@@ -150,7 +129,7 @@ export const asanaCommand = {
         await interaction.reply(errorResponse);
       }
     }
-  }
+  },
 };
 
 async function handleUserInfo(interaction: ChatInputCommandInteraction) {
@@ -172,11 +151,15 @@ async function handleUserInfo(interaction: ChatInputCommandInteraction) {
       .setTimestamp();
 
     if (workspaces.length > 0) {
-      const workspaceList = workspaces.slice(0, 3).map(ws => `• **${ws.name}** (${ws.gid})`).join('\n');
-      embed.addFields({ 
-        name: 'Available Workspaces', 
-        value: workspaceList + (workspaces.length > 3 ? `\n... and ${workspaces.length - 3} more` : ''),
-        inline: false 
+      const workspaceList = workspaces
+        .slice(0, 3)
+        .map(ws => `• **${ws.name}** (${ws.gid})`)
+        .join('\n');
+      embed.addFields({
+        name: 'Available Workspaces',
+        value:
+          workspaceList + (workspaces.length > 3 ? `\n... and ${workspaces.length - 3} more` : ''),
+        inline: false,
       });
     }
 
@@ -197,7 +180,7 @@ async function handleCreateTask(interaction: ChatInputCommandInteraction) {
   const taskData: any = {
     name,
     notes,
-    projects: projectGid ? [projectGid] : []
+    projects: projectGid ? [projectGid] : [],
   };
 
   if (dueDate) {
@@ -243,7 +226,7 @@ async function handleListTasks(interaction: ChatInputCommandInteraction) {
 
   if (filteredTasks.length === 0) {
     await interaction.editReply({
-      content: '📝 No tasks found.'
+      content: '📝 No tasks found.',
     });
     return;
   }
@@ -253,11 +236,14 @@ async function handleListTasks(interaction: ChatInputCommandInteraction) {
     .setColor(0x0099ff)
     .setTimestamp();
 
-  const taskList = filteredTasks.slice(0, 10).map((task, index) => {
-    const status = task.completed ? '✅' : '⏳';
-    const dueDate = task.due_on ? ` (Due: ${task.due_on})` : '';
-    return `${index + 1}. ${status} **${task.name}**${dueDate}\n   \`GID: ${task.gid}\``;
-  }).join('\n\n');
+  const taskList = filteredTasks
+    .slice(0, 10)
+    .map((task, index) => {
+      const status = task.completed ? '✅' : '⏳';
+      const dueDate = task.due_on ? ` (Due: ${task.due_on})` : '';
+      return `${index + 1}. ${status} **${task.name}**${dueDate}\n   \`GID: ${task.gid}\``;
+    })
+    .join('\n\n');
 
   embed.setDescription(taskList);
 
@@ -296,9 +282,11 @@ async function handleListWorkspaces(interaction: ChatInputCommandInteraction) {
     .setColor(0x0099ff)
     .setTimestamp();
 
-  const workspaceList = workspaces.map((ws: any, index: number) => {
-    return `${index + 1}. **${ws.name}**\n   \`GID: ${ws.gid}\``;
-  }).join('\n\n');
+  const workspaceList = workspaces
+    .map((ws: any, index: number) => {
+      return `${index + 1}. **${ws.name}**\n   \`GID: ${ws.gid}\``;
+    })
+    .join('\n\n');
 
   embed.setDescription(workspaceList);
 
@@ -319,9 +307,11 @@ async function handleListProjects(interaction: ChatInputCommandInteraction) {
   if (projects.length === 0) {
     embed.setDescription('No projects found in this workspace.');
   } else {
-    const projectList = projects.map((project: any, index: number) => {
-      return `${index + 1}. **${project.name}**\n   \`GID: ${project.gid}\``;
-    }).join('\n\n');
+    const projectList = projects
+      .map((project: any, index: number) => {
+        return `${index + 1}. **${project.name}**\n   \`GID: ${project.gid}\``;
+      })
+      .join('\n\n');
 
     embed.setDescription(projectList);
   }

@@ -121,19 +121,24 @@ export class ResearchHandler extends BaseAIService {
   async handleYouTubeUrl(message: Message, url: string): Promise<void> {
     console.log('🎬 [DEBUG] ResearchHandler.handleYouTubeUrl() starting');
     console.log(`   URL: ${url}`);
-    
+
     // Add loading indicator
     await this.addLoadingReaction(message);
-    
+
     try {
       // Create completion callback for when summary is finished
       const onSummaryComplete = async () => {
         await this.addSummaryCompletionReaction(message);
       };
-      
+
       // Process YouTube URL with immediate transcript and async summary
-      const result = await this.youtubeAnalysisService.processYouTubeUrl(message, url, true, onSummaryComplete);
-      
+      const result = await this.youtubeAnalysisService.processYouTubeUrl(
+        message,
+        url,
+        true,
+        onSummaryComplete
+      );
+
       if (result.status === 'success') {
         console.log('✅ [DEBUG] YouTube URL processed successfully');
         // Note: Transcript is already sent to Discord by YouTubeAnalysisService
@@ -146,11 +151,13 @@ export class ResearchHandler extends BaseAIService {
     } catch (error) {
       console.error('❌ [DEBUG] YouTube URL handling failed:', error);
       await this.addErrorReaction(message);
-      
+
       // Send error message
       try {
         if ('reply' in message) {
-          await message.reply(`❌ Failed to process YouTube video: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          await message.reply(
+            `❌ Failed to process YouTube video: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         }
       } catch (replyError) {
         console.error('❌ Failed to send YouTube error reply:', replyError);
@@ -175,7 +182,7 @@ export class ResearchHandler extends BaseAIService {
 
       // Check if content contains YouTube URL
       const youtubeUrl = this.detectYouTubeUrl(content);
-      
+
       if (youtubeUrl) {
         console.log('🎬 [DEBUG] YouTube URL detected, using YouTube analysis service');
         await this.handleYouTubeUrl(message, youtubeUrl);

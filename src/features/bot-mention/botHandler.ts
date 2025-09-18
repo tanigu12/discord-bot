@@ -20,9 +20,6 @@ export class BotHandler {
    * Remove bot mention from content to get clean query
    */
   extractContentFromMention(message: Message, clientId: string): string {
-    return message.content
-      .replace(`<@${clientId}>`, '')
-      .replace(`<@!${clientId}>`, '')
-      .trim();
+    return message.content.replace(`<@${clientId}>`, '').replace(`<@!${clientId}>`, '').trim();
   }
 }

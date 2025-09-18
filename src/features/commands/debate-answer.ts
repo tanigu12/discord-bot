@@ -6,7 +6,9 @@ const debateAnswerService = new DebateAnswerService();
 export const debateAnswerCommand = {
   data: new SlashCommandBuilder()
     .setName('debate-answer')
-    .setDescription('Get a structured model answer for debate practice with 4-step logical structure'),
+    .setDescription(
+      'Get a structured model answer for debate practice with 4-step logical structure'
+    ),
 
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
@@ -57,7 +59,9 @@ export const debateAnswerCommand = {
       // Send follow-up with the logical structure guide
       const guideEmbed = new EmbedBuilder()
         .setTitle('🔑 Logical Structure (How to Build It)')
-        .setDescription('When you want to answer in a debate-like way, you can follow this four-step logic:')
+        .setDescription(
+          'When you want to answer in a debate-like way, you can follow this four-step logic:'
+        )
         .setColor(0x3498db)
         .addFields(
           {
@@ -83,7 +87,8 @@ export const debateAnswerCommand = {
         )
         .addFields({
           name: '💡 Practice Tip',
-          value: 'Try answering the question above using this structure before looking at the model answer!',
+          value:
+            'Try answering the question above using this structure before looking at the model answer!',
           inline: false,
         });
 
@@ -92,21 +97,23 @@ export const debateAnswerCommand = {
       console.log('✅ Debate answer generated successfully');
     } catch (error) {
       console.error('❌ Error generating debate answer:', error);
-      
+
       // Fallback response
       const fallbackEmbed = new EmbedBuilder()
         .setTitle('🎭 Debate Practice Guide')
-        .setDescription('Here\'s the structure for great debate answers:')
+        .setDescription("Here's the structure for great debate answers:")
         .setColor(0xe74c3c)
         .addFields(
           {
             name: '**1️⃣ State Your Opinion Clearly**',
-            value: 'Start with a clear position: "I think...", "I believe...", or "In my opinion..."',
+            value:
+              'Start with a clear position: "I think...", "I believe...", or "In my opinion..."',
             inline: false,
           },
           {
             name: '**2️⃣ Give One Strong Reason**',
-            value: 'Support with evidence: "Because...", "The main reason is...", "Research shows..."',
+            value:
+              'Support with evidence: "Because...", "The main reason is...", "Research shows..."',
             inline: false,
           },
           {
@@ -123,7 +130,7 @@ export const debateAnswerCommand = {
 
       await interaction.editReply({
         embeds: [fallbackEmbed],
-        content: '⚠️ Having trouble getting a specific example, but here\'s the debate structure!',
+        content: "⚠️ Having trouble getting a specific example, but here's the debate structure!",
       });
     }
   },

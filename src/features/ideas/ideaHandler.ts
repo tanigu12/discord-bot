@@ -117,7 +117,6 @@ export class IdeaHandler extends BaseAIService {
       const emojiGuide = this.getIdeaEmojiGuide();
       await thread.send(emojiGuide);
 
-
       console.log(`✅ Created idea thread: ${threadName}`);
     } catch (error) {
       console.error('❌ Failed to create idea thread:', error);

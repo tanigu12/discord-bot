@@ -41,7 +41,7 @@ describe('PomodoroFormatter Auto-Status Functionality', () => {
       const embed = formatter.createAutoStatusEmbed(mockUser, autoStatusUpdate);
 
       expect(embed).toBeInstanceOf(EmbedBuilder);
-      
+
       const embedData = embed.toJSON();
       expect(embedData.title).toContain('📊');
       expect(embedData.title).toContain('Auto Status Check');
@@ -257,7 +257,7 @@ describe('PomodoroFormatter Auto-Status Functionality', () => {
 
       const diagnosticsField = embedData.fields?.find(f => f.name === '🔧 Diagnostics');
       const diagnosticsContent = diagnosticsField?.value || '';
-      
+
       // Should only show first 3 diagnostics
       expect(diagnosticsContent.split('\n').length).toBe(3);
       expect(diagnosticsContent).toContain('Diagnostic 1');

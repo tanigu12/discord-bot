@@ -101,7 +101,6 @@ export const pomodoroCommand = {
     const userId = interaction.user.id;
     const channelId = interaction.channelId;
 
-
     try {
       switch (subcommand) {
         case 'start':
@@ -226,12 +225,14 @@ async function handleStart(
               );
               await thread.send({ embeds: [autoStatusEmbed] });
             } else {
-              // PhaseCompletionNotification  
+              // PhaseCompletionNotification
               const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
                 interaction.user,
                 notification as PhaseCompletionNotification
               );
-              const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification as PhaseCompletionNotification);
+              const autoMessage = pomodoroFormatter.createAutoTimerMessage(
+                notification as PhaseCompletionNotification
+              );
 
               // Send both embed and text message to thread
               await thread.send({
@@ -271,7 +272,9 @@ async function handleStart(
                 await interaction.channel.send({ embeds: [autoStatusEmbed] });
               } else {
                 // PhaseCompletionNotification
-                const autoMessage = pomodoroFormatter.createAutoTimerMessage(notification as PhaseCompletionNotification);
+                const autoMessage = pomodoroFormatter.createAutoTimerMessage(
+                  notification as PhaseCompletionNotification
+                );
                 const completionEmbed = pomodoroFormatter.createPhaseCompletionEmbed(
                   interaction.user,
                   notification as PhaseCompletionNotification

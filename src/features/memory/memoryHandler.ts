@@ -4,7 +4,7 @@ import {
   User,
   PartialUser,
   Message,
-  PartialMessage
+  PartialMessage,
 } from 'discord.js';
 import { MemoryFormatter } from './memoryFormatter';
 import { ObsidianGitHubService } from './obsidianGitHubService';
@@ -32,11 +32,13 @@ export class MemoryHandler {
       console.log(`🧠 Memory reaction from ${user.tag} - processing vocabulary save...`);
 
       const message = reaction.message;
-      
+
       // Validate this is a valid memory reaction
       if (!this.isValidMemoryReaction(reaction)) {
         console.log('❌ Invalid memory reaction - not on Larry feedback message');
-        await message.reply('🧠 Memory save only works on Larry\'s diary feedback messages with text attachments.');
+        await message.reply(
+          "🧠 Memory save only works on Larry's diary feedback messages with text attachments."
+        );
         return;
       }
 
@@ -51,13 +53,15 @@ export class MemoryHandler {
       // Validate content is suitable for vocabulary learning
       if (!this.memoryFormatter.validateMemoryContent(messageContent)) {
         console.log('❌ Content not suitable for vocabulary learning');
-        await message.reply('🧠 This content doesn\'t appear suitable for vocabulary learning (needs Japanese text with translations).');
+        await message.reply(
+          "🧠 This content doesn't appear suitable for vocabulary learning (needs Japanese text with translations)."
+        );
         return;
       }
 
       // Format content for Obsidian
       const formattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
-      
+
       // Generate filename
       const filename = this.memoryFormatter.generateVocabularyFilename();
 
@@ -73,7 +77,6 @@ export class MemoryHandler {
 Your vocabulary entry has been added to your Obsidian Git Sync repository!`);
 
       console.log(`✅ Memory saved successfully: ${filename}`);
-
     } catch (error) {
       console.error('❌ Error handling memory reaction:', error);
       await reaction.message.reply(`🧠❌ **Memory save failed**
@@ -89,7 +92,7 @@ Please try again or check the logs.`);
    */
   isValidMemoryReaction(reaction: MessageReaction | PartialMessageReaction): boolean {
     const message = reaction.message;
-    
+
     // Must be brain emoji
     if (reaction.emoji.name !== this.MEMORY_EMOJI) {
       return false;
@@ -107,9 +110,7 @@ Please try again or check the logs.`);
 
     // Check if any attachment is a text file (likely message.txt from Larry)
     const hasTextFile = Array.from(message.attachments.values()).some(
-      attachment => 
-        attachment.name?.endsWith('.txt') || 
-        attachment.contentType?.startsWith('text/')
+      attachment => attachment.name?.endsWith('.txt') || attachment.contentType?.startsWith('text/')
     );
 
     return hasTextFile;
@@ -122,9 +123,8 @@ Please try again or check the logs.`);
     try {
       // Find the text attachment (message.txt)
       const textAttachment = Array.from(message.attachments.values()).find(
-        attachment => 
-          attachment.name?.endsWith('.txt') || 
-          attachment.contentType?.startsWith('text/')
+        attachment =>
+          attachment.name?.endsWith('.txt') || attachment.contentType?.startsWith('text/')
       );
 
       if (!textAttachment) {
@@ -142,9 +142,8 @@ Please try again or check the logs.`);
 
       const content = await response.text();
       console.log(`📄 Extracted content length: ${content.length}`);
-      
+
       return content;
-      
     } catch (error) {
       console.error('Error extracting message content:', error);
       return null;

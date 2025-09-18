@@ -48,7 +48,7 @@ Discord User → Discord Bot (Railway) → GitHub Actions Trigger → Claude Cod
 
 ### 技術スタック
 
-- **Node.js 18+** 
+- **Node.js 18+**
 - **TypeScript 5.x**
 - **Discord.js v14**
 - **@anthropic-ai/sdk** または **Model Context Protocol (MCP)**
@@ -115,14 +115,14 @@ GITHUB_REPO=your_private_repo_name
 ```javascript
 // 必要なBot Permissions (Permissions Integer: 139586988096)
 const requiredPermissions = [
-  'ViewChannels',          // チャンネル閲覧
-  'SendMessages',          // メッセージ送信
-  'ReadMessageHistory',    // メッセージ履歴読み取り
-  'UseSlashCommands',      // スラッシュコマンド使用
-  'CreatePublicThreads',   // パブリックスレッド作成（重要）
-  'AddReactions',          // リアクション追加
-  'AttachFiles',           // ファイル添付
-  'EmbedLinks'             // リンク埋め込み
+  'ViewChannels', // チャンネル閲覧
+  'SendMessages', // メッセージ送信
+  'ReadMessageHistory', // メッセージ履歴読み取り
+  'UseSlashCommands', // スラッシュコマンド使用
+  'CreatePublicThreads', // パブリックスレッド作成（重要）
+  'AddReactions', // リアクション追加
+  'AttachFiles', // ファイル添付
+  'EmbedLinks', // リンク埋め込み
 ];
 ```
 
@@ -141,7 +141,7 @@ const requiredIntents = [
   GatewayIntentBits.Guilds,
   GatewayIntentBits.GuildMessages,
   GatewayIntentBits.GuildMessageReactions,
-  GatewayIntentBits.MessageContent  // 特権インテント
+  GatewayIntentBits.MessageContent, // 特権インテント
 ];
 ```
 
@@ -155,26 +155,26 @@ import { Anthropic } from '@anthropic-ai/sdk';
 
 export class ClaudeService {
   private client: Anthropic;
-  
+
   constructor() {
     this.client = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
   }
-  
+
   async searchRepository(query: string, repoContent: string): Promise<string> {
     try {
       const message = await this.client.messages.create({
-        model: "claude-3-5-sonnet-20241022",
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4000,
         messages: [
           {
-            role: "user",
-            content: `以下のリポジトリ内容から「${query}」に関する情報を検索してください:\n\n${repoContent}`
-          }
-        ]
+            role: 'user',
+            content: `以下のリポジトリ内容から「${query}」に関する情報を検索してください:\n\n${repoContent}`,
+          },
+        ],
       });
-      
+
       return message.content[0].text;
     } catch (error) {
       console.error('Claude API error:', error);
@@ -188,39 +188,36 @@ export class ClaudeService {
 
 ```typescript
 // src/services/mcp.ts
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio';
 
 export class MCPService {
   private client: Client;
-  
+
   async initializeGitHubMCP() {
     const transport = new StdioClientTransport({
       command: 'npx',
-      args: [
-        '@modelcontextprotocol/server-github',
-        process.env.GITHUB_TOKEN!
-      ]
+      args: ['@modelcontextprotocol/server-github', process.env.GITHUB_TOKEN!],
     });
-    
+
     this.client = new Client(
       { name: 'discord-bot-client', version: '1.0.0' },
       { capabilities: {} }
     );
-    
+
     await this.client.connect(transport);
   }
-  
+
   async searchCode(query: string, repo: string): Promise<any> {
     const result = await this.client.callTool({
       name: 'search_code',
       arguments: {
         query,
         repo,
-        owner: process.env.GITHUB_OWNER
-      }
+        owner: process.env.GITHUB_OWNER,
+      },
     });
-    
+
     return result;
   }
 }
@@ -267,7 +264,7 @@ export class ClaudeGitHubService {
 
 ### 1. GitHub Actions Workflow設定
 
-```yaml
+````yaml
 # .github/workflows/claude-discord-bot.yml
 name: Claude Discord Bot Integration
 
@@ -304,18 +301,18 @@ jobs:
   claude-processing:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      
+
       - name: Claude Code Processing
         uses: anthropics/claude-code-action@v1
         with:
@@ -326,25 +323,25 @@ jobs:
             Task Type: ${{ github.event.inputs.task_type }}
             Query: ${{ github.event.inputs.query }}
             Path: ${{ github.event.inputs.repository_path || '.' }}
-            
+
             Please ${{ github.event.inputs.task_type }} the following:
             ${{ github.event.inputs.query }}
-          
+
           # Claude Code設定
-          model: "claude-3-5-sonnet-20241022"
+          model: 'claude-3-5-sonnet-20241022'
           max-tokens: 8000
-          timeout: 1800  # 30分
+          timeout: 1800 # 30分
         id: claude_result
-      
+
       - name: Process Claude Results
         run: |
           echo "Processing Claude results..."
           # 結果をファイルに保存
           echo "${{ steps.claude_result.outputs.response }}" > claude_response.md
-          
+
           # 長い結果を2000文字ずつに分割（Discord制限対応）
           split -b 1900 -d -a 3 claude_response.md chunk_
-          
+
       - name: Upload Results as Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -352,25 +349,25 @@ jobs:
           path: |
             claude_response.md
             chunk_*
-      
+
       - name: Discord Success Notification
         if: success()
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: 'success'
-          title: "✅ Claude Code Processing Complete"
+          title: '✅ Claude Code Processing Complete'
           description: |
             **Task**: ${{ github.event.inputs.task_type }}
             **Query**: ${{ github.event.inputs.query }}
             **User**: <@${{ github.event.inputs.discord_user_id }}>
             **Channel**: <#${{ github.event.inputs.discord_channel_id }}>
-            
+
             Results are being sent to your channel...
           color: 0x00ff00
-          username: "Claude Code Bot"
-          avatar_url: "https://avatars.githubusercontent.com/u/anthropic"
-      
+          username: 'Claude Code Bot'
+          avatar_url: 'https://avatars.githubusercontent.com/u/anthropic'
+
       - name: Send Results to Discord
         if: success()
         run: |
@@ -380,14 +377,14 @@ jobs:
           import json
           import os
           import glob
-          
+
           webhook_url = "${{ secrets.DISCORD_WEBHOOK_URL }}"
           channel_id = "${{ github.event.inputs.discord_channel_id }}"
           user_id = "${{ github.event.inputs.discord_user_id }}"
-          
+
           # チャンク化された結果を送信
           chunk_files = sorted(glob.glob('chunk_*'))
-          
+
           for i, chunk_file in enumerate(chunk_files):
               with open(chunk_file, 'r', encoding='utf-8') as f:
                   content = f.read()
@@ -411,24 +408,24 @@ jobs:
               import time
               time.sleep(1)
           EOF
-      
+
       - name: Discord Error Notification
         if: failure()
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: 'failure'
-          title: "❌ Claude Code Processing Failed"
+          title: '❌ Claude Code Processing Failed'
           description: |
             **Task**: ${{ github.event.inputs.task_type }}
             **Query**: ${{ github.event.inputs.query }}
             **User**: <@${{ github.event.inputs.discord_user_id }}>
-            
+
             Please check the workflow logs for details.
           color: 0xff0000
-          username: "Claude Code Bot"
-          avatar_url: "https://avatars.githubusercontent.com/u/anthropic"
-```
+          username: 'Claude Code Bot'
+          avatar_url: 'https://avatars.githubusercontent.com/u/anthropic'
+````
 
 ### 2. Discord BotでのWorkflow Dispatch実装
 
@@ -438,13 +435,13 @@ import { Octokit } from '@octokit/rest';
 
 export class GitHubActionsService {
   private octokit: Octokit;
-  
+
   constructor() {
     this.octokit = new Octokit({
       auth: process.env.GITHUB_TOKEN,
     });
   }
-  
+
   async triggerClaudeWorkflow(params: {
     discordUserId: string;
     discordChannelId: string;
@@ -463,31 +460,30 @@ export class GitHubActionsService {
           discord_channel_id: params.discordChannelId,
           query: params.query,
           task_type: params.taskType,
-          repository_path: params.repositoryPath || '.'
-        }
+          repository_path: params.repositoryPath || '.',
+        },
       });
-      
+
       // ワークフロー実行URLを取得
       const runsResponse = await this.octokit.rest.actions.listWorkflowRuns({
         owner: process.env.GITHUB_OWNER!,
         repo: process.env.GITHUB_REPO!,
         workflow_id: 'claude-discord-bot.yml',
-        per_page: 1
+        per_page: 1,
       });
-      
+
       const latestRun = runsResponse.data.workflow_runs[0];
-      
+
       return {
         runId: latestRun.id,
-        url: latestRun.html_url
+        url: latestRun.html_url,
       };
-      
     } catch (error) {
       console.error('GitHub Actions trigger error:', error);
       throw error;
     }
   }
-  
+
   async getWorkflowStatus(runId: number): Promise<{
     status: string;
     conclusion: string | null;
@@ -497,13 +493,13 @@ export class GitHubActionsService {
       const response = await this.octokit.rest.actions.getWorkflowRun({
         owner: process.env.GITHUB_OWNER!,
         repo: process.env.GITHUB_REPO!,
-        run_id: runId
+        run_id: runId,
       });
-      
+
       return {
         status: response.data.status,
         conclusion: response.data.conclusion,
-        url: response.data.html_url
+        url: response.data.html_url,
       };
     } catch (error) {
       console.error('GitHub Actions status check error:', error);
@@ -538,35 +534,33 @@ export const data = new SlashCommandBuilder()
       )
   )
   .addStringOption(option =>
-    option
-      .setName('query')
-      .setDescription('Claude Codeへの指示内容')
-      .setRequired(true)
+    option.setName('query').setDescription('Claude Codeへの指示内容').setRequired(true)
   )
   .addStringOption(option =>
-    option
-      .setName('path')
-      .setDescription('対象のファイルパス（省略可）')
-      .setRequired(false)
+    option.setName('path').setDescription('対象のファイルパス（省略可）').setRequired(false)
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     await interaction.deferReply();
-    
-    const task = interaction.options.getString('task')! as 'search' | 'analyze' | 'implement' | 'debug';
+
+    const task = interaction.options.getString('task')! as
+      | 'search'
+      | 'analyze'
+      | 'implement'
+      | 'debug';
     const query = interaction.options.getString('query')!;
     const path = interaction.options.getString('path');
-    
+
     // GitHub Actionsワークフローをトリガー
     const result = await githubActions.triggerClaudeWorkflow({
       discordUserId: interaction.user.id,
       discordChannelId: interaction.channelId,
       query: query,
       taskType: task,
-      repositoryPath: path
+      repositoryPath: path,
     });
-    
+
     // 実行開始の通知
     const embed = new EmbedBuilder()
       .setTitle('🚀 Claude Code処理を開始しました')
@@ -578,17 +572,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         { name: 'ワークフロー', value: `[GitHub Actions](<${result.url}>)`, inline: true }
       )
       .setFooter({
-        text: `処理完了時に結果を通知します • Run ID: ${result.runId}`
+        text: `処理完了時に結果を通知します • Run ID: ${result.runId}`,
       })
       .setTimestamp();
-    
+
     await interaction.editReply({ embeds: [embed] });
-    
+
     // 定期的にステータスをチェック（オプション）
     setTimeout(async () => {
       try {
         const status = await githubActions.getWorkflowStatus(result.runId);
-        
+
         if (status.conclusion) {
           const statusEmbed = new EmbedBuilder()
             .setTitle(status.conclusion === 'success' ? '✅ 処理完了' : '❌ 処理失敗')
@@ -598,22 +592,21 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               { name: '結果', value: status.conclusion, inline: true },
               { name: 'ワークフロー', value: `[詳細を見る](<${status.url}>)`, inline: true }
             );
-          
+
           await interaction.followUp({ embeds: [statusEmbed] });
         }
       } catch (error) {
         console.error('Status check error:', error);
       }
     }, 60000); // 1分後にステータスチェック
-    
   } catch (error) {
     console.error('Claude Actions command error:', error);
-    
+
     const errorEmbed = new EmbedBuilder()
       .setTitle('❌ エラーが発生しました')
       .setColor(0xff0000)
       .setDescription('GitHub Actionsの起動に失敗しました。しばらく待ってから再試行してください。');
-    
+
     if (interaction.deferred) {
       await interaction.editReply({ embeds: [errorEmbed] });
     } else {
@@ -627,7 +620,7 @@ function getTaskEmoji(task: string): string {
     search: '🔍',
     analyze: '📊',
     implement: '🛠️',
-    debug: '🐛'
+    debug: '🐛',
   };
   return emojis[task as keyof typeof emojis] || '⚡';
 }
@@ -636,12 +629,14 @@ function getTaskEmoji(task: string): string {
 ### 4. 必要な環境変数とSecretsの設定
 
 #### GitHub Repository Secrets
+
 ```
 ANTHROPIC_API_KEY=your_anthropic_api_key
 DISCORD_WEBHOOK_URL=your_discord_webhook_url
 ```
 
 #### Railway Environment Variables
+
 ```
 DISCORD_TOKEN=your_discord_token
 CLIENT_ID=your_discord_client_id
@@ -680,13 +675,13 @@ import { Octokit } from '@octokit/rest';
 
 export class GitHubService {
   private octokit: Octokit;
-  
+
   constructor() {
     this.octokit = new Octokit({
       auth: process.env.GITHUB_TOKEN,
     });
   }
-  
+
   async getRepositoryContent(path: string = ''): Promise<string> {
     try {
       const { data } = await this.octokit.rest.repos.getContent({
@@ -694,7 +689,7 @@ export class GitHubService {
         repo: process.env.GITHUB_REPO!,
         path,
       });
-      
+
       if (Array.isArray(data)) {
         // ディレクトリの場合
         return this.processDirectoryContent(data);
@@ -703,27 +698,27 @@ export class GitHubService {
         const content = Buffer.from(data.content, 'base64').toString('utf-8');
         return content;
       }
-      
+
       return '';
     } catch (error) {
       console.error('GitHub API error:', error);
       throw error;
     }
   }
-  
+
   private async processDirectoryContent(items: any[]): Promise<string> {
     let allContent = '';
-    
+
     for (const item of items) {
       if (item.type === 'file' && this.isTextFile(item.name)) {
         const fileContent = await this.getRepositoryContent(item.path);
         allContent += `\n\n--- ${item.path} ---\n${fileContent}`;
       }
     }
-    
+
     return allContent;
   }
-  
+
   private isTextFile(filename: string): boolean {
     const textExtensions = ['.js', '.ts', '.py', '.md', '.txt', '.json', '.yaml', '.yml'];
     return textExtensions.some(ext => filename.endsWith(ext));
@@ -739,19 +734,17 @@ import { App } from '@octokit/app';
 
 export class GitHubAppService {
   private app: App;
-  
+
   constructor() {
     this.app = new App({
       appId: process.env.GITHUB_APP_ID!,
       privateKey: process.env.GITHUB_PRIVATE_KEY!,
-      installationId: process.env.GITHUB_INSTALLATION_ID!
+      installationId: process.env.GITHUB_INSTALLATION_ID!,
     });
   }
-  
+
   async getInstallationOctokit() {
-    return await this.app.getInstallationOctokit(
-      parseInt(process.env.GITHUB_INSTALLATION_ID!)
-    );
+    return await this.app.getInstallationOctokit(parseInt(process.env.GITHUB_INSTALLATION_ID!));
   }
 }
 ```
@@ -770,28 +763,23 @@ export const Environment = {
   // Discord
   DISCORD_TOKEN: process.env.DISCORD_TOKEN!,
   CLIENT_ID: process.env.CLIENT_ID!,
-  
+
   // Claude
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY!,
-  
+
   // GitHub
   GITHUB_TOKEN: process.env.GITHUB_TOKEN!,
-  
+
   // 検証関数
   validate() {
-    const required = [
-      'DISCORD_TOKEN',
-      'CLIENT_ID', 
-      'ANTHROPIC_API_KEY',
-      'GITHUB_TOKEN'
-    ];
-    
+    const required = ['DISCORD_TOKEN', 'CLIENT_ID', 'ANTHROPIC_API_KEY', 'GITHUB_TOKEN'];
+
     for (const key of required) {
       if (!process.env[key]) {
         throw new Error(`Required environment variable ${key} is not set`);
       }
     }
-  }
+  },
 };
 
 // アプリケーション起動時に検証
@@ -804,25 +792,23 @@ Environment.validate();
 // src/utils/rateLimiter.ts
 export class RateLimiter {
   private requests: Map<string, number[]> = new Map();
-  
+
   constructor(
     private maxRequests: number = 10,
     private windowMs: number = 60000 // 1分
   ) {}
-  
+
   isAllowed(userId: string): boolean {
     const now = Date.now();
     const userRequests = this.requests.get(userId) || [];
-    
+
     // 古いリクエストを削除
-    const validRequests = userRequests.filter(
-      time => now - time < this.windowMs
-    );
-    
+    const validRequests = userRequests.filter(time => now - time < this.windowMs);
+
     if (validRequests.length >= this.maxRequests) {
       return false;
     }
-    
+
     validRequests.push(now);
     this.requests.set(userId, validRequests);
     return true;
@@ -842,13 +828,13 @@ export class SecureTokenManager {
     // 例: crypto-js, node:crypto 等
     return encryptedToken; // プレースホルダー
   }
-  
+
   static getSecureToken(tokenName: string): string {
     const encrypted = process.env[tokenName];
     if (!encrypted) {
       throw new Error(`Token ${tokenName} not found`);
     }
-    
+
     return this.decrypt(encrypted);
   }
 }
@@ -871,7 +857,7 @@ class DiscordClaudeBot {
   private claude: ClaudeService;
   private github: GitHubService;
   private rateLimiter: RateLimiter;
-  
+
   constructor() {
     this.client = new Client({
       intents: [
@@ -880,55 +866,55 @@ class DiscordClaudeBot {
         GatewayIntentBits.MessageContent,
       ],
     });
-    
+
     this.claude = new ClaudeService();
     this.github = new GitHubService();
     this.rateLimiter = new RateLimiter(5, 60000); // 1分に5回まで
-    
+
     this.setupEventHandlers();
   }
-  
+
   private setupEventHandlers() {
     this.client.once(Events.ClientReady, () => {
       console.log(`✅ Bot ready! Logged in as ${this.client.user?.tag}`);
     });
-    
-    this.client.on(Events.InteractionCreate, async (interaction) => {
+
+    this.client.on(Events.InteractionCreate, async interaction => {
       if (!interaction.isChatInputCommand()) return;
-      
+
       if (interaction.commandName === 'search-repo') {
         await this.handleRepoSearch(interaction);
       }
     });
   }
-  
+
   private async handleRepoSearch(interaction: any) {
     try {
       // レート制限チェック
       if (!this.rateLimiter.isAllowed(interaction.user.id)) {
         await interaction.reply({
           content: '⚠️ レート制限に達しています。しばらく待ってから再試行してください。',
-          ephemeral: true
+          ephemeral: true,
         });
         return;
       }
-      
+
       await interaction.deferReply();
-      
+
       const query = interaction.options.getString('query');
       const searchPath = interaction.options.getString('path') || '';
-      
+
       // GitHubからリポジトリ内容取得
       const repoContent = await this.github.getRepositoryContent(searchPath);
-      
+
       // Claudeで検索・解析
       const result = await this.claude.searchRepository(query, repoContent);
-      
+
       // Discord thread作成（長い回答用）
       const thread = await interaction.followUp({
         content: `🔍 **検索結果: "${query}"**`,
       });
-      
+
       if (interaction.channel?.isThread()) {
         // すでにスレッド内の場合
         await interaction.editReply(result);
@@ -937,7 +923,7 @@ class DiscordClaudeBot {
         const createdThread = await interaction.followUp({
           content: result.substring(0, 2000), // Discord文字制限対応
         });
-        
+
         // 長い結果の場合は分割送信
         if (result.length > 2000) {
           const chunks = this.splitMessage(result.substring(2000));
@@ -946,19 +932,18 @@ class DiscordClaudeBot {
           }
         }
       }
-      
     } catch (error) {
       console.error('Repository search error:', error);
       await interaction.editReply({
-        content: '❌ エラーが発生しました。しばらく待ってから再試行してください。'
+        content: '❌ エラーが発生しました。しばらく待ってから再試行してください。',
       });
     }
   }
-  
+
   private splitMessage(text: string): string[] {
     const chunks = [];
     let current = '';
-    
+
     for (const line of text.split('\n')) {
       if ((current + line + '\n').length > 2000) {
         if (current) chunks.push(current);
@@ -967,11 +952,11 @@ class DiscordClaudeBot {
         current += line + '\n';
       }
     }
-    
+
     if (current) chunks.push(current);
     return chunks;
   }
-  
+
   async start() {
     await this.client.login(Environment.DISCORD_TOKEN);
   }
@@ -991,17 +976,9 @@ import { SlashCommandBuilder } from 'discord.js';
 export const data = new SlashCommandBuilder()
   .setName('search-repo')
   .setDescription('プライベートリポジトリ内を検索します')
+  .addStringOption(option => option.setName('query').setDescription('検索クエリ').setRequired(true))
   .addStringOption(option =>
-    option
-      .setName('query')
-      .setDescription('検索クエリ')
-      .setRequired(true)
-  )
-  .addStringOption(option =>
-    option
-      .setName('path')
-      .setDescription('検索対象のパス (省略可)')
-      .setRequired(false)
+    option.setName('path').setDescription('検索対象のパス (省略可)').setRequired(false)
   );
 ```
 
@@ -1094,27 +1071,28 @@ railway variables set GITHUB_TOKEN=your_github_token
 ### よくある問題と解決方法
 
 #### 1. "Missing Access" エラー
+
 ```
 Error: Missing Access
 ```
 
-**解決方法**: 
+**解決方法**:
+
 - Bot権限確認（`Create Public Threads`権限が重要）
 - 招待URLで正しい権限を付与
 - サーバー管理者権限確認
 
 #### 2. Claude API レート制限
+
 ```
 Error: Rate limit exceeded
 ```
 
 **解決方法**:
+
 ```typescript
 // 指数バックオフ実装
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3
-): Promise<T> {
+async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await fn();
@@ -1132,31 +1110,37 @@ async function retryWithBackoff<T>(
 ```
 
 #### 3. GitHub API認証エラー
+
 ```
 Error: Bad credentials
 ```
 
 **解決方法**:
+
 - Personal Access Tokenの権限確認
 - トークンの有効期限確認
 - リポジトリアクセス権限確認
 
 #### 4. Railway環境変数未設定
+
 ```
 Error: Required environment variable X is not set
 ```
 
 **解決方法**:
+
 - Railway Dashboardで環境変数確認
 - `.env.example`と実際の設定比較
 - アプリケーション再起動
 
 #### 5. メモリ不足エラー
+
 ```
 Error: Process out of memory
 ```
 
 **解決方法**:
+
 - リポジトリ内容取得時のファイルサイズ制限
 - チャンク処理実装
 - Railway Pro Plan検討
@@ -1169,11 +1153,11 @@ export class Logger {
   static info(message: string, meta?: any) {
     console.log(`[INFO] ${new Date().toISOString()}: ${message}`, meta);
   }
-  
+
   static error(message: string, error?: any) {
     console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, error);
   }
-  
+
   static warn(message: string, meta?: any) {
     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, meta);
   }
@@ -1185,12 +1169,14 @@ export class Logger {
 このガイドでは、Railway上でDisord BotとClaude Code APIを統合し、プライベートGitHubリポジトリを検索するシステムの構築方法を詳しく解説しました。
 
 ### 主要なポイント
+
 - **Railway**: 簡単で費用効率の良いDiscord Botホスティング
 - **Claude API**: 強力なコード理解・検索機能
 - **セキュリティ**: 適切なトークン管理と権限設定
 - **GitHub統合**: プライベートリポジトリへの安全なアクセス
 
 ### 次のステップ
+
 - 追加のClaude機能実装（コード生成、リファクタリング提案等）
 - Webhookを使用したリアルタイム更新
 - Dashboard UIの追加

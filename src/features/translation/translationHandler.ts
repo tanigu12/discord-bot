@@ -55,16 +55,16 @@ export class TranslationHandler {
   // Google Translation の処理
   private async handleGoogleTranslation(message: Message): Promise<void> {
     const parsedEntry = this.translationService.parseTranslationEntry(message.content);
-    
+
     if (!parsedEntry.targetSentence) {
       return;
     }
 
     console.log(`🔍 Determining language scenario for: "${parsedEntry.targetSentence}"`);
-    
+
     const scenario = this.translationService.determineProcessingScenario(parsedEntry);
     console.log(`📝 Processing scenario: ${scenario}`);
-    
+
     try {
       const translation = await this.getGoogleTranslation(scenario, parsedEntry.targetSentence);
       if (translation) {
@@ -83,14 +83,14 @@ export class TranslationHandler {
       console.log(`✨ Google Translation (JA→EN): "${translation}"`);
       return `🌐 **Google Translation (JP→EN):**\n> ${translation}`;
     }
-    
+
     if (scenario === 'english-only') {
       console.log(`🇺🇸 Translating English to Japanese...`);
       const translation = await googleTranslationService.translateToJapanese(text);
       console.log(`✨ Google Translation (EN→JA): "${translation}"`);
       return `🌐 **Google Translation (EN→JP):**\n> ${translation}`;
     }
-    
+
     return null;
   }
 
