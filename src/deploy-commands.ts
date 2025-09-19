@@ -8,6 +8,7 @@ import {
   pomodoroCommand,
   debateAnswerCommand,
   techInterviewCommand,
+  systemDesignCommand,
 } from './features/commands';
 
 dotenv.config();
@@ -24,6 +25,7 @@ const commands = [
   pomodoroCommand.data,
   debateAnswerCommand.data,
   techInterviewCommand.data,
+  systemDesignCommand.data,
 ].map(command => command.toJSON());
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);

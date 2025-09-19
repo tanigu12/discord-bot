@@ -1,15 +1,5 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { techInterviewService } from '../tech-interview/index.js';
-import { TechInterviewAnswer, SystemDesignConcept } from '../tech-interview/types.js';
-
-// Type guard functions
-function isTechInterviewAnswer(content: TechInterviewAnswer | SystemDesignConcept): content is TechInterviewAnswer {
-  return 'definition' in content;
-}
-
-function isSystemDesignConcept(content: TechInterviewAnswer | SystemDesignConcept): content is SystemDesignConcept {
-  return 'requirementsGathering' in content;
-}
 
 export const techInterviewCommand = {
   data: new SlashCommandBuilder()
@@ -24,18 +14,13 @@ export const techInterviewCommand = {
     try {
       console.log(`💻 Generating tech interview answer for ${interaction.user.tag}`);
 
-      // Get random content (either TechInterviewAnswer or SystemDesignConcept)
-      const techContent = techInterviewService.getRandomTechContent();
-
-      // Helper function to format arrays as bullet points
-      const formatBulletPoints = (items: string[]): string => {
-        return items.map(item => `• ${item}`).join('\n');
-      };
+      // Get a random tech interview question with model answer
+      const techAnswer = techInterviewService.getRandomTechInterviewAnswer();
 
       // Create the main embed with the structured answer
       const embed = new EmbedBuilder()
         .setTitle('💻 Technical Interview Practice')
-        .setDescription(`**Question:** ${techContent.question}`)
+        .setDescription(`**Question:** ${techAnswer.question}`)
         .setColor(0x2ecc71)
         .setTimestamp()
         .setFooter({
@@ -43,209 +28,98 @@ export const techInterviewCommand = {
           iconURL: interaction.user.displayAvatarURL(),
         });
 
-      // Handle different content types
-      if (isTechInterviewAnswer(techContent)) {
-        // Traditional tech interview answer format
-        embed.addFields(
-          {
-            name: '**📌 Definition / Concept**',
-            value: formatBulletPoints(techContent.definition),
-            inline: false,
-          },
-          {
-            name: '**🔍 Key Characteristics / Differences**',
-            value: formatBulletPoints(techContent.keyCharacteristics),
-            inline: false,
-          }
-        );
+      // Helper function to format arrays as bullet points
+      const formatBulletPoints = (items: string[]): string => {
+        return items.map(item => `• ${item}`).join('\n');
+      };
 
-        // Add advantages/disadvantages if they exist
-        if (techContent.advantages && techContent.disadvantages) {
-          embed.addFields({
-            name: '**⚖️ Advantages / Disadvantages**',
-            value: `**Advantages:**\n${formatBulletPoints(techContent.advantages)}\n\n**Disadvantages:**\n${formatBulletPoints(techContent.disadvantages)}`,
-            inline: false,
-          });
+      // Add the extended answer structure
+      embed.addFields(
+        {
+          name: '**📌 Definition / Concept**',
+          value: formatBulletPoints(techAnswer.definition),
+          inline: false,
+        },
+        {
+          name: '**🔍 Key Characteristics / Differences**',
+          value: formatBulletPoints(techAnswer.keyCharacteristics),
+          inline: false,
         }
+      );
 
-        embed.addFields(
-          {
-            name: '**💡 Practical Example**',
-            value: formatBulletPoints(techContent.practicalExample),
-            inline: false,
-          },
-          {
-            name: '**✅ Best Practices / When to Use**',
-            value: formatBulletPoints(techContent.bestPractices),
-            inline: false,
-          },
-          {
-            name: '**🎯 Conclusion / Summary**',
-            value: formatBulletPoints(techContent.conclusion),
-            inline: false,
-          }
-        );
-      } else if (isSystemDesignConcept(techContent)) {
-        // System design concept format
-        embed.addFields(
-          {
-            name: '**📋 Requirements Gathering**',
-            value: formatBulletPoints(techContent.requirementsGathering),
-            inline: false,
-          },
-          {
-            name: '**⚙️ Functional Requirements**',
-            value: formatBulletPoints(techContent.functionalRequirements),
-            inline: false,
-          },
-          {
-            name: '**📊 Non-Functional Requirements**',
-            value: formatBulletPoints(techContent.nonFunctionalRequirements),
-            inline: false,
-          },
-          {
-            name: '**📏 Capacity Estimation**',
-            value: formatBulletPoints(techContent.capacityEstimation),
-            inline: false,
-          },
-          {
-            name: '**🏗️ High-Level Design**',
-            value: formatBulletPoints(techContent.highLevelDesign),
-            inline: false,
-          },
-          {
-            name: '**🔧 Detailed Design**',
-            value: formatBulletPoints(techContent.detailedDesign),
-            inline: false,
-          },
-          {
-            name: '**💾 Database Design**',
-            value: formatBulletPoints(techContent.databaseDesign),
-            inline: false,
-          },
-          {
-            name: '**🔌 API Design**',
-            value: formatBulletPoints(techContent.apiDesign),
-            inline: false,
-          },
-          {
-            name: '**📈 Scaling Strategy**',
-            value: formatBulletPoints(techContent.scalingStrategy),
-            inline: false,
-          },
-          {
-            name: '**📊 Monitoring**',
-            value: formatBulletPoints(techContent.monitoring),
-            inline: false,
-          },
-          {
-            name: '**⚖️ Trade-offs**',
-            value: formatBulletPoints(techContent.tradeoffs),
-            inline: false,
-          }
-        );
+      // Add advantages/disadvantages if they exist
+      if (techAnswer.advantages && techAnswer.disadvantages) {
+        embed.addFields({
+          name: '**⚖️ Advantages / Disadvantages**',
+          value: `**Advantages:**\n${formatBulletPoints(techAnswer.advantages)}\n\n**Disadvantages:**\n${formatBulletPoints(techAnswer.disadvantages)}`,
+          inline: false,
+        });
       }
+
+      embed.addFields(
+        {
+          name: '**💡 Practical Example**',
+          value: formatBulletPoints(techAnswer.practicalExample),
+          inline: false,
+        },
+        {
+          name: '**✅ Best Practices / When to Use**',
+          value: formatBulletPoints(techAnswer.bestPractices),
+          inline: false,
+        },
+        {
+          name: '**🎯 Conclusion / Summary**',
+          value: formatBulletPoints(techAnswer.conclusion),
+          inline: false,
+        }
+      );
 
       await interaction.editReply({ embeds: [embed] });
 
-      // Send follow-up with the answer structure guide based on content type
-      let guideEmbed: EmbedBuilder;
-      
-      if (isTechInterviewAnswer(techContent)) {
-        guideEmbed = new EmbedBuilder()
-          .setTitle('🔧 Technical Interview Answer Structure')
-          .setDescription(
-            'When answering technical interview questions, follow this extended structure for comprehensive responses:'
-          )
-          .setColor(0x3498db)
-          .addFields(
-            {
-              name: '**1. Definition / Concept**',
-              value: 'Start with a short, clear definition. Show you know the core idea.',
-              inline: false,
-            },
-            {
-              name: '**2. Key Characteristics / Differences**',
-              value: 'Explain the important details. Compare if needed (e.g., SQL vs NoSQL).',
-              inline: false,
-            },
-            {
-              name: '**3. Advantages / Disadvantages (if relevant)**',
-              value: 'Show critical thinking. Mention trade-offs, not only the good side.',
-              inline: false,
-            },
-            {
-              name: '**4. Practical Example**',
-              value: 'Real-world project or simple analogy. Show that you can apply knowledge.',
-              inline: false,
-            },
-            {
-              name: '**5. Best Practices / When to Use**',
-              value: 'Demonstrate judgment and decision-making skills.',
-              inline: false,
-            },
-            {
-              name: '**6. Conclusion / Summary**',
-              value: 'Short wrap-up, reinforce main point.',
-              inline: false,
-            }
-          );
-      } else {
-        guideEmbed = new EmbedBuilder()
-          .setTitle('🏗️ System Design Interview Structure')
-          .setDescription(
-            'When answering "How would you design ~~ service?" questions, follow this systematic approach:'
-          )
-          .setColor(0x3498db)
-          .addFields(
-            {
-              name: '**1. Requirements Gathering**',
-              value: 'Clarify scope, scale, and key constraints. Ask questions about expected usage.',
-              inline: false,
-            },
-            {
-              name: '**2. Functional & Non-Functional Requirements**',
-              value: 'Define what the system should do and performance/reliability expectations.',
-              inline: false,
-            },
-            {
-              name: '**3. Capacity Estimation**',
-              value: 'Calculate storage, QPS, bandwidth needs. Show your math.',
-              inline: false,
-            },
-            {
-              name: '**4. High-Level Design**',
-              value: 'Draw the major components and their relationships. Keep it simple first.',
-              inline: false,
-            },
-            {
-              name: '**5. Detailed Design**',
-              value: 'Dive deeper into critical components, algorithms, and data flow.',
-              inline: false,
-            },
-            {
-              name: '**6. Database & API Design**',
-              value: 'Choose appropriate storage solutions and define key APIs.',
-              inline: false,
-            },
-            {
-              name: '**7. Scaling & Monitoring**',
-              value: 'Discuss bottlenecks, scaling strategies, and key metrics to track.',
-              inline: false,
-            },
-            {
-              name: '**8. Trade-offs**',
-              value: 'Acknowledge limitations and alternative approaches. Show critical thinking.',
-              inline: false,
-            }
-          );
-      }
-
-      guideEmbed.addFields({
-        name: '🎯 Practice Tip',
-        value: `Try answering the question above using this structure before looking at the model answer! (${techInterviewService.getTotalCount()} questions available)`,
-        inline: false,
-      });
+      // Send follow-up with the answer structure guide
+      const guideEmbed = new EmbedBuilder()
+        .setTitle('🔧 Technical Interview Answer Structure')
+        .setDescription(
+          'When answering technical interview questions, follow this extended structure for comprehensive responses:'
+        )
+        .setColor(0x3498db)
+        .addFields(
+          {
+            name: '**1. Definition / Concept**',
+            value: 'Start with a short, clear definition. Show you know the core idea.',
+            inline: false,
+          },
+          {
+            name: '**2. Key Characteristics / Differences**',
+            value: 'Explain the important details. Compare if needed (e.g., SQL vs NoSQL).',
+            inline: false,
+          },
+          {
+            name: '**3. Advantages / Disadvantages (if relevant)**',
+            value: 'Show critical thinking. Mention trade-offs, not only the good side.',
+            inline: false,
+          },
+          {
+            name: '**4. Practical Example**',
+            value: 'Real-world project or simple analogy. Show that you can apply knowledge.',
+            inline: false,
+          },
+          {
+            name: '**5. Best Practices / When to Use**',
+            value: 'Demonstrate judgment and decision-making skills.',
+            inline: false,
+          },
+          {
+            name: '**6. Conclusion / Summary**',
+            value: 'Short wrap-up, reinforce main point.',
+            inline: false,
+          }
+        )
+        .addFields({
+          name: '🎯 Practice Tip',
+          value: `Try answering the question above using this structure before looking at the model answer! (${techInterviewService.getQuestionCount()} questions available)`,
+          inline: false,
+        });
 
       await interaction.followUp({ embeds: [guideEmbed] });
 

@@ -8,6 +8,7 @@ import {
   pomodoroCommand,
   debateAnswerCommand,
   techInterviewCommand,
+  systemDesignCommand,
 } from './features/commands';
 import { ReactionHandler } from './features/reactions';
 import { TranslationHandler } from './features/translation';
@@ -39,6 +40,7 @@ client.commands.set(asanaCommand.data.name, asanaCommand);
 client.commands.set(pomodoroCommand.data.name, pomodoroCommand);
 client.commands.set(debateAnswerCommand.data.name, debateAnswerCommand);
 client.commands.set(techInterviewCommand.data.name, techInterviewCommand);
+client.commands.set(systemDesignCommand.data.name, systemDesignCommand);
 
 // Initialize handlers
 const reactionHandler = new ReactionHandler();
