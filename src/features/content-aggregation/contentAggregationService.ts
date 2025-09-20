@@ -1,6 +1,5 @@
 import { TranslationAIService } from '../translation/translationAIService';
 import { NewsService } from '../../services/newsService';
-import { AsanaService } from '../../services/asanaService';
 import { TechnicalQuestionService, TechnicalQuestion } from '../technical-questions';
 import { EnglishPhraseService, EnglishPhrase } from '../english-phrases';
 
@@ -14,17 +13,14 @@ export interface RandomContentResult {
   technicalQuestions: TechnicalQuestion[];
   englishPhrases: EnglishPhrase[];
   debateQuestions: EnglishPhrase[];
-  asanaTasks: any[];
 }
 
 interface ContentAggregationOptions {
   technicalQuestionCount?: number;
   englishPhraseCount?: number;
   debateQuestionCount?: number;
-  maxAsanaTasks?: number;
   includeNews?: boolean;
   includeDiary?: boolean;
-  includeAsana?: boolean;
 }
 
 export class ContentAggregationService {
@@ -50,10 +46,8 @@ export class ContentAggregationService {
       technicalQuestionCount = 3,
       englishPhraseCount = 3,
       debateQuestionCount = 2,
-      maxAsanaTasks = 10,
       includeNews = true,
       includeDiary = true,
-      includeAsana = true,
     } = options;
 
     console.log('📝 Aggregating random content...');
@@ -69,7 +63,6 @@ export class ContentAggregationService {
       technicalQuestions,
       englishPhrases,
       debateQuestions,
-      asanaTasks: [],
     };
 
     // Get news and diary content in parallel if requested
@@ -87,21 +80,6 @@ export class ContentAggregationService {
       }
     }
 
-    // Get Asana tasks if requested and configured (same logic as asana list command)
-    if (includeAsana) {
-      try {
-        if (process.env.ASANA_PERSONAL_ACCESS_TOKEN) {
-          const asanaService = AsanaService.createFromEnvironment();
-          // Use same logic as asana list command
-          const allTasks = await asanaService.getTasks(); // Get all tasks (same as asana list)
-          const incompleteTasks = allTasks.filter(task => !task.completed); // Filter incomplete (same as asana list)
-          result.asanaTasks = incompleteTasks.slice(0, maxAsanaTasks); // Limit results
-          console.log(`✅ Retrieved ${result.asanaTasks.length} incomplete tasks from Asana`);
-        }
-      } catch (error) {
-        console.log('ℹ️ Asana tasks not available (service not configured or error occurred)');
-      }
-    }
 
     return result;
   }

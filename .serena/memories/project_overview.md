@@ -9,7 +9,6 @@ This is an AI-powered Discord bot designed to support English learning through v
    - `/random` - Daily diary topic suggestions based on news
    - `/format` - Thread formatting for Obsidian blog posts (bilingual JP/EN)
    - `/bsky` - Bluesky social media posting
-   - `/asana` - Task management integration
 
 2. **Emoji Reaction System**: Frictionless AI interactions through emoji reactions
    - 🧙‍♂️ Larry consultation (expert advice with web search)
@@ -34,7 +33,7 @@ English learners who want to improve their language skills through:
 - **Architecture**: Modular "package by feature" organization
 - **Testing**: Vitest with comprehensive unit tests
 - **AI Services**: Centralized BaseAIService with lazy initialization
-- **External Integrations**: Asana, Bluesky, GitHub (Obsidian), Google APIs
+- **External Integrations**: Bluesky, GitHub (Obsidian), Google APIs
 
 ## Development Philosophy
 - Low-friction interactions (emoji reactions)

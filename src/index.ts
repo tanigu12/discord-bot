@@ -4,7 +4,6 @@ import {
   randomCommand,
   formatCommand,
   bskyCommand,
-  asanaCommand,
   pomodoroCommand,
   debateAnswerCommand,
   techInterviewCommand,
@@ -36,7 +35,6 @@ client.commands = new Collection();
 client.commands.set(randomCommand.data.name, randomCommand);
 client.commands.set(formatCommand.data.name, formatCommand);
 client.commands.set(bskyCommand.data.name, bskyCommand);
-client.commands.set(asanaCommand.data.name, asanaCommand);
 client.commands.set(pomodoroCommand.data.name, pomodoroCommand);
 client.commands.set(debateAnswerCommand.data.name, debateAnswerCommand);
 client.commands.set(techInterviewCommand.data.name, techInterviewCommand);

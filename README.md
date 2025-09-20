@@ -42,13 +42,6 @@ Bot は以下のスラッシュコマンドをサポートしています：
   - 画像は1MB以下 (JPEG, PNG, GIF, WebP対応)
 - **例**: `/bsky message:Hello from Discord! image:photo.jpg`
 
-#### `/asana` - Asanaタスク管理
-- **機能**: Asanaプロジェクトのタスク管理（作成、一覧表示、完了）
-- **使用方法**: 
-  - `/asana action:create name:[タスク名] notes:[詳細]` - タスク作成
-  - `/asana action:list` - タスク一覧表示
-  - `/asana action:complete task_id:[タスクID]` - タスク完了
-- **例**: `/asana action:create name:新機能実装 notes:ユーザー認証機能を追加`
 
 ### 絵文字リアクション機能
 
@@ -73,7 +66,6 @@ Bot は以下のスラッシュコマンドをサポートしています：
 - **TypeScript**: 5.x
 - **AI Service**: OpenAI GPT-5-mini
 - **Node.js**: 18.x以上推奨
-- **タスク管理**: Asana API v1統合
 - **SNS連携**: Bluesky API対応
 - **記憶機能**: GitHub API経由でObsidian Git Syncリポジトリ連携
 
@@ -89,10 +81,6 @@ CLIENT_ID=your_discord_client_id
 OPENAI_API_KEY=your_openai_api_key
 BLUESKY_USERNAME=your_bluesky_handle
 BLUESKY_PASSWORD=your_bluesky_app_password
-ASANA_PERSONAL_ACCESS_TOKEN=your_asana_pat
-ASANA_DEFAULT_WORKSPACE_GID=your_workspace_gid
-ASANA_DEFAULT_PROJECT_GID=your_project_gid
-ASANA_DEFAULT_USER_GID=your_user_gid
 GITHUB_PAT=your_github_personal_access_token
 OBSIDIAN_REPO_OWNER=your_github_username
 OBSIDIAN_REPO_NAME=your_obsidian_git_sync_repo
@@ -188,11 +176,6 @@ Larryの日記フィードバックメッセージ（message.txt添付）
 → 後から語彙復習に活用可能
 ```
 
-### Asanaタスク管理
-```
-/asana action:create name:新機能開発 notes:ユーザー認証システムの実装
-→ Asanaプロジェクトにタスクを作成し、URLを返却
-```
 
 ## 🎓 Bot活用方法
 
@@ -203,7 +186,6 @@ Larryの日記フィードバックメッセージ（message.txt添付）
 3. **情報収集とまとめ**: /searchでWebコンテンツを分析し、理解を深める
 4. **語彙学習**: 🧠リアクションでLarryのフィードバック内容をObsidianに自動保存し、後から復習
 5. **アイデア発展**: ideaチャンネルでのブレインストーミングとアイデア管理
-6. **プロジェクト管理**: Asana連携による学習タスクの体系的管理
 7. **コンテンツ作成**: ブログ記事の整形と出力
 
 ## 🔍 トラブルシューティング
@@ -223,9 +205,6 @@ Larryの日記フィードバックメッセージ（message.txt添付）
 - `BLUESKY_USERNAME`と`BLUESKY_PASSWORD`が正しく設定されていることを確認
 - Blueskyのアプリパスワードを使用していることを確認（通常パスワードではない）
 
-**Asana連携エラー**
-- `ASANA_PERSONAL_ACCESS_TOKEN`が有効であることを確認
-- 適切なワークスペースとプロジェクトのGIDが設定されていることを確認
 
 **Web検索機能が動作しない**
 - OpenAI APIキーが`gpt-4o-search-preview`モデルへのアクセス権を持っていることを確認

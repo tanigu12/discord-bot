@@ -10,7 +10,6 @@ const EXTERNAL_LINKS = [
   `[Google News](https://news.google.com/home?hl=en-US&gl=US&ceid=US:en)`,
   `[X (Twitter)](https://x.com/home)`,
   `**Checking Tasks:**`,
-  `[Asana](https://app.asana.com/1/1184068549429528/project/1211072064033611/list/1211072065102773)`,
   `[Duo3.0](https://app.abceed.com/libraries/detail/duo?from=home)`,
   `[英語のハノン](https://app.abceed.com/libraries/detail/hanon_shokyu_2?from=find-text)`,
 ];
@@ -46,10 +45,6 @@ export class RandomContentEmbedFormatter {
     this.addEnglishPhrasesField(embed, content.englishPhrases);
     this.addDebateQuestionsField(embed, content.debateQuestions);
 
-    // Add short task list to main embed
-    if (content.asanaTasks && content.asanaTasks.length > 0) {
-      this.addShortAsanaTasksField(embed, content.asanaTasks);
-    }
 
     // Add tips and resources
     this.addTipsAndResourcesFields(embed);
@@ -62,10 +57,6 @@ export class RandomContentEmbedFormatter {
       await this.sendLongDiaryContentInteraction(content, interaction);
     }
 
-    // Always send complete task details as follow-up if there are any tasks
-    if (content.asanaTasks && content.asanaTasks.length > 0) {
-      await this.sendLongTasksContentInteraction(content.asanaTasks, interaction);
-    }
   }
 
   /**
@@ -248,56 +239,7 @@ export class RandomContentEmbedFormatter {
     });
   }
 
-  /**
-   * Add summary of Asana tasks to main embed
-   */
-  private addShortAsanaTasksField(embed: EmbedBuilder, tasks: any[]): void {
-    // Show up to 5 tasks in main embed to give better preview
-    const shortList = tasks.slice(0, 5);
-    const tasksText = shortList
-      .map((task, index) => {
-        const status = task.completed ? '✅' : '⏳';
-        const dueDate = task.due_on ? ` (Due: ${task.due_on})` : '';
-        return `${index + 1}. ${status} **${task.name}**${dueDate}`;
-      })
-      .join('\n');
 
-    const moreTasksText = tasks.length > 5 ? `\n\n*📋 Complete list with details sent below*` : '';
-
-    embed.addFields({
-      name: `📋 Your Current Tasks (${tasks.length} total)`,
-      value: tasksText + moreTasksText,
-      inline: false,
-    });
-  }
-
-  /**
-   * Send complete task list for interactions (up to 10 tasks with full details)
-   */
-  private async sendLongTasksContentInteraction(
-    tasks: any[],
-    interaction: ChatInputCommandInteraction
-  ): Promise<void> {
-    // Show up to 10 tasks as requested
-    const displayTasks = tasks.slice(0, 10);
-    const tasksText = displayTasks
-      .map((task, index) => {
-        const status = task.completed ? '✅' : '⏳';
-        const dueDate = task.due_on ? ` (Due: ${task.due_on})` : '';
-        const projectName =
-          task.projects && task.projects.length > 0 ? ` [${task.projects[0].name}]` : '';
-        return `${index + 1}. ${status} **${task.name}**${dueDate}${projectName}\n   \`GID: ${task.gid}\``;
-      })
-      .join('\n\n');
-
-    const remainingText =
-      tasks.length > 10
-        ? `\n\n*Note: Showing 10 of ${tasks.length} tasks. Use \`/asana list\` to see all.*`
-        : '';
-    const title = `📋 Your Asana Tasks (${Math.min(tasks.length, 10)}${tasks.length > 10 ? ` of ${tasks.length}` : ''})`;
-
-    await this.sendLongContentInteraction(title, tasksText + remainingText, interaction);
-  }
 
   /**
    * Add tips and resources fields

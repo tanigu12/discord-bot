@@ -34,7 +34,6 @@ src/
 │   └── [feature]/         # Other feature modules
 ├── services/              # Shared infrastructure
 │   ├── baseAIService.ts   # Common AI functionality
-│   ├── asanaService.ts    # Task management
 │   ├── blueskyService.ts  # Social media
 │   └── githubService.ts   # Repository integration
 ├── utils/                 # Shared utilities
@@ -70,7 +69,6 @@ src/features/[feature]/
 - `src/features/ai-partner/larryAIService.ts` - Larry AI personality
 
 ### External Integrations
-- `src/services/asanaService.ts` - Task management API
 - `src/services/blueskyService.ts` - Social media posting
 - `src/services/githubService.ts` - Obsidian repository sync
 - `src/features/translation/googleTranslationService.ts` - Google Translate
@@ -116,7 +114,6 @@ OPENAI_API_KEY=            # OpenAI API key
 GOOGLE_API_KEY=            # Google Gemini API
 BLUESKY_USERNAME=          # Bluesky handle
 BLUESKY_PASSWORD=          # Bluesky app password
-ASANA_PERSONAL_ACCESS_TOKEN= # Asana API token
 GITHUB_PAT=                # GitHub Personal Access Token
 GUILD_ID=                  # Discord server ID (development)
 ```

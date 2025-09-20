@@ -30,10 +30,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `GOOGLE_API_KEY` - Google API key for Gemini AI video analysis features
    - `BLUESKY_USERNAME` - Bluesky handle (e.g., taka1415.bsky.social)
    - `BLUESKY_PASSWORD` - Bluesky app password (create in Bluesky settings)
-   - `ASANA_PERSONAL_ACCESS_TOKEN` - Asana Personal Access Token for task management
-   - `ASANA_DEFAULT_WORKSPACE_GID` - (Optional) Default Asana workspace GID
-   - `ASANA_DEFAULT_PROJECT_GID` - (Optional) Default Asana project GID for new tasks
-   - `ASANA_DEFAULT_USER_GID` - (Optional) Default Asana user GID for task queries
    - `GITHUB_PAT` - GitHub Personal Access Token for blog repository access
    - `GUILD_ID` - (Optional) Guild ID for faster command deployment during development
 

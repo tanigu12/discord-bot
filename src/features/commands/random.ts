@@ -8,7 +8,7 @@ export const randomCommand = {
   data: new SlashCommandBuilder()
     .setName('random')
     .setDescription(
-      'Get diary topics, technical questions, English phrases, and your current tasks'
+      'Get diary topics, technical questions, English phrases, and debate topics'
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
@@ -22,10 +22,8 @@ export const randomCommand = {
         technicalQuestionCount: 3,
         englishPhraseCount: 3,
         debateQuestionCount: 2,
-        maxAsanaTasks: 10,
         includeNews: true,
         includeDiary: true,
-        includeAsana: true,
       });
 
       // Create comprehensive response with main embed and follow-up messages

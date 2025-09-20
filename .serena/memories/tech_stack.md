@@ -10,7 +10,6 @@
 - **OpenAI**: v5.12.2 (GPT-4o-mini model)
 - **Google Generative AI**: v0.24.1 (Gemini for video analysis)
 - **Google Cloud Translate**: v9.2.0
-- **Asana**: v1.0.4 (task management)
 - **Bluesky AT Protocol**: v0.16.2
 - **GitHub API**: v22.0.0 (Obsidian integration)
 
