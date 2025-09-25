@@ -9,6 +9,11 @@ import {
 import { MemoryFormatter } from './memoryFormatter';
 import { ObsidianGitHubService } from './obsidianGitHubService';
 
+interface ExtractedMessageContent {
+  content: string;
+  type: 'embed' | 'attachment' | 'message';
+}
+
 export class MemoryHandler {
   private memoryFormatter: MemoryFormatter;
   private obsidianService: ObsidianGitHubService;
@@ -42,28 +47,51 @@ export class MemoryHandler {
         return;
       }
 
-      // Extract diary content from message attachment
-      const messageContent = await this.extractMessageContent(message);
-      if (!messageContent) {
-        console.log('❌ No message.txt content found');
-        await message.reply('🧠 Could not find message.txt attachment with diary content.');
+      // Extract content and its type from message
+      const extractedContent = await this.extractMessageContent(message);
+      if (!extractedContent) {
+        console.log('❌ No content found');
+        await message.reply('🧠 Could not find content with diary content.');
         return;
       }
 
-      // Validate content is suitable for vocabulary learning
-      if (!this.memoryFormatter.validateMemoryContent(messageContent)) {
-        console.log('❌ Content not suitable for vocabulary learning');
-        await message.reply(
-          "🧠 This content doesn't appear suitable for vocabulary learning (needs Japanese text with translations)."
-        );
-        return;
+      const { content, type } = extractedContent;
+      console.log(`📝 Processing manual memory save for content type: ${type}`);
+
+      // Validate content is suitable for vocabulary learning based on type
+      let isValidContent = false;
+
+      if (type === 'embed') {
+        // For embed content, we know it's Larry's feedback - always valid
+        console.log('✅ Embed content from Larry - automatically valid for vocabulary learning');
+        isValidContent = true;
+      } else if (type === 'attachment' || type === 'message') {
+        // For attachment/message content, use formatter validation
+        isValidContent = this.memoryFormatter.validateMemoryContent(content);
+        if (!isValidContent) {
+          console.log(`❌ ${type} content not suitable for vocabulary learning`);
+          await message.reply(
+            "🧠 This content doesn't appear suitable for vocabulary learning (needs Japanese text with translations)."
+          );
+          return;
+        }
       }
 
       // Generate daily filename
       const filename = this.memoryFormatter.generateVocabularyFilename();
 
-      // Format content for Obsidian
-      const baseFormattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
+      // Format content for Obsidian based on content type
+      let baseFormattedContent: string;
+
+      if (type === 'embed') {
+        // Embed content is already well-formatted, use as-is or with minimal formatting
+        console.log('📋 Using embed content with minimal formatting');
+        baseFormattedContent = content; // Embed content is already structured
+      } else {
+        // Use formatter for attachment and message content
+        console.log(`📄 Formatting ${type} content through MemoryFormatter`);
+        baseFormattedContent = await this.memoryFormatter.formatForObsidian(content);
+      }
 
       // Format for appending (adds timestamp and separator)
       const appendFormattedContent = this.memoryFormatter.formatForAppending(baseFormattedContent);
@@ -74,15 +102,17 @@ export class MemoryHandler {
         appendFormattedContent
       );
 
-      // Confirm success to user
+      // Send content-type specific confirmation reply
+      const contentTypeEmoji = type === 'embed' ? '📋' : type === 'attachment' ? '📎' : '📝';
       await message.reply(`🧠✅ **Vocabulary saved to daily file!**
 
+${contentTypeEmoji} **Content Type:** ${type}
 📂 **Daily File:** ${filename}
 🔗 **URL:** ${fileUrl}
 
 Your vocabulary entry has been appended to your daily Obsidian file!`);
 
-      console.log(`✅ Manual memory saved successfully to: ${filename}`);
+      console.log(`✅ Manual memory saved successfully (${type}): ${filename}`);
     } catch (error) {
       console.error('❌ Error handling memory reaction:', error);
       await reaction.message.reply(`🧠❌ **Memory save failed**
@@ -99,31 +129,56 @@ Please try again or check the logs.`);
    */
   async handleTranslationChannelMessage(message: Message): Promise<void> {
     try {
-      // Only process bot messages (Larry's feedback) with attachments
+      // Only process bot messages (Larry's feedback) with valid content
       if (!this.isValidTranslationChannelMessage(message)) {
         return;
       }
 
       console.log(`🧠 Auto-processing memory for translation channel message from bot...`);
 
-      // Extract diary content from message attachment
-      const messageContent = await this.extractMessageContent(message);
-      if (!messageContent) {
-        console.log('❌ No message.txt content found for auto-memory processing');
+      // Extract content and its type from message
+      const extractedContent = await this.extractMessageContent(message);
+      if (!extractedContent) {
+        console.log('❌ No content found for auto-memory processing');
         return;
       }
 
-      // Validate content is suitable for vocabulary learning
-      if (!this.memoryFormatter.validateMemoryContent(messageContent)) {
-        console.log('❌ Content not suitable for vocabulary learning - skipping auto-memory save');
-        return;
+      const { content, type } = extractedContent;
+      console.log(`📝 Processing content type: ${type}`);
+
+      // Validate content is suitable for vocabulary learning based on type
+      let isValidContent = false;
+
+      if (type === 'embed') {
+        // For embed content, we know it's Larry's feedback - always valid
+        console.log('✅ Embed content from Larry - automatically valid for vocabulary learning');
+        isValidContent = true;
+      } else if (type === 'attachment' || type === 'message') {
+        // For attachment/message content, use formatter validation
+        isValidContent = this.memoryFormatter.validateMemoryContent(content);
+        if (!isValidContent) {
+          console.log(
+            `❌ ${type} content not suitable for vocabulary learning - skipping auto-memory save`
+          );
+          return;
+        }
       }
 
       // Generate daily filename
       const filename = this.memoryFormatter.generateVocabularyFilename();
 
-      // Format content for Obsidian
-      const baseFormattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
+      // Format content for Obsidian based on content type
+      let baseFormattedContent: string;
+
+      if (type === 'embed') {
+        // Embed content is already well-formatted, use as-is or with minimal formatting
+        console.log('📋 Using embed content with minimal formatting');
+        baseFormattedContent = content; // Embed content is already structured
+      } else {
+        // Use formatter for attachment and message content
+        console.log(`📄 Formatting ${type} content through MemoryFormatter`);
+        baseFormattedContent = await this.memoryFormatter.formatForObsidian(content);
+      }
 
       // Format for appending (adds timestamp and separator)
       const appendFormattedContent = this.memoryFormatter.formatForAppending(baseFormattedContent);
@@ -137,12 +192,13 @@ Please try again or check the logs.`);
       // Add brain emoji reaction to indicate auto-save completed
       await message.react(this.MEMORY_EMOJI);
 
-      // Send a subtle confirmation reply
+      // Send content-type specific confirmation reply
+      const contentTypeEmoji = type === 'embed' ? '📋' : type === 'attachment' ? '📎' : '📝';
       await message.reply(
-        `🧠✅ **Auto-saved to daily vocabulary!**\n\n📂 **Daily File:** ${filename}\n🔗 **URL:** ${fileUrl}\n\n*Automatically appended to your daily vocabulary file.*`
+        `🧠✅ **Auto-saved to daily vocabulary!**\n\n${contentTypeEmoji} **Content Type:** ${type}\n📂 **Daily File:** ${filename}\n🔗 **URL:** ${fileUrl}\n\n*Automatically appended to your daily vocabulary file.*`
       );
 
-      console.log(`✅ Auto-memory appended successfully to: ${filename}`);
+      console.log(`✅ Auto-memory appended successfully (${type}): ${filename}`);
     } catch (error) {
       console.error('❌ Error handling translation channel memory:', error);
       // Don't send error messages for auto-processing failures to avoid spam
@@ -236,7 +292,9 @@ Please try again or check the logs.`);
   /**
    * Extract content from message.txt attachment
    */
-  private async extractMessageContent(message: Message | PartialMessage): Promise<string | null> {
+  private async extractMessageContent(
+    message: Message | PartialMessage
+  ): Promise<ExtractedMessageContent | null> {
     try {
       // Check embeds for Larry's Diary Feedback (new format)
       if (message.embeds && message.embeds.length > 0) {
@@ -258,7 +316,10 @@ Please try again or check the logs.`);
 
           console.log(`📄 Extracted embed content length: ${embedContent.length}`);
           console.log(`📋 Embed content preview: "${embedContent.substring(0, 200)}..."`);
-          return embedContent;
+          return {
+            content: embedContent,
+            type: 'embed',
+          };
         }
       }
 
@@ -286,7 +347,10 @@ Please try again or check the logs.`);
       const content = await response.text();
       console.log(`📄 Extracted attachment content length: ${content.length}`);
 
-      return content;
+      return {
+        content: content,
+        type: 'attachment',
+      };
     } catch (error) {
       console.error('❌ Error extracting message content:', error);
       return null;
