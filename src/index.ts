@@ -14,6 +14,7 @@ import { TranslationHandler } from './features/translation';
 import { IdeaHandler } from './features/ideas';
 import { ResearchHandler } from './features/research';
 import { BotHandler } from './features/bot-mention';
+import { MemoryHandler } from './features/memory/memoryHandler';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ const translationHandler = new TranslationHandler();
 const ideaHandler = new IdeaHandler();
 const researchHandler = new ResearchHandler();
 const botHandler = new BotHandler();
+const memoryHandler = new MemoryHandler();
 
 // Handle bot mentions - provide AI assistance
 async function handleBotMention(message: any) {
@@ -153,6 +155,17 @@ client.on(Events.MessageCreate, async message => {
         console.log('🔬 Research channel detected, processing research request...');
         await researchHandler.handleResearchMessage(message);
         return;
+      }
+    } else {
+      // Handle bot messages for automatic memory processing in translation channels
+      console.log(
+        `🤖 Bot message received from ${message.author.tag}: "${message.content?.substring(0, 30)}..."`
+      );
+
+      // Check if this is a bot message in a translation channel for automatic memory processing
+      if (translationHandler.isTranslationChannel(message)) {
+        console.log('🧠 Translation channel bot message detected, processing auto-memory...');
+        await memoryHandler.handleTranslationChannelMessage(message);
       }
     }
   } catch (error) {

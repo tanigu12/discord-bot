@@ -88,6 +88,77 @@ Please try again or check the logs.`);
   }
 
   /**
+   * Handle automatic memory processing for messages in translation channels
+   * This is called automatically when messages are sent in translation channels
+   */
+  async handleTranslationChannelMessage(message: Message): Promise<void> {
+    try {
+      // Only process bot messages (Larry's feedback) with attachments
+      if (!this.isValidTranslationChannelMessage(message)) {
+        return;
+      }
+
+      console.log(`🧠 Auto-processing memory for translation channel message from bot...`);
+
+      // Extract diary content from message attachment
+      const messageContent = await this.extractMessageContent(message);
+      if (!messageContent) {
+        console.log('❌ No message.txt content found for auto-memory processing');
+        return;
+      }
+
+      // Validate content is suitable for vocabulary learning
+      if (!this.memoryFormatter.validateMemoryContent(messageContent)) {
+        console.log('❌ Content not suitable for vocabulary learning - skipping auto-memory save');
+        return;
+      }
+
+      // Format content for Obsidian
+      const formattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
+
+      // Generate filename
+      const filename = this.memoryFormatter.generateVocabularyFilename();
+
+      // Save to Obsidian GitHub repository
+      const fileUrl = await this.obsidianService.createVocabularyFile(filename, formattedContent);
+
+      // Add brain emoji reaction to indicate auto-save completed
+      await message.react(this.MEMORY_EMOJI);
+
+      // Send a subtle confirmation reply
+      await message.reply(`🧠✅ **Auto-saved to vocabulary!**\n\n📂 **File:** ${filename}\n🔗 **URL:** ${fileUrl}\n\n*This was automatically saved because it's a translation feedback with learning content.*`);
+
+      console.log(`✅ Auto-memory saved successfully: ${filename}`);
+    } catch (error) {
+      console.error('❌ Error handling translation channel memory:', error);
+      // Don't send error messages for auto-processing failures to avoid spam
+      // Just log the error and continue
+    }
+  }
+
+  /**
+   * Check if message is valid for automatic memory processing in translation channels
+   */
+  private isValidTranslationChannelMessage(message: Message): boolean {
+    // Message must be from bot (Larry's feedback)
+    if (!message.author?.bot) {
+      return false;
+    }
+
+    // Message must have text attachments (message.txt from Larry)
+    if (!message.attachments || message.attachments.size === 0) {
+      return false;
+    }
+
+    // Check if any attachment is a text file (likely message.txt from Larry)
+    const hasTextFile = Array.from(message.attachments.values()).some(
+      attachment => attachment.name?.endsWith('.txt') || attachment.contentType?.startsWith('text/')
+    );
+
+    return hasTextFile;
+  }
+
+  /**
    * Check if reaction is valid for memory processing
    */
   isValidMemoryReaction(reaction: MessageReaction | PartialMessageReaction): boolean {
