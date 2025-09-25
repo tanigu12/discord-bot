@@ -166,18 +166,21 @@ Please try again or check the logs.`);
       return false;
     }
 
-    // Special case: If message starts with "📝 Larry's Diary Feedback", pass validation even without attachments
-    console.log(`🔍 Message: ${JSON.stringify(message, null, 2)}`);
-    const messageContent = message.content || '';
-    if (messageContent.includes("Larry's Diary Feedback")) {
-      console.log(`✅ Message validation passed: Special Larry's Diary Feedback format detected`);
-      return true;
+    // Check embeds for Larry's Diary Feedback (new format)
+    if (message.embeds && message.embeds.length > 0) {
+      const hasLarryEmbed = message.embeds.some(
+        embed => embed.title && embed.title.includes("Larry's Diary Feedback")
+      );
+      if (hasLarryEmbed) {
+        console.log(`✅ Message validation passed: Larry's Diary Feedback found in embed title`);
+        return true;
+      }
     }
 
-    // Check for text attachments (message.txt from Larry)
+    // Check for text attachments (message.txt from Larry) - fallback method
     if (!message.attachments || message.attachments.size === 0) {
       console.log(
-        `❌ Message validation failed: No attachments found (content preview: "${messageContent.substring(0, 50)}...")`
+        `❌ Message validation failed: No Larry's Diary Feedback in content/embeds and no attachments found (content preview: "${messageContent.substring(0, 50)}...")`
       );
       return false;
     }
@@ -192,7 +195,7 @@ Please try again or check the logs.`);
         .map(att => att.name || 'unknown')
         .join(', ');
       console.log(
-        `❌ Message validation failed: No text file attachments found (attachments: ${attachmentNames})`
+        `❌ Message validation failed: No Larry's Diary Feedback found and no text file attachments (attachments: ${attachmentNames})`
       );
       return false;
     }
@@ -235,13 +238,28 @@ Please try again or check the logs.`);
    */
   private async extractMessageContent(message: Message | PartialMessage): Promise<string | null> {
     try {
-      const messageContent = message.content || '';
+      // Check embeds for Larry's Diary Feedback (new format)
+      if (message.embeds && message.embeds.length > 0) {
+        const larryEmbed = message.embeds.find(
+          embed => embed.title && embed.title.includes("Larry's Diary Feedback")
+        );
 
-      // Special case: If message starts with "📝 Larry's Diary Feedback", extract from message content
-      if (messageContent.includes("Larry's Diary Feedback")) {
-        console.log(`📝 Extracting content from Larry's Diary Feedback message`);
-        console.log(`📄 Message content length: ${messageContent.length}`);
-        return messageContent;
+        if (larryEmbed) {
+          console.log(`📝 Extracting content from Larry's Diary Feedback embed`);
+
+          // Extract content from embed fields
+          let embedContent = `# ${larryEmbed.title}\n\n`;
+
+          if (larryEmbed.fields && larryEmbed.fields.length > 0) {
+            for (const field of larryEmbed.fields) {
+              embedContent += `## ${field.name}\n${field.value}\n\n`;
+            }
+          }
+
+          console.log(`📄 Extracted embed content length: ${embedContent.length}`);
+          console.log(`📋 Embed content preview: "${embedContent.substring(0, 200)}..."`);
+          return embedContent;
+        }
       }
 
       // Standard case: Find the text attachment (message.txt)
@@ -252,7 +270,7 @@ Please try again or check the logs.`);
 
       if (!textAttachment) {
         console.log(
-          "❌ No text attachment found and message does not start with Larry's Diary Feedback format"
+          "❌ No text attachment found and no Larry's Diary Feedback found in content or embeds"
         );
         return null;
       }
