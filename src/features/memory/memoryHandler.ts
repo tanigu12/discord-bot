@@ -64,12 +64,15 @@ export class MemoryHandler {
 
       // Format content for Obsidian
       const baseFormattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
-      
+
       // Format for appending (adds timestamp and separator)
       const appendFormattedContent = this.memoryFormatter.formatForAppending(baseFormattedContent);
 
       // Save/append to daily Obsidian file
-      const fileUrl = await this.obsidianService.createVocabularyFile(filename, appendFormattedContent);
+      const fileUrl = await this.obsidianService.createVocabularyFile(
+        filename,
+        appendFormattedContent
+      );
 
       // Confirm success to user
       await message.reply(`🧠✅ **Vocabulary saved to daily file!**
@@ -121,18 +124,23 @@ Please try again or check the logs.`);
 
       // Format content for Obsidian
       const baseFormattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
-      
+
       // Format for appending (adds timestamp and separator)
       const appendFormattedContent = this.memoryFormatter.formatForAppending(baseFormattedContent);
 
       // Save/append to daily Obsidian file
-      const fileUrl = await this.obsidianService.createVocabularyFile(filename, appendFormattedContent);
+      const fileUrl = await this.obsidianService.createVocabularyFile(
+        filename,
+        appendFormattedContent
+      );
 
       // Add brain emoji reaction to indicate auto-save completed
       await message.react(this.MEMORY_EMOJI);
 
       // Send a subtle confirmation reply
-      await message.reply(`🧠✅ **Auto-saved to daily vocabulary!**\n\n📂 **Daily File:** ${filename}\n🔗 **URL:** ${fileUrl}\n\n*Automatically appended to your daily vocabulary file.*`);
+      await message.reply(
+        `🧠✅ **Auto-saved to daily vocabulary!**\n\n📂 **Daily File:** ${filename}\n🔗 **URL:** ${fileUrl}\n\n*Automatically appended to your daily vocabulary file.*`
+      );
 
       console.log(`✅ Auto-memory appended successfully to: ${filename}`);
     } catch (error) {
@@ -146,24 +154,30 @@ Please try again or check the logs.`);
    * Check if message is valid for automatic memory processing in translation channels
    */
   private isValidTranslationChannelMessage(message: Message): boolean {
-    console.log(`🔍 Validating translation channel message from ${message.author?.tag || 'unknown'}`);
-    
+    console.log(
+      `🔍 Validating translation channel message from ${message.author?.tag || 'unknown'}`
+    );
+
     // Message must be from bot (Larry's feedback)
     if (!message.author?.bot) {
-      console.log(`❌ Message validation failed: Not from a bot (from: ${message.author?.tag || 'unknown'})`);
+      console.log(
+        `❌ Message validation failed: Not from a bot (from: ${message.author?.tag || 'unknown'})`
+      );
       return false;
     }
 
     // Special case: If message starts with "📝 Larry's Diary Feedback", pass validation even without attachments
     const messageContent = message.content || '';
-    if (messageContent.startsWith("📝 Larry's Diary Feedback")) {
+    if (messageContent.includes("Larry's Diary Feedback")) {
       console.log(`✅ Message validation passed: Special Larry's Diary Feedback format detected`);
       return true;
     }
 
     // Check for text attachments (message.txt from Larry)
     if (!message.attachments || message.attachments.size === 0) {
-      console.log(`❌ Message validation failed: No attachments found (content preview: "${messageContent.substring(0, 50)}...")`);
+      console.log(
+        `❌ Message validation failed: No attachments found (content preview: "${messageContent.substring(0, 50)}...")`
+      );
       return false;
     }
 
@@ -173,8 +187,12 @@ Please try again or check the logs.`);
     );
 
     if (!hasTextFile) {
-      const attachmentNames = Array.from(message.attachments.values()).map(att => att.name || 'unknown').join(', ');
-      console.log(`❌ Message validation failed: No text file attachments found (attachments: ${attachmentNames})`);
+      const attachmentNames = Array.from(message.attachments.values())
+        .map(att => att.name || 'unknown')
+        .join(', ');
+      console.log(
+        `❌ Message validation failed: No text file attachments found (attachments: ${attachmentNames})`
+      );
       return false;
     }
 
@@ -217,9 +235,9 @@ Please try again or check the logs.`);
   private async extractMessageContent(message: Message | PartialMessage): Promise<string | null> {
     try {
       const messageContent = message.content || '';
-      
+
       // Special case: If message starts with "📝 Larry's Diary Feedback", extract from message content
-      if (messageContent.startsWith("📝 Larry's Diary Feedback")) {
+      if (messageContent.includes("Larry's Diary Feedback")) {
         console.log(`📝 Extracting content from Larry's Diary Feedback message`);
         console.log(`📄 Message content length: ${messageContent.length}`);
         return messageContent;
@@ -232,7 +250,9 @@ Please try again or check the logs.`);
       );
 
       if (!textAttachment) {
-        console.log('❌ No text attachment found and message does not start with Larry\'s Diary Feedback format');
+        console.log(
+          "❌ No text attachment found and message does not start with Larry's Diary Feedback format"
+        );
         return null;
       }
 
