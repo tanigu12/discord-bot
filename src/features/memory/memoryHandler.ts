@@ -180,7 +180,7 @@ Please try again or check the logs.`);
     // Check for text attachments (message.txt from Larry) - fallback method
     if (!message.attachments || message.attachments.size === 0) {
       console.log(
-        `❌ Message validation failed: No Larry's Diary Feedback in content/embeds and no attachments found (content preview: "${messageContent.substring(0, 50)}...")`
+        `❌ Message validation failed: No Larry's Diary Feedback in content/embeds and no attachments found`
       );
       return false;
     }
