@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📖 Bot Features Reference
+
+**IMPORTANT: For comprehensive Discord bot feature information, always refer to README.md first.**
+
+The README.md contains complete documentation of all bot capabilities:
+- 8 slash commands (including `/pomodoro` with 8 subcommands)
+- 4 emoji reaction types (🧙‍♂️, 💡, 📝, 🧠)
+- Integration details (OpenAI, Bluesky, GitHub)
+- Usage examples and troubleshooting
+- Setup instructions and environment variables
+
+When asked about bot features, capabilities, or usage, reference README.md to provide accurate and up-to-date information.
+
 ## Development Commands
 
 ### Essential Commands
