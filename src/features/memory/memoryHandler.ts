@@ -167,7 +167,7 @@ Please try again or check the logs.`);
     }
 
     // Special case: If message starts with "📝 Larry's Diary Feedback", pass validation even without attachments
-    console.log(`🔍 Message: ${JSON.stringify(message)}`);
+    console.log(`🔍 Message: ${JSON.stringify(message, null, 2)}`);
     const messageContent = message.content || '';
     if (messageContent.includes("Larry's Diary Feedback")) {
       console.log(`✅ Message validation passed: Special Larry's Diary Feedback format detected`);
