@@ -46,9 +46,30 @@ ${compactTranslationSection}
    */
   generateVocabularyFilename(): string {
     const now = new Date();
-    const timestamp = now.toISOString().replace(/[:.]/g, '-').substring(0, 19); // YYYY-MM-DDTHH-mm-ss format
+    // Generate daily filename format: vocabulary-YYYY-MM-DD.md
+    const dateString = now.toISOString().substring(0, 10); // YYYY-MM-DD format
+    
+    return `vocabulary-${dateString}.md`;
+  }
 
-    return `vocabulary-${timestamp}.md`;
+  /**
+   * Format content for appending to existing daily file
+   * Adds timestamp and separator for readability
+   */
+  formatForAppending(content: string): string {
+    const now = new Date();
+    const timestamp = now.toLocaleString('ja-JP', { 
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    // Add separator and timestamp before the content
+    return `\n\n---\n### Entry at ${timestamp}\n\n${content}`;
   }
 
   /**

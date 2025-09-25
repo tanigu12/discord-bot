@@ -28,50 +28,86 @@ export class ObsidianGitHubService {
    */
   async createVocabularyFile(filename: string, content: string): Promise<string> {
     try {
-      console.log(`📝 Creating vocabulary file: ${filename}`);
+      console.log(`📝 Processing vocabulary file: ${filename}`);
 
       // Construct full file path
-      let filePath = `${this.vocabularyPath}${filename}`;
+      const filePath = `${this.vocabularyPath}${filename}`;
 
       // Check if file already exists
-      const exists = await this.checkFileExists(filePath);
-      if (exists) {
-        console.log(`⚠️ File ${filename} already exists, creating unique name...`);
-        filename = this.generateUniqueFilename(filename);
-        // Update filePath with new filename
-        filePath = `${this.vocabularyPath}${filename}`;
-        console.log(`📝 Updated filename: ${filename}`);
-      }
+      const existingFile = await this.getFileContent(filePath);
+      
+      let finalContent: string;
+      let commitMessage: string;
+      
+      if (existingFile) {
+        // File exists - append new content
+        console.log(`📄 Daily file exists, appending content to: ${filename}`);
+        finalContent = existingFile.content + content; // content should already be formatted for appending
+        
+        commitMessage = `Append vocabulary entry to daily file: ${filename}
 
-      // Encode content to base64
-      const encodedContent = Buffer.from(content, 'utf-8').toString('base64');
+📚 New vocabulary entry added to daily file
+🧠 Generated from Larry's diary feedback  
+📅 ${new Date().toISOString()}`;
 
-      // Create commit message
-      const commitMessage = `Add vocabulary entry: ${this.extractTitleFromContent(content)}
+        // Encode content to base64
+        const encodedContent = Buffer.from(finalContent, 'utf-8').toString('base64');
 
-📚 Vocabulary entry created via Discord memory reaction
+        // Update existing file
+        const response = await this.octokit.rest.repos.createOrUpdateFileContents({
+          owner: this.owner,
+          repo: this.repo,
+          path: filePath,
+          message: commitMessage,
+          content: encodedContent,
+          sha: existingFile.sha, // Required for updating existing files
+          branch: 'main',
+        });
+
+        console.log(`✅ Content appended to daily file: ${filePath}`);
+        return response.data.content?.html_url || 
+               `https://github.com/${this.owner}/${this.repo}/blob/main/${filePath}`;
+               
+      } else {
+        // File doesn't exist - create new daily file
+        console.log(`🆕 Creating new daily file: ${filename}`);
+        
+        // Create daily file header
+        const dateString = filename.replace('vocabulary-', '').replace('.md', '');
+        const dailyHeader = `# Vocabulary Learning - ${dateString}
+
+This file contains vocabulary entries learned on ${dateString}.
+
+---
+`;
+        
+        finalContent = dailyHeader + content;
+        
+        commitMessage = `Create daily vocabulary file: ${filename}
+
+📚 Daily vocabulary file created
 🧠 Generated from Larry's diary feedback
 📅 ${new Date().toISOString()}`;
 
-      // Create or update the file in the repository
-      const response = await this.octokit.rest.repos.createOrUpdateFileContents({
-        owner: this.owner,
-        repo: this.repo,
-        path: filePath,
-        message: commitMessage,
-        content: encodedContent,
-        branch: 'main', // Obsidian typically uses 'main' branch
-      });
+        // Encode content to base64
+        const encodedContent = Buffer.from(finalContent, 'utf-8').toString('base64');
 
-      console.log(`✅ Vocabulary file created successfully: ${filePath}`);
+        // Create new file
+        const response = await this.octokit.rest.repos.createOrUpdateFileContents({
+          owner: this.owner,
+          repo: this.repo,
+          path: filePath,
+          message: commitMessage,
+          content: encodedContent,
+          branch: 'main',
+        });
 
-      // Return the URL to the created file
-      return (
-        response.data.content?.html_url ||
-        `https://github.com/${this.owner}/${this.repo}/blob/main/${filePath}`
-      );
+        console.log(`✅ Daily vocabulary file created: ${filePath}`);
+        return response.data.content?.html_url || 
+               `https://github.com/${this.owner}/${this.repo}/blob/main/${filePath}`;
+      }
     } catch (error) {
-      console.error('❌ Error creating vocabulary file:', error);
+      console.error('❌ Error processing vocabulary file:', error);
 
       // Provide more specific error messages
       if (error instanceof Error) {
@@ -84,66 +120,44 @@ export class ObsidianGitHubService {
             `Permission denied to ${this.owner}/${this.repo}. Check GitHub PAT permissions.`
           );
         } else {
-          throw new Error(`Failed to create vocabulary file: ${error.message}`);
+          throw new Error(`Failed to process vocabulary file: ${error.message}`);
         }
       } else {
-        throw new Error(`Failed to create vocabulary file: Unknown error`);
+        throw new Error(`Failed to process vocabulary file: Unknown error`);
       }
     }
   }
 
+
   /**
-   * Check if file already exists in repository
+   * Get file content and SHA for updating existing files
    */
-  private async checkFileExists(filePath: string): Promise<boolean> {
+  private async getFileContent(filePath: string): Promise<{ content: string; sha: string } | null> {
     try {
-      await this.octokit.rest.repos.getContent({
+      const response = await this.octokit.rest.repos.getContent({
         owner: this.owner,
         repo: this.repo,
         path: filePath,
       });
-      return true;
+
+      // GitHub API returns content in base64, decode it
+      if ('content' in response.data && typeof response.data.content === 'string') {
+        const decodedContent = Buffer.from(response.data.content, 'base64').toString('utf-8');
+        return {
+          content: decodedContent,
+          sha: response.data.sha
+        };
+      }
+
+      return null;
     } catch (error: any) {
-      // If 404, file doesn't exist - this is expected for new files
+      // If 404, file doesn't exist - this is expected for new daily files
       if (error.status === 404 || (error.response && error.response.status === 404)) {
-        return false;
+        return null;
       }
       // Other errors might indicate permission issues
-      console.error('Unexpected error in checkFileExists:', error);
+      console.error('Unexpected error in getFileContent:', error);
       throw error;
     }
-  }
-
-  /**
-   * Generate unique filename if original already exists
-   */
-  private generateUniqueFilename(originalFilename: string): string {
-    const timestamp = Date.now();
-    const nameWithoutExt = originalFilename.replace(/\.md$/, '');
-    return `${nameWithoutExt}-${timestamp}.md`;
-  }
-
-  /**
-   * Extract title from vocabulary content for commit message
-   */
-  private extractTitleFromContent(content: string): string {
-    const lines = content.split('\n');
-
-    // Look for the Japanese sentence (after ###)
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (
-        !trimmed.startsWith('###') &&
-        !trimmed.startsWith('#') &&
-        trimmed.length > 0 &&
-        trimmed !== '?' &&
-        /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(trimmed)
-      ) {
-        // Truncate for commit message
-        return trimmed.length > 50 ? trimmed.substring(0, 47) + '...' : trimmed;
-      }
-    }
-
-    return 'New vocabulary entry';
   }
 }

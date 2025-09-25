@@ -59,24 +59,27 @@ export class MemoryHandler {
         return;
       }
 
-      // Format content for Obsidian
-      const formattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
-
-      // Generate filename
+      // Generate daily filename
       const filename = this.memoryFormatter.generateVocabularyFilename();
 
-      // Save to Obsidian GitHub repository
-      const fileUrl = await this.obsidianService.createVocabularyFile(filename, formattedContent);
+      // Format content for Obsidian
+      const baseFormattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
+      
+      // Format for appending (adds timestamp and separator)
+      const appendFormattedContent = this.memoryFormatter.formatForAppending(baseFormattedContent);
+
+      // Save/append to daily Obsidian file
+      const fileUrl = await this.obsidianService.createVocabularyFile(filename, appendFormattedContent);
 
       // Confirm success to user
-      await message.reply(`🧠✅ **Vocabulary saved to Obsidian!**
+      await message.reply(`🧠✅ **Vocabulary saved to daily file!**
 
-📂 **File:** ${filename}
+📂 **Daily File:** ${filename}
 🔗 **URL:** ${fileUrl}
 
-Your vocabulary entry has been added to your Obsidian Git Sync repository!`);
+Your vocabulary entry has been appended to your daily Obsidian file!`);
 
-      console.log(`✅ Memory saved successfully: ${filename}`);
+      console.log(`✅ Manual memory saved successfully to: ${filename}`);
     } catch (error) {
       console.error('❌ Error handling memory reaction:', error);
       await reaction.message.reply(`🧠❌ **Memory save failed**
@@ -113,22 +116,25 @@ Please try again or check the logs.`);
         return;
       }
 
-      // Format content for Obsidian
-      const formattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
-
-      // Generate filename
+      // Generate daily filename
       const filename = this.memoryFormatter.generateVocabularyFilename();
 
-      // Save to Obsidian GitHub repository
-      const fileUrl = await this.obsidianService.createVocabularyFile(filename, formattedContent);
+      // Format content for Obsidian
+      const baseFormattedContent = await this.memoryFormatter.formatForObsidian(messageContent);
+      
+      // Format for appending (adds timestamp and separator)
+      const appendFormattedContent = this.memoryFormatter.formatForAppending(baseFormattedContent);
+
+      // Save/append to daily Obsidian file
+      const fileUrl = await this.obsidianService.createVocabularyFile(filename, appendFormattedContent);
 
       // Add brain emoji reaction to indicate auto-save completed
       await message.react(this.MEMORY_EMOJI);
 
       // Send a subtle confirmation reply
-      await message.reply(`🧠✅ **Auto-saved to vocabulary!**\n\n📂 **File:** ${filename}\n🔗 **URL:** ${fileUrl}\n\n*This was automatically saved because it's a translation feedback with learning content.*`);
+      await message.reply(`🧠✅ **Auto-saved to daily vocabulary!**\n\n📂 **Daily File:** ${filename}\n🔗 **URL:** ${fileUrl}\n\n*Automatically appended to your daily vocabulary file.*`);
 
-      console.log(`✅ Auto-memory saved successfully: ${filename}`);
+      console.log(`✅ Auto-memory appended successfully to: ${filename}`);
     } catch (error) {
       console.error('❌ Error handling translation channel memory:', error);
       // Don't send error messages for auto-processing failures to avoid spam
