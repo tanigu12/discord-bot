@@ -146,13 +146,24 @@ Please try again or check the logs.`);
    * Check if message is valid for automatic memory processing in translation channels
    */
   private isValidTranslationChannelMessage(message: Message): boolean {
+    console.log(`🔍 Validating translation channel message from ${message.author?.tag || 'unknown'}`);
+    
     // Message must be from bot (Larry's feedback)
     if (!message.author?.bot) {
+      console.log(`❌ Message validation failed: Not from a bot (from: ${message.author?.tag || 'unknown'})`);
       return false;
     }
 
-    // Message must have text attachments (message.txt from Larry)
+    // Special case: If message starts with "📝 Larry's Diary Feedback", pass validation even without attachments
+    const messageContent = message.content || '';
+    if (messageContent.startsWith("📝 Larry's Diary Feedback")) {
+      console.log(`✅ Message validation passed: Special Larry's Diary Feedback format detected`);
+      return true;
+    }
+
+    // Check for text attachments (message.txt from Larry)
     if (!message.attachments || message.attachments.size === 0) {
+      console.log(`❌ Message validation failed: No attachments found (content preview: "${messageContent.substring(0, 50)}...")`);
       return false;
     }
 
@@ -161,7 +172,14 @@ Please try again or check the logs.`);
       attachment => attachment.name?.endsWith('.txt') || attachment.contentType?.startsWith('text/')
     );
 
-    return hasTextFile;
+    if (!hasTextFile) {
+      const attachmentNames = Array.from(message.attachments.values()).map(att => att.name || 'unknown').join(', ');
+      console.log(`❌ Message validation failed: No text file attachments found (attachments: ${attachmentNames})`);
+      return false;
+    }
+
+    console.log(`✅ Message validation passed: Text file attachment found`);
+    return true;
   }
 
   /**
@@ -198,14 +216,23 @@ Please try again or check the logs.`);
    */
   private async extractMessageContent(message: Message | PartialMessage): Promise<string | null> {
     try {
-      // Find the text attachment (message.txt)
+      const messageContent = message.content || '';
+      
+      // Special case: If message starts with "📝 Larry's Diary Feedback", extract from message content
+      if (messageContent.startsWith("📝 Larry's Diary Feedback")) {
+        console.log(`📝 Extracting content from Larry's Diary Feedback message`);
+        console.log(`📄 Message content length: ${messageContent.length}`);
+        return messageContent;
+      }
+
+      // Standard case: Find the text attachment (message.txt)
       const textAttachment = Array.from(message.attachments.values()).find(
         attachment =>
           attachment.name?.endsWith('.txt') || attachment.contentType?.startsWith('text/')
       );
 
       if (!textAttachment) {
-        console.log('No text attachment found');
+        console.log('❌ No text attachment found and message does not start with Larry\'s Diary Feedback format');
         return null;
       }
 
@@ -218,11 +245,11 @@ Please try again or check the logs.`);
       }
 
       const content = await response.text();
-      console.log(`📄 Extracted content length: ${content.length}`);
+      console.log(`📄 Extracted attachment content length: ${content.length}`);
 
       return content;
     } catch (error) {
-      console.error('Error extracting message content:', error);
+      console.error('❌ Error extracting message content:', error);
       return null;
     }
   }
